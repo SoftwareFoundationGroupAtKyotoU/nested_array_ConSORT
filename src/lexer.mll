@@ -8,7 +8,7 @@
         ("in", Parser.IN);
         ("int", Parser.INT);
         ("let", Parser.LET);
-        ("ALLOC", Parser.ALLOC);
+        ("alloc", Parser.ALLOC);
         ("ref", Parser.REF);
         ("then", Parser.THEN);
     ]

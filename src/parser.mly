@@ -83,14 +83,5 @@ AExpr :
   | i=ID   { Var i }
   | LPAREN e=Expr RPAREN { e }
 
-TyExpr :
-  | t1=TyAExpr RARROW t2=TyExpr { TyFun(t1, t2) }
-  | e = TyAExpr { e }
-
-TyAExpr :
-    INT { TyInt }
-  | BOOL { TyBool }
-  | LPAREN e=TyExpr RPAREN { e }
-
  
 
