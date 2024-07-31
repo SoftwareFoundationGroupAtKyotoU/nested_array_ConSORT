@@ -1,30 +1,30 @@
 type id = string
-
 type binOp = Plus | Minus | Mult | Lt | AND | OR
-type tyvar = int
 
 type ty = 
     TyInt
   | TyBool
-  | TyVar of tyvar
-  | TyFun of ty * tyvar
   | TyRef of ty
   | TyUnit
 
 type simpleTy =
     SInt
   | SRef of simpleTy
+  | SBool
+  | SUnit
 
 type funcallexp = 
     FunCall of id * (id list)
 
-type exp
+type phi =
+    Phi of id
 
 type presemi =
     Assign of id * id
   | AliasAddPtr of id * id * id
   | AliasDeref of id * id
-  | Phi of exp(*ごまかし*)
+  | Assert of phi
+  | Phi(*ごまかし*)
 
 type exp =
     Var of id
@@ -38,13 +38,6 @@ type exp =
   | LetBindExp of id * exp * exp
   | LetFunCall of id * funcallexp * exp
   | PreSEMIExpr of presemi * exp
-
-(* 呼び出すたびに，他とかぶらない新しい tyvar 型の値を返す関数 *)
-let fresh_tyvar =
-  let counter = ref 0 in (* 次に返すべき tyvar 型の値を参照で持っておいて， *)
-  let body () =
-    let v = !counter in
-      counter := v + 1; v (* 呼び出されたら参照をインクリメントして，古い counter の参照先の値を返す *)
-  in body
+  | ExpSeq of presemi * exp
 
 

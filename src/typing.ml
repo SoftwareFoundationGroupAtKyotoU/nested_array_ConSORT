@@ -55,7 +55,7 @@ let rec ty_exp (tyenv: tyenv) exp =
       let eqs = (ty1, SInt) :: c1 @ c2 in
       (try let c3 = unify eqs in (c3, ty2)
       with Error _-> err("occur error"))
-  | FunExp (id, exp) ->
+  (* | FunExp (id, exp) ->
       (* id の型を表す fresh な型変数を生成 *)
       let domty = TyVar (fresh_tyvar ()) in
 	  (* id : domty で tyenv を拡張し，その下で exp を型推論 *)
@@ -64,7 +64,7 @@ let rec ty_exp (tyenv: tyenv) exp =
         let eqs = (eqs_of_subst s) in
         let s1 = unify eqs in 
         (* let TyScheme (_ , ty) = domty in *)
-        (s1, TyFun (subst_type s1 domty, ranty))
+        (s1, TyFun (subst_type s1 domty, ranty)) *)
   | AnnoFunExp (id,ty,  exp) ->
       let domty = ty in
     (* id : domty で tyenv を拡張し，その下で exp を型推論 *)
