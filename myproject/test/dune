@@ -1,2 +1,15 @@
-(test
- (name test_myproject))
+; (menhir
+;   (modules tyParser)
+; )
+; (ocamllex
+;   (modules tyLexer)
+; )
+; (tests
+;   (name
+;     test_myproject
+;   )
+;   (libraries
+;     oUnit
+;     myproject
+;   )
+; )

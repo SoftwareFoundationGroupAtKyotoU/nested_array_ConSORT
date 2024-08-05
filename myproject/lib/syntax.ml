@@ -38,6 +38,5 @@ type exp =
   | LetBindExp of id * exp * exp
   | LetFunCall of id * funcallexp * exp
   | PreSEMIExpr of presemi * exp
-  | ExpSeq of presemi * exp
 
 

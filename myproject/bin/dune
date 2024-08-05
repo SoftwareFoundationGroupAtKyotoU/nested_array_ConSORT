@@ -2,3 +2,9 @@
  (public_name myproject)
  (name main)
  (libraries myproject))
+
+(env
+ (dev
+   (flags
+     (:standard -warn-error -A -w -39)
+   )))

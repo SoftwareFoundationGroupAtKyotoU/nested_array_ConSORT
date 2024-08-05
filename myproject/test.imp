@@ -1,0 +1,1 @@
+{ assert(x); x := y ; alias(x = *y); alias(x = y+z); 1}

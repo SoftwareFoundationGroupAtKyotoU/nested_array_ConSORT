@@ -22,14 +22,14 @@ toplevel :
 Expr :
     e=IfnpExpr { e }
   | e=LetExpr { e }
-  | e1=PreSEMIExpr SEMI e2=Expr { ExpSeq(e1, e2) }
+  | e1=PreSEMIExpr SEMI e2=Expr { PreSEMIExpr(e1, e2) }
   | e=AExpr { e }
 
 IfnpExpr :
     IFNP x=ID THEN t=Expr ELSE e=Expr { IfnpExp (x, t, e) }
 
 LetExpr :
-    LET x=ID EQ ALLOC y=ID SEMI ty=SimpleTyExpr REF IN e=Expr { LetAllocExp(x, Var y, ty, e) }
+    LET x=ID EQ ALLOC y=ID COLON ty=SimpleTyExpr REF IN e=Expr { LetAllocExp(x, Var y, SRef ( ty ), e) }
   | LET x=ID EQ STAR y=ID IN e=Expr { LetDerefExp(x, Var y, e) }
   | LET x=ID EQ e1=BinOpExpr IN e2=Expr { LetBinOpExp(x, e1, e2) }
   | LET x=ID EQ e1=Expr IN e2=Expr { LetBindExp(x, e1, e2) }
