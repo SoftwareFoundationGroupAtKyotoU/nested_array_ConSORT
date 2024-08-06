@@ -4,12 +4,12 @@
 ; (ocamllex
 ;   (modules tyLexer)
 ; )
-; (tests
-;   (name
-;     test_myproject
-;   )
-;   (libraries
-;     oUnit
-;     myproject
-;   )
-; )
+(test
+  (name
+    test_myproject
+  )
+  (libraries
+    oUnit
+    myproject
+  )
+)

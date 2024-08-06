@@ -22,20 +22,13 @@ let binop_to_string binop =
   | Lt -> "<"
   | AND -> "&&"
   | OR -> "||"
+  | Eq -> "="
 
 let rec simpleTy_to_string simpleTy =
   match simpleTy with
   | SInt -> "int "
   | SRef ty -> (simpleTy_to_string ty) ^ "ref "
   | _ -> err ("this type decralation doesn't suit ")
-
-let rec presemi_to_string presemi =
-  match presemi with
-  | Assign (id1, id2) -> id1 ^ " := " ^ id2
-  | AliasAddPtr (id1, id2, id3) -> id1 ^ " = " ^ id2 ^ " + " ^ id3
-  | AliasDeref (id1, id2) -> id1 ^ " =*" ^ id2
-  | Assert phi -> "assert(phi)"
-  | Phi -> "Phi"
 
 let rec print_ast ast = 
   match ast with
@@ -80,7 +73,21 @@ let rec print_ast ast =
       print_ast(exp2);
       print_string (") ");
   | PreSEMIExpr (presemi , exp) ->
-      let presemi_string = presemi_to_string presemi in
-      print_string (presemi_string ^ "; ");
+      print_ast presemi;
       print_ast(exp)
+  | Assign (id1, id2) -> 
+      print_string id1;
+      print_string " := ";
+      print_string (id2 ^ "; ")
+  | AliasAddPtr (id1, id2, id3) -> 
+      print_string (id1 ^ " = " ^ id2 ^ " + " ^ id3 ^ "; ")
+  | AliasDeref (id1, id2) -> 
+      print_string (id1 ^ " = *" ^ id2 ^ "; ")
+  | Assert phi -> 
+      print_string "assert";
+      print_ast phi;
+      print_string "; " 
+  | Deref var ->
+      print_string "*";
+      print_ast var
   | _ ->print_string "3"

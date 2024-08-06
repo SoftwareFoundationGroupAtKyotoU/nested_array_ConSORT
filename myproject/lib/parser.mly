@@ -56,30 +56,28 @@ PreSEMIExpr :
     x=ID ASSIGN y=ID { Assign(x, y) }
   | ALIAS LPAREN x=ID EQ y=ID PLUS z=ID RPAREN { AliasAddPtr(x, y, z) }
   | ALIAS LPAREN x=ID EQ STAR y=ID RPAREN { AliasDeref(x, y) }
-  | ASSERT LPAREN p=PHIExpr RPAREN { Assert(p) } 
+  | ASSERT LPAREN p=LTExpr RPAREN { Assert(p) } 
 
 ORExpr :
-    e1=ORExpr OR e2=ANDExpr { Exp(e1, e2) }
+    e1=ORExpr OR e2=ANDExpr { BinOp(OR, e1, e2) }
   | e=ANDExpr { e }
 
 ANDExpr :
-    e1=ANDExpr AND e2=LTExpr { ANDExp(e1, e2) }
-  | e=LTExpr { e1 }
+    e1=ANDExpr AND e2=LTExpr { BinOp(AND, e1, e2) }
+  | e=LTExpr { e }
 
 LTExpr :
-    e1=BaseExpr LT e2=BaseExpr { LTExp(e1, e2) }
+    e1=BaseExpr LT e2=BaseExpr { BinOp(Lt, e1, e2) }
   | e=EQExpr { e }
 
 EQExpr :
-    e1=BaseExpr EQ e2=BaseExpr { EQExp(e1, e2) }
+    e1=BaseExpr EQ e2=BaseExpr { BinOp(Eq, e1, e2) }
 
 BaseExpr :
     i=INTV { ILit (i) }
-  | i=ID { i }
+  | i=ID { Var i }
+  | STAR e=BaseExpr { Deref e }
   | LPAREN e=ORExpr RPAREN { e }
-
-PHIExpr :
-    i=ID { Phi i }
 
 AExpr :
     i=INTV { ILit i }

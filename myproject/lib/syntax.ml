@@ -1,5 +1,5 @@
 type id = string
-type binOp = Plus | Minus | Mult | Lt | AND | OR
+type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq
 
 type ty = 
     TyInt
@@ -16,16 +16,6 @@ type simpleTy =
 type funcallexp = 
     FunCall of id * (id list)
 
-type phi =
-    Phi of id
-
-type presemi =
-    Assign of id * id
-  | AliasAddPtr of id * id * id
-  | AliasDeref of id * id
-  | Assert of phi
-  | Phi(*ごまかし*)
-
 type exp =
     Var of id
   | ILit of int
@@ -37,6 +27,11 @@ type exp =
   | LetBinOpExp of id * exp * exp
   | LetBindExp of id * exp * exp
   | LetFunCall of id * funcallexp * exp
-  | PreSEMIExpr of presemi * exp
+  | PreSEMIExpr of exp * exp
+  | Assign of id * id
+  | AliasAddPtr of id * id * id
+  | AliasDeref of id * id
+  | Assert of exp
+  | Deref of exp
 
 

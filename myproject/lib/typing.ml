@@ -18,6 +18,7 @@ let ty_prim op ty1 ty2 = match op with
   | Lt -> ([(ty1, SInt); (ty2, SInt)], SBool)
   | AND -> ([(ty1, SBool); (ty2, SBool)], SBool)
   | OR -> ([(ty1, SBool); (ty2, SBool)], SBool)
+  | Eq -> ([(ty1,ty2)], SBool)
 
 (*型の単一化のための関数*)
 let rec unify lis =
@@ -73,3 +74,7 @@ let rec ty_exp (tyenv: tyenv) exp =
         (* let TyScheme (_ , ty) = domty in *)
         (s1, TyFun (subst_type s1 domty, ranty)) *)
   | _ -> err ("Not Implemented!")
+
+let ty_test exp =
+  let (_, ty) = ty_exp Environment.empty exp in
+  ty;
