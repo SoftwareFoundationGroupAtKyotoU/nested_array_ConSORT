@@ -82,7 +82,7 @@ BaseExpr :
 AExpr :
     i=INTV { ILit i }
   | i=ID   { Var i }
-  | LPAREN e=Expr RPAREN { e }
+  | LBRACE e=Expr RBRACE { e }
 
  
 
