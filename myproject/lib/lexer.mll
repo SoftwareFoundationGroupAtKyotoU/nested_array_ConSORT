@@ -28,6 +28,7 @@ rule main = parse
   | "-" { Parser.MINUS }
   | "*" { Parser.STAR }
   | "<" { Parser.LT }
+  | ">" { Parser.GT }
   | "=" { Parser.EQ }
   | ":" { Parser.COLON }
   | ";" { Parser.SEMI }
@@ -39,6 +40,7 @@ rule main = parse
   | "!" { Parser.NOT }
   | "->" { Parser.RARROW }
   | "," { Parser.COMMA }
+  | "|" { Parser.BAR }
   | "(*" { comment lexbuf; main lexbuf }
   (*コメントの先頭を読んだ際はエントリポイント「コメント」に移ったのちメインに戻ってくる*)
   | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']*
