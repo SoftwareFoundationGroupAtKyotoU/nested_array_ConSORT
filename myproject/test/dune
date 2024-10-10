@@ -4,9 +4,10 @@
 ; (ocamllex
 ;   (modules tyLexer)
 ; )
-(test
-  (name
-    test_myproject
+(tests
+  (names
+    typing_test
+    tyenv_test
   )
   (libraries
     oUnit
