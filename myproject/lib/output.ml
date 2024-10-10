@@ -12,7 +12,5 @@ let read_eval_print env tyenv inchannel =
 let initial_env =
   Environment.empty
 
-(* Update in 4.4.1 *)
-(* tyenvの型が変わったため *)
 let initial_tyenv = 
     (Environment.empty)
