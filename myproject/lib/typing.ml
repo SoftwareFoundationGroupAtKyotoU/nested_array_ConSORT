@@ -129,4 +129,9 @@ let rec ty_exp (tyenv: tyenv) exp =
 
 let ty_test exp =
   let (_, ty) = ty_exp Environment.empty exp in
-  ty;
+  ty
+
+let tyenv_test exp =
+  let tyenv = Environment.empty in
+  let _ = ty_exp tyenv exp in
+  tyenv
