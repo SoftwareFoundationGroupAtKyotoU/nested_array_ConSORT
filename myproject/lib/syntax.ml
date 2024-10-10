@@ -34,4 +34,6 @@ type exp =
   | Assert of exp
   | Deref of exp
 
+  type program = id list * exp
+
 
