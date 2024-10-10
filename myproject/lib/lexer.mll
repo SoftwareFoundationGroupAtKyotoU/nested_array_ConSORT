@@ -41,7 +41,7 @@ rule main = parse
   | "->" { Parser.RARROW }
   | "," { Parser.COMMA }
   | "|" { Parser.BAR }
-  | "(*" { comment lexbuf; main lexbuf }
+  | "/*" { comment lexbuf; main lexbuf }
   (*コメントの先頭を読んだ際はエントリポイント「コメント」に移ったのちメインに戻ってくる*)
   | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']*
       { let id = Lexing.lexeme lexbuf in
@@ -52,10 +52,10 @@ rule main = parse
       }
   | eof { Parser.EOF }
 and comment = parse 
-  | "(*"  { comment lexbuf; comment lexbuf }
+  | "/*"  { comment lexbuf; comment lexbuf }
   (*コメント内でコメントの先頭を読んだ際はエントリポイント「コメント」に移ったのち
   またエントリポイント「コメント」に戻ってくる*)
-  | "*)"  { () }
+  | "*/"  { () }
   | _  { comment lexbuf }
   (*コメント中の文字は全て無視する
   またコメントの最後を読んだ際は何も返さないことを()で表現*)
