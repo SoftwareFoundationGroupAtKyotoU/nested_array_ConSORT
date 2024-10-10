@@ -3,21 +3,48 @@ open Syntax
 %}
 
 %token LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET
-%token PLUS MINUS STAR LT EQ
+%token PLUS MINUS STAR LT GT EQ
 %token IFNP THEN ELSE NOT OR AND
 %token LET IN ALIAS ASSERT ALLOC REF INT
 %token COLON COMMA ASSIGN NONDET WAVE RARROW SEMI
+%token BAR
 %token EOF
 
 %token <int> INTV
 %token <Syntax.id> ID
 
 %start toplevel
-%type <Syntax.exp> toplevel 
+%type <Syntax.program> toplevel 
 %%(*?*)
 
-toplevel :
-    LBRACE e=Expr RBRACE EOF { e }
+toplevel : (* プログラムは関数定義と本体式からなる *)
+    LBRACE e=Expr RBRACE EOF { ([], e) }
+  // | f = FunDefs LBRACE e = Expr RBRACE EOF { ([], e) }
+
+// FunDefs :
+//   | f = FunDef  { [f] } 
+//   | f1 = FunDef f2 = FunDefs { f1 :: f2 }
+
+// FunDef : (* 関数定義 *)
+//   x = ID LPAREN y=IDs RPAREN LBRACKET a = Annotation RBRACKET LBRACE e = Expr RBRACE { (x, y, a, e) }
+
+// IDs: (* 関数の引数名 *)
+//   | x = ID { [x] }
+//   | x = ID COMMA y = IDs { x :: y }
+
+// Annotation:
+//   LT x = ID_Funtypes GT ARROW LT y = ID_Funtypes BAR z = Funtype GT { (x, y, z) }
+
+// ID_Funtypes:(* 関数の引数の前後の型の列 *)
+//   | x = ID_Funtype { x }
+//   | x = ID_Funtype COMMA y = ID_Funtypes { x :: y }
+
+// id_ftype: (* 関数の引数の前後の型 *)
+// | id COLON ftype 
+//   { (RawId($1), $3) }
+// | HASH id COLON ftype
+//   { (HashId($2), $4) }
+// ;
 
 Expr :
     e=IfnpExpr { e }
