@@ -1,10 +1,23 @@
+/*init(n, p) 
+[ <#n: int, p: int ref> -> 
+  <#n: int, p: int ref | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 0;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    1
+  }
+}*/
+
 {   
-  let z = 3 in
-  let w = 1 in
-  let x = alloc z : int ref in
-  let y = x + w in {
-    alias(x = y+w);
-    alias(x = *y);
-    1 
+  let n = 1 in
+  let x = alloc n : int ref in {
+    x := n;
+    assert(*x = 1);
+    1
   }
 }
