@@ -1,7 +1,6 @@
 open Eval
-open Typing
 
-let read_eval_print env tyenv inchannel =
+let read_eval_print env inchannel =
   (* 入力からバッファを生成 *)
   let buffer = Lexing.from_channel inchannel in
   let (_, exp_ast) = Parser.toplevel Lexer.main buffer in
