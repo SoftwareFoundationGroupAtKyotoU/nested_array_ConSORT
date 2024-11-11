@@ -2,7 +2,9 @@ open Syntax
 
 exception Error of string
 
-let err s = raise (Error s)
+(* (関数名 * (変数 * 単純型)list)list *)
+(* let all_tyenv = ref [] *)
+(* let err s = raise (Error s)
 
 (* 単純型環境 *)
 let simple_tyenv = ref []
@@ -16,14 +18,14 @@ let extend_tyenv id ty =
   simple_tyenv := (id,ty) :: !simple_tyenv
 
 (* 演算子 op が生成すべき制約集合と返り値の型を記述 *)
-let ty_prim op ty1 ty2 = match op with
+(* let ty_prim op ty1 ty2 = match op with
   | Plus -> ([(ty1, SInt); (ty2, SInt)], SInt)
   | Minus -> ([(ty1, SInt); (ty2, SInt)], SInt)
   | Mult -> ([(ty1, SInt); (ty2, SInt)], SInt)
   | Lt -> ([(ty1, SInt); (ty2, SInt)], SBool)
   | AND -> ([(ty1, SBool); (ty2, SBool)], SBool)
   | OR -> ([(ty1, SBool); (ty2, SBool)], SBool)
-  | Eq -> ([(ty1,ty2)], SBool)
+  | Eq -> ([(ty1,ty2)], SBool) *)
 
 (*型の単一化のための関数*)
 let rec unify lis =
@@ -130,12 +132,52 @@ let rec ty_exp exp =
         let s1 = unify eqs in 
         (* let TyScheme (_ , ty) = domty in *)
         (s1, TyFun (subst_type s1 domty, ranty)) *)
-  | _ -> err ("Not Implemented!")
+  | _ -> err ("Not Implemented!") *)
 
-let ty_test exp =
+(* 関数のアノテーションから引数と返り値の単純型を求める *)
+let rec from_annnotation_to_simpleTy annotation =
+  let (args_before_eval, _, return_type) = annotation in
+  let types_before_eval = List.map snd args_before_eval in 
+  let simple_types_before_eval = List.map convert_to_simpleTy types_before_eval in
+  let simple_return_type = convert_to_simpleTy return_type in
+  SFun (simple_types_before_eval, simple_return_type)
+and convert_to_simpleTy ty =
+  match ty with
+  | FTInt _ -> SInt
+  | FTRef (ft', _, _, _) -> SRef(convert_to_simpleTy ft')
+
+(* let infer_fdef fun_tyenv fdef = 
+  let (fun_name, args, annotation, fun_body) = fdef in
+  let SFun (simple_arg_types_eval, simple_return_typ) = from_annnotation_to_simpleTy annotation in 
+  (* 関数の型を型環境に追加 *)
+  let fun_tyenv' = (fun_name, from_annnotation_to_simpleTy annotation) :: fun_tyenv in 
+  (* 関数の引数を型環境に追加 *)
+  let args_tyenv = List.append (List.map2 (fun x y -> (x, y)) args simple_arg_types_eval) fun_tyenv' in 
+  let tyenv = ref args_tyenv in
+  (* let (t, c) = infer_exp tyenv e in 
+  let s = ty_unify ((t, t_ret) :: c) in
+  let t' = ty_subst s t in
+  assert(t' = t_ret);
+  let tyenv' = List.map (fun (id,ty) -> (id, ty_subst s ty)) !tyenv in *)
+  all_tyenv := (fun_name, tyenv') :: !all_tyenv;
+  fun_tyenv'
+
+(* プログラム全体を解析して型推論を行い、各関数や式の型を推論する役割を果たす *)
+let infer_prog program = 
+  let (fdefs, e) = program in
+  let fun_tyenv = List.fold_left infer_fdef [] fdefs in
+  let tyenv = ref fun_tyenv in
+  let (t, c) = infer_exp tyenv e in
+  let s = ty_unify c in
+  let t' = ty_subst s t in
+  assert(t' = TyUnit);
+  let tyenv' = List.map (fun (id,ty) -> (id, ty_subst s ty)) !tyenv in
+  all_tyenv := ("main", tyenv') :: !all_tyenv *)
+
+(* let ty_test exp =
   let (_, ty) = ty_exp exp in
   ty
 
 let tyenv_test exp =
   let _ = ty_exp exp in
-  !simple_tyenv
+  !simple_tyenv *)
