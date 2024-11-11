@@ -5,12 +5,21 @@
         ("assert", Parser.ASSERT);
         ("else", Parser.ELSE);
         ("ifnp", Parser.IFNP);
+        ("if", Parser.IF);
         ("in", Parser.IN);
         ("int", Parser.INT);
+        ("unit", Parser.UNIT);
         ("let", Parser.LET);
         ("alloc", Parser.ALLOC);
         ("ref", Parser.REF);
         ("then", Parser.THEN);
+        ("true", Parser.TRUE);
+        ("false", Parser.FALSE);
+        ("or", Parser.TOR);
+        ("and", Parser.TAND);
+        ("not", Parser.TNOT);
+        ("T", Parser.TOP);
+        ("v", Parser.NU);
     ]
 }
 
@@ -18,6 +27,7 @@ rule main = parse
   (*改行と空白とタブと改ページは無視*)
   [' ' '\009' '\012' '\n']+   { main lexbuf }(*?*)
   | "-"? ['0'-'9']+ {Parser.INTV (int_of_string (Lexing.lexeme lexbuf)) }
+  | "()" { Parser.UNITV }
   | "(" { Parser.LPAREN }
   | ")" { Parser.RPAREN }
   | "{" { Parser.LBRACE }
@@ -29,7 +39,10 @@ rule main = parse
   | "*" { Parser.STAR }
   | "<" { Parser.LT }
   | ">" { Parser.GT }
+  | "<=" { Parser.LEQ }
+  | ">=" { Parser.GEQ }
   | "=" { Parser.EQ }
+  | "!=" { Parser.NEQ }
   | ":" { Parser.COLON }
   | ";" { Parser.SEMI }
   | ":=" { Parser.ASSIGN }
@@ -39,6 +52,7 @@ rule main = parse
   | "~" { Parser.WAVE }
   | "!" { Parser.NOT }
   | "->" { Parser.RARROW }
+  | "=>" { Parser.TIMPLY }
   | "," { Parser.COMMA }
   | "|" { Parser.BAR }
   | "/*" { comment lexbuf; main lexbuf }
