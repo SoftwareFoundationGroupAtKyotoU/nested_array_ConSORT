@@ -1,5 +1,9 @@
 type id = string
-type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq
+(* type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq *)
+
+(** Type representing the syntax of the SMT-LIB language *)
+type smtlib = 
+  | VarPred
 
 type ty = 
     TyInt
@@ -20,20 +24,45 @@ type exp =
     Var of id
   | ILit of int
   | BLit of bool
-  | BinOp of binOp * exp * exp
+  (* | BinOp of binOp * exp * exp *)
+  | OrExp of exp * exp
+  | AndExp of exp * exp
+  | NotExp of exp
+  | EqExp of exp * exp
+  | LtExp of exp * exp
+  | GtExp of exp * exp
+  | Leq of exp * exp
+  | Geq of exp * exp
+  | Neq of exp * exp
+  | PlusExp of exp * exp
+  | MinusExp of exp * exp
+  | MultExp of exp * exp
   | IfnpExp of id * exp * exp
+  | IfExp of exp * exp * exp
   | LetAllocExp of id * exp * simpleTy * exp
   | LetDerefExp of id * exp * exp
   | LetBinOpExp of id * exp * exp
   | LetBindExp of id * exp * exp
   | LetFunCall of id * funcallexp * exp
-  | PreSEMIExpr of exp * exp
-  | Assign of id * id
-  | AliasAddPtr of id * id * id
-  | AliasDeref of id * id
-  | Assert of exp
+  | Let of id * exp * exp
+  (* | PreSEMIExpr of exp * exp *)
+  | Assign of id * exp * exp
+  (* | AliasAddPtr of id * id * id *)
+  (* | AliasDeref of id * id *)
+  | Alias of exp * exp * exp
+  | Seq of exp * exp
+  | Assert of exp * exp
   | Deref of exp
+  | AppExpr of id * exp list
+  | Nondet
+  | Unit
 
-  type program = id list * exp
+type ftype =
+  | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
+  | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
+
+type annotation = Annotation of (id * ftype) list * (id * ftype) list * ftype
+type fdef = FunDef of id * id list * annotation * exp
+type program = fdef list * exp
 
 
