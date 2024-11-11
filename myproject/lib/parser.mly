@@ -67,22 +67,22 @@ IDs: (* 関数の引数名のコンマ区切り *)
   | x = ID COMMA y = IDs { x :: y }
 
 Annotation: // 関数の引数に単純型の情報を付加
-  LT args_before_eval = ID_Funtypes GT ARROW LT args_after_eval = ID_Funtypes BAR return_type = Ftype GT 
+  LT args_before_eval = ID_Funtypes GT RARROW LT args_after_eval = ID_Funtypes BAR return_type = Ftype GT 
   { Annotation(args_before_eval, args_after_eval, return_type) }
 
 ID_Funtypes: (* 関数の評価前後の引数名と型のコンマ区切り *)
-  | x = ID_Funtype { x }
+  | x = ID_Funtype { [x] }
   | x = ID_Funtype COMMA y = ID_Funtypes { x :: y }
 
-Id_Funtype: (* 関数の評価前後の引数名と型 *)
-| x = ID COLON simple_type = Ftype { (x, simple_type) }
+ID_Funtype: (* 関数の評価前後の引数名と型 *)
+| x = ID COLON idtype = Ftype { (x, idtype) }
 
 Ftype: // プログラム内に記述する型
 // | LBRACE NU COLON TINT BAR smtlib RBRACE
 //   { FTInt($6) }
 // | ftype REF LPAREN exp COMMA exp COMMA FLOATV RPAREN
 //   { FTRef($1, $4, $6, $8) }
-| TINT { FTInt(VarPred) }
+| INT { FTInt(VarPred) }
 | inner_type = Ftype REF { FTRef(inner_type, ENull, ENull, 0.) }
 
 Expr :
@@ -102,20 +102,20 @@ IfExpr :
   | IF x=Expr THEN t=Expr ELSE e=Expr { IfExp (x, t, e) }
 
 LetExpr :
-  | LET x=id EQ e1 = exp IN e2 = exp { Let (id, e1, e2) }
+  | LET x=ID EQ e1 = Expr IN e2 = Expr { Let (x, e1, e2) }
   | LET x=ID EQ ALLOC y=ID COLON ty=SimpleTyExpr REF IN e=Expr { LetAllocExp(x, Var y, SRef ( ty ), e) }
 //   | LET x=ID EQ STAR y=ID IN e=Expr { LetDerefExp(x, Var y, e) }
 //   | LET x=ID EQ e1=BinOpExpr IN e2=Expr { LetBinOpExp(x, e1, e2) }
 //   | LET x=ID EQ e1=Expr IN e2=Expr { LetBindExp(x, e1, e2) }
 //   | LET x=ID EQ app=FunCallExpr IN e=Expr { LetFunCall(x, app, e) }
 
-// SimpleTyExpr :
-//     INT { SInt }
-//   | ty=SimpleTyExpr REF { SRef (ty) }
+SimpleTyExpr :
+    INT { SInt }
+  | ty=SimpleTyExpr REF { SRef (ty) }
 
 PlusMinusExpr :
   | x=PlusMinusExpr PLUS y=MultExpr { PlusExp(x, y) }
-  | x=PlusMinusExpr PLUS y=MultExpr { MinusExp(x, y) }
+  | x=PlusMinusExpr MINUS y=MultExpr { MinusExp(x, y) }
 
 MultExpr :
   | x=MultExpr STAR y=AExpr { MultExp(x, y) }
@@ -174,7 +174,7 @@ CompareExpr :
 
 AExpr :
     i=INTV { ILit i }
-  | MINUS e=exp { MinusExp(ILit 0, e) }
+  | MINUS e=Expr { MinusExp(ILit 0, e) }
   | i=ID   { Var i }
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
@@ -190,7 +190,7 @@ Args:
   | e=Expr COMMA ids=Args { e :: ids }
 
 DerefExpr :
-  | STAR x=Id { Deref(e) }
+  | STAR x=ID { Deref(x) }
 
 ID :
   | x=ID_NAME { x }
