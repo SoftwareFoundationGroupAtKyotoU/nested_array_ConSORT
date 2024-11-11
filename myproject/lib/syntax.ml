@@ -5,6 +5,8 @@ type id = string
 type smtlib = 
   | VarPred
 
+type tyvar = int
+
 (* 単純型 *)
 type simpleTy =
     SInt
@@ -12,7 +14,7 @@ type simpleTy =
   | SBool
   | SUnit
   | SFun of simpleTy list * simpleTy
-  | SVar of id
+  | SVar of tyvar
 
 type funcallexp = 
     FunCall of id * (id list)
@@ -37,10 +39,10 @@ type exp =
   | IfnpExp of id * exp * exp
   | IfExp of exp * exp * exp
   | LetAllocExp of id * exp * simpleTy * exp
-  | LetDerefExp of id * exp * exp
-  | LetBinOpExp of id * exp * exp
-  | LetBindExp of id * exp * exp
-  | LetFunCall of id * funcallexp * exp
+  (* | LetDerefExp of id * exp * exp *)
+  (* | LetBinOpExp of id * exp * exp *)
+  (* | LetBindExp of id * exp * exp *)
+  (* | LetFunCall of id * funcallexp * exp *)
   | Let of id * exp * exp
   (* | PreSEMIExpr of exp * exp *)
   | Assign of id * exp * exp
