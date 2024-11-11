@@ -49,7 +49,6 @@ rule main = parse
   | "||" { Parser.OR }
   | "&&" { Parser.AND }
   | "_" { Parser.NONDET }
-  | "~" { Parser.WAVE }
   | "!" { Parser.NOT }
   | "->" { Parser.RARROW }
   | "=>" { Parser.TIMPLY }
@@ -62,7 +61,7 @@ rule main = parse
         try
           List.assoc id reservedWords(*予約語に含まれている場合は予約語として機能*)
         with
-        _ -> Parser.ID id(*予約語でない場合には変数名として扱う*)
+        _ -> Parser.ID_NAME id(*予約語でない場合には変数名として扱う*)
       }
   | eof { Parser.EOF }
 and comment = parse 
