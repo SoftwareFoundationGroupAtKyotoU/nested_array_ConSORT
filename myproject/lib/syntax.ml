@@ -5,17 +5,14 @@ type id = string
 type smtlib = 
   | VarPred
 
-type ty = 
-    TyInt
-  | TyBool
-  | TyRef of ty
-  | TyUnit
-
+(* 単純型 *)
 type simpleTy =
     SInt
   | SRef of simpleTy
   | SBool
   | SUnit
+  | SFun of simpleTy list * simpleTy
+  | SVar of id
 
 type funcallexp = 
     FunCall of id * (id list)
@@ -31,9 +28,9 @@ type exp =
   | EqExp of exp * exp
   | LtExp of exp * exp
   | GtExp of exp * exp
-  | Leq of exp * exp
-  | Geq of exp * exp
-  | Neq of exp * exp
+  | LeqExp of exp * exp
+  | GeqExp of exp * exp
+  | NeqExp of exp * exp
   | PlusExp of exp * exp
   | MinusExp of exp * exp
   | MultExp of exp * exp
@@ -52,11 +49,13 @@ type exp =
   | Alias of exp * exp * exp
   | Seq of exp * exp
   | Assert of exp * exp
-  | Deref of exp
-  | AppExpr of id * exp list
+  | Deref of id
+  | AppExp of id * exp list
   | Nondet
   | Unit
+  | ENull
 
+(* 篩型と所有権付きの型 *)
 type ftype =
   | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
   | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
