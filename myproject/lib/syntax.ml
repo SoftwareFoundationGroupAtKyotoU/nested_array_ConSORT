@@ -39,15 +39,19 @@ type exp =
   | IfnpExp of id * exp * exp
   | IfExp of exp * exp * exp
   | LetAllocExp of id * exp * simpleTy * exp
-  (* | LetDerefExp of id * exp * exp *)
+  | LetIntExp of id * exp * exp
+  | LetAddPtrExp of id * id * exp * exp
+  | LetDerefExp of id * id * exp
   (* | LetBinOpExp of id * exp * exp *)
   (* | LetBindExp of id * exp * exp *)
   (* | LetFunCall of id * funcallexp * exp *)
   | Let of id * exp * exp
   (* | PreSEMIExpr of exp * exp *)
   | Assign of id * exp * exp
-  (* | AliasAddPtr of id * id * id *)
-  (* | AliasDeref of id * id *)
+  | AssignInt of id * exp * exp
+  | AssignPtr of id * id * exp
+  | AliasAddPtr of id * id * exp * exp
+  | AliasDeref of id * id * exp
   | Alias of exp * exp * exp
   | Seq of exp * exp
   | Assert of exp * exp
