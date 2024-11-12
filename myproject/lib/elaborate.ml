@@ -1,5 +1,4 @@
 open Syntax
-open Util
 open SimpleTyping
 
 (* 単純型付けの情報をもとにプログラムの詳細化
