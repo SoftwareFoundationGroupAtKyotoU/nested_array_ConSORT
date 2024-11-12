@@ -94,7 +94,7 @@ let rec infer_simple_ty tyenv exp =
     | _ -> err ("Although " ^ id ^ " is used like a function, " ^ id ^ " isn't function."))
   | Unit -> ([], SUnit)
   | ENull -> err ("TyError: Mismatch Simple Type")
-  (* | _ -> err("TyError: If this error occurs, the parser is wrong.") *)
+  | _ -> err("TyError: If this error occurs, the parser is wrong.")
 
 (* 関数のアノテーションから引数と返り値の単純型を求める *)
 let rec from_annnotation_to_simpleTy annotation =
