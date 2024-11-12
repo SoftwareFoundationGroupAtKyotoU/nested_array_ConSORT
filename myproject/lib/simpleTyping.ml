@@ -6,19 +6,6 @@ exception Error of string
 (* (関数名 * (変数 * 単純型)list)list *)
 let all_tyenv = ref []
 let err s = raise (Error s)
-(*
-(* 単純型環境 *)
-let simple_tyenv = ref []
-
-(* 演算子 op が生成すべき制約集合と返り値の型を記述 *)
- let ty_prim op ty1 ty2 = match op with
-  | Plus -> ([(ty1, SInt); (ty2, SInt)], SInt)
-  | Minus -> ([(ty1, SInt); (ty2, SInt)], SInt)
-  | Mult -> ([(ty1, SInt); (ty2, SInt)], SInt)
-  | Lt -> ([(ty1, SInt); (ty2, SInt)], SBool)
-  | AND -> ([(ty1, SBool); (ty2, SBool)], SBool)
-  | OR -> ([(ty1, SBool); (ty2, SBool)], SBool)
-  | Eq -> ([(ty1,ty2)], SBool) *)
 
 (* 型の単一化のための関数 *)
 let rec unify lis =
@@ -137,16 +124,13 @@ let infer_fdef fun_tyenv fdef =
   | _ -> err ("The function from_annnotation_to_simpleTy must return SFun")
 
 (* プログラム全体を解析して型推論を行い、各関数や式の型を推論する役割を果たす *)
-(* let infer_prog program = 
-  let (fdefs, e) = program in
+let infer_prog program = 
+  let (fdefs, exp) = program in
   let fun_tyenv = List.fold_left infer_fdef [] fdefs in
   let tyenv = ref fun_tyenv in
-  let (t, c) = infer_exp tyenv e in
-  let s = ty_unify c in
-  let t' = ty_subst s t in
-  assert(t' = TyUnit);
-  let tyenv' = List.map (fun (id,ty) -> (id, ty_subst s ty)) !tyenv in
-  all_tyenv := ("main", tyenv') :: !all_tyenv *)
+  let (_, ty) = infer_simple_ty tyenv exp in
+  assert(ty = SUnit);
+  all_tyenv := ("main", !tyenv) :: !all_tyenv
 
 (* let ty_test exp =
   let (_, ty) = infer_simple_ty exp in
