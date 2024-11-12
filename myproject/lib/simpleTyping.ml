@@ -1,7 +1,11 @@
 open Syntax
-open Util
+(* open Util *)
 
 exception Error of string
+
+let err s = raise (Error s)
+let lookup x env =
+  try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
 
 (* (関数名 * (変数 * 単純型)list)list *)
 let all_tyenv = ref []
