@@ -10,14 +10,6 @@ let err s = raise (Error s)
 (* 単純型環境 *)
 let simple_tyenv = ref []
 
-(* 環境から変数を探す関数 *)
-let lookup x env =
-  try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
-
-  (* 型環境の拡張 *)
-let extend_tyenv id ty =
-  simple_tyenv := (id,ty) :: !simple_tyenv
-
 (* 演算子 op が生成すべき制約集合と返り値の型を記述 *)
  let ty_prim op ty1 ty2 = match op with
   | Plus -> ([(ty1, SInt); (ty2, SInt)], SInt)
@@ -33,18 +25,6 @@ let rec unify lis =
   match lis with
   [] -> [] (*空集合であれば空の代入を返す*)
   | (tau1, tau2)::rest when tau1 = tau2 -> unify rest 
-  | (SVar tau1, tau2)::rest -> 
-    let dif = MySet.remove tau1 (freevar_ty tau2) in
-    if freevar_ty tau2 = dif then (tau1, tau2)::(unify (subst_ty_list [(tau1, tau2)] rest)) 
-    else err("occur error1")
-    (*τ1とτ2の片方が型変数だった場合: この場合、型変数αはτである。
-       したがって、残りの制約X′中のαにτを代入した制約[α->τ]X′を作り、これを再帰的に解き、
-       得られた解にαをτに代入する写像[α->τ]を合成して得られる写像Unify([α↦τ]X′)∘[α↦τ]を解として返す。
-       τ中にαが現れていた場合はエラーを検出する。*)
-  | (tau1, SVar tau2)::rest ->
-    let dif = MySet.remove tau2 (freevar_ty tau1) in
-    if freevar_ty tau1 = dif then  (tau2, tau1)::(unify (subst_ty_list [(tau2, tau1)] rest))
-    else err("occur error2")
   | _ -> err("occur error")
 
 (* 型環境 tyenv と式 exp を受け取って，型制約と exp の単純型のペアを返す  *)
@@ -53,10 +33,6 @@ let rec infer_simple_ty tyenv exp =
     Var x -> ([], lookup x !tyenv)
   | ILit _ | Nondet -> ([], SInt)
   | BLit _ -> ([], SBool)
-  | OrExp (exp1, exp2) | AndExp(exp1, exp2) -> 
-    let (c1, ty1) = infer_simple_ty tyenv exp1 in
-    let (c2, ty2) = infer_simple_ty tyenv exp2 in
-    let c3 = unify ((ty1, SBool) :: (ty2, SBool) :: c1 @ c2) in (c3, SBool)
   | OrExp (exp1, exp2) | AndExp(exp1, exp2) -> 
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
@@ -86,36 +62,40 @@ let rec infer_simple_ty tyenv exp =
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
     let (c3, ty3) = infer_simple_ty tyenv exp3 in
-    let c4 = unify ((ty1, SBool) :: (ty2, ty3) :: c1 @ c2) in (c4, ty2)
-  (* | LetAllocExp (id, exp1, simpleTy, exp2) ->
+    let c4 = unify ((ty1, SBool) :: (ty2, ty3) :: c1 @ c2 @ c3) in (c4, ty2)
+  | LetAllocExp (id, exp1, simpleTy, exp2) ->
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
+    tyenv := (id,simpleTy) :: !tyenv;
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
-    let c3 = unify ((ty1, SInt) :: c1 @ c2) in (c3, ty2) *)
+    let c3 = unify ((ty1, SInt) :: c1 @ c2) in (c3, ty2)
   | Let(id, exp1, exp2) ->
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     tyenv := (id,ty1) :: !tyenv;
-    let (c2, ty2) = infer_simple_ty tyenv exp2 in (c1 @ c2, ty2)
+    let (c2, ty2) = infer_simple_ty tyenv exp2 in
+    let c3 = unify ( c1 @ c2) in (c3, ty2)
   | Assign(id, exp1, exp2) ->
     let t = lookup id !tyenv in
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
-    ((t, SRef (ty1)) :: c1 @ c2, ty2)
+    let c3 = unify ((t, SRef (ty1)) :: c1 @ c2) in (c3, ty2)
   | Alias(exp1, exp2, exp3) ->
     let (c1,ty1) = infer_simple_ty tyenv exp1 in
     let (c2,ty2) = infer_simple_ty tyenv exp2 in
     let (c3,ty3) = infer_simple_ty tyenv exp3 in
-    ((ty1, ty2) :: c1 @ c2 @ c3, ty3)
+    let c4 = unify((ty1, ty2) :: c1 @ c2 @ c3) in (c4, ty3)
   | Seq (exp1, exp2) ->
     let (c1,ty1) = infer_simple_ty tyenv exp1 in
     let (c2,ty2) = infer_simple_ty tyenv exp2 in
-    ((ty1, SUnit) :: c1 @ c2, ty2)
+    let c3 = unify((ty1, SUnit) :: c1 @ c2) in (c3, ty2)
   | Assert(exp1, exp2) ->
     let (c1,ty1) = infer_simple_ty tyenv exp1 in
     let (c2,ty2) = infer_simple_ty tyenv exp2 in
-    ((ty1, SBool) :: c1 @ c2, ty2)
-  (* | Deref id ->
-    let t_id = lookup id !tyenv in
-    ([(TyRef nt, t_id)]) *)
+    let c3 = unify((ty1, SBool) :: c1 @ c2) in (c3, ty2)
+  | Deref id ->
+    let ty = lookup id !tyenv in
+    (match ty with
+    | SRef ty' -> ([], ty')
+    | _ -> err ("TyError: Dereferencing integer variables."))
   | AppExp(id, exps) ->
     (match lookup id !tyenv with
     | SFun (simple_arg_types, simple_return_type) ->
@@ -123,11 +103,11 @@ let rec infer_simple_ty tyenv exp =
       let tys = List.map snd arg_tys_cs in
       let cs_arg = List.concat (List.map fst arg_tys_cs) in
       let cs_param = List.map2 (fun x y -> (x,y)) simple_arg_types tys in
-      (cs_arg @ cs_param, simple_return_type)
+      let c_unify = unify( cs_arg @ cs_param) in (c_unify, simple_return_type)
     | _ -> err ("Although " ^ id ^ " is used like a function, " ^ id ^ " isn't function."))
   | Unit -> ([], SUnit)
   | ENull -> err ("TyError: Mismatch Simple Type")
-  | _ -> err("TyError: If this error occurs, the parser is wrong.")
+  (* | _ -> err("TyError: If this error occurs, the parser is wrong.") *)
 
 (* 関数のアノテーションから引数と返り値の単純型を求める *)
 let rec from_annnotation_to_simpleTy annotation =
@@ -150,12 +130,9 @@ let infer_fdef fun_tyenv fdef =
     (* 関数の引数を型環境に追加 *)
     let args_tyenv = List.append (List.map2 (fun x y -> (x, y)) args simple_arg_types) fun_tyenv' in 
     let tyenv = ref args_tyenv in
-    let (c, ty) = infer_simple_ty tyenv fun_body in 
-    let c' = unify ((ty, simple_return_type) :: c) in
-    let t' = ty_subst c' ty in
-    assert(t' = simple_return_type);
-    let tyenv' = List.map (fun (id,ty) -> (id, ty_subst c' ty)) !tyenv in
-    all_tyenv := (fun_name, tyenv') :: !all_tyenv;
+    let (_, ty) = infer_simple_ty tyenv fun_body in 
+    assert(ty = simple_return_type);
+    all_tyenv := (fun_name, !tyenv) :: !all_tyenv;
     fun_tyenv'
   | _ -> err ("The function from_annnotation_to_simpleTy must return SFun")
 
