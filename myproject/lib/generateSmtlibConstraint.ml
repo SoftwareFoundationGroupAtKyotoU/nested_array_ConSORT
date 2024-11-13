@@ -21,3 +21,14 @@ let rec lookup_pos id branch_trace env =
   | (x, (position, branch_trace')) :: left_env -> 
     if id = x && branch_trace = branch_trace' then position else lookup_pos id branch_trace left_env
 
+(* var_locationsに新しい変数idを追加または既存のidの情報を更新 *)
+let new_id id position branch_trace =
+  try
+    let pos' = lookup_pos id branch_trace !var_locations in
+    if pos' = position then ()
+    else
+      var_locations := (id, (position, branch_trace)) :: !var_locations
+  with 
+    Unbound -> var_locations := (id, (position, branch_trace)) :: !var_locations
+    
+
