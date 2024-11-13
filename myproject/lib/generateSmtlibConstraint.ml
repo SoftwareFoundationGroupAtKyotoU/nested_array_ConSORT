@@ -59,7 +59,7 @@ let make_own_var id fun_num branch_trace =
     Add(Mul(Id( "c_1_l_a_x_pos?_then"), FV(a) ), Add(Mul(Id("c_1_l_b_x_?_then"), FV(b)), "d_1_l_x_pos?_then") )
     つまり "c_1_l_a_x_pos?_then" * FV(a) + "c_1_l_b_x_pos?_then" * FV(b) + "d_1_l_x_pos?_then"
   *)
-let rec make_low_bound_var fvs id fun_num branch_trace = 
+let rec make_low_bound_exp fvs id fun_num branch_trace = 
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
@@ -67,7 +67,7 @@ let rec make_low_bound_var fvs id fun_num branch_trace =
     Id(var_name)
   | fv :: fvs' ->
     let var_name = asprintf "c_%d_l_%s_%s_%d_%a" fun_num fv id id_pos pp_branch_trace branch_trace in
-    Add( Mul(Id(var_name), FV(fv)), make_low_bound_var fvs' id fun_num branch_trace)
+    Add( Mul(Id(var_name), FV(fv)), make_low_bound_exp fvs' id fun_num branch_trace)
   (* | [] -> Id("d_" ^ (string_of_int n) ^ "_l_" ^ id ^ "_" ^ (string_of_int (lookup_ifel id ifel !id_count)) ^ ifel_to_str ifel)
   | fv :: fvs' ->
     Add(Mul(Id("c_" ^ (string_of_int n) ^ "_l_" ^ fv ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_ifel id ifel !id_count)) ^ ifel_to_str ifel), FV(fv)),
@@ -78,7 +78,7 @@ let rec make_low_bound_var fvs id fun_num branch_trace =
     Add(Mul(Id( "c_1_h_a_x_pos?_then"), FV(a) ), Add(Mul(Id("c_1_h_b_x_pos?_then"), FV(b)), "d_1_h_x_pos?_then") )
     つまり "c_1_h_a_x_pos?_then" * FV(a) + "c_1_h_b_x_pos?_then" * FV(b) + "d_1_h_x_pos?_then"
 *)
-let rec make_high_bound_var fvs id fun_num branch_trace = 
+let rec make_high_bound_exp fvs id fun_num branch_trace = 
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
@@ -86,6 +86,6 @@ let rec make_high_bound_var fvs id fun_num branch_trace =
     Id(var_name)
   | fv :: fvs' ->
     let var_name = asprintf "c_%d_h_%s_%s_%d_%a" fun_num fv id id_pos pp_branch_trace branch_trace in
-    Add( Mul(Id(var_name), FV(fv)), make_high_bound_var fvs' id fun_num branch_trace)
+    Add( Mul(Id(var_name), FV(fv)), make_high_bound_exp fvs' id fun_num branch_trace)
 
 
