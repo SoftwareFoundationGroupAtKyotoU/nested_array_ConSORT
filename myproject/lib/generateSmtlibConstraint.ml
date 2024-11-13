@@ -45,3 +45,10 @@ let rec collect_same_trace_vars branch_trace var_locations =
       else 
         iterative_collect_same_trace_vars branch_trace var_locations' (x :: res))
   in iterative_collect_same_trace_vars branch_trace var_locations []
+
+(* id fun_num branch_traceを元にsmtlibに渡す所有権の変数を生成 *)
+let make_own_var id fun_num branch_trace = 
+  let var_pos = lookup_pos id branch_trace !var_locations in
+  let var_name = asprintf "o_%d_%s_%d_%a" fun_num id var_pos pp_branch_trace branch_trace in 
+  Id(var_name)
+  (* Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_pos id branch_trace !var_locations)) ^ (branch_trace_to_str branch_trace)) *)
