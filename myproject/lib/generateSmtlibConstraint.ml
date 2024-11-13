@@ -55,9 +55,9 @@ let make_own_var id fun_num branch_trace =
 
 (* 所有範囲の下限を定める (cかd)_(fun_num)_l_(fv)_(id)_(pos)_(branch_trace)
   nって何，idはどの変数の所有権を計算しているか？
-  fvs=["a", "b"], id="x", n=1, ifel="if"の場合
-    Add(Mul(Id( "c_1_l_a_x_level?_if"), FV(a) ), Add(Mul(Id("c_1_l_b_x_level?_if"), FV(b)), "d_1_l_x_level?_if") )
-    = "c_1_l_a_x_level?_if" * FV(a) + "c_1_l_b_x_level?_if" * FV(b) + "d_1_l_x_level?_if"
+  fvs=["a", "b"], id="x", fun_num=1, branch_trace=[then]の場合
+    Add(Mul(Id( "c_1_l_a_x_pos?_then"), FV(a) ), Add(Mul(Id("c_1_l_b_x_?_then"), FV(b)), "d_1_l_x_pos?_then") )
+    つまり "c_1_l_a_x_pos?_then" * FV(a) + "c_1_l_b_x_pos?_then" * FV(b) + "d_1_l_x_pos?_then"
   *)
 let rec make_low_bound_var fvs id fun_num branch_trace = 
   let id_pos = lookup_pos id branch_trace !var_locations in
@@ -72,4 +72,20 @@ let rec make_low_bound_var fvs id fun_num branch_trace =
   | fv :: fvs' ->
     Add(Mul(Id("c_" ^ (string_of_int n) ^ "_l_" ^ fv ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_ifel id ifel !id_count)) ^ ifel_to_str ifel), FV(fv)),
         lo fvs' id n ifel) *)
+
+(* 所有範囲の上限を定める (cかd)_(fun_num)_h_(fv)_(id)_(pos)_(branch_trace)
+  fvs=["a", "b"], id="x", fun_num=1, branch_trace="then"の場合
+    Add(Mul(Id( "c_1_h_a_x_pos?_then"), FV(a) ), Add(Mul(Id("c_1_h_b_x_pos?_then"), FV(b)), "d_1_h_x_pos?_then") )
+    つまり "c_1_h_a_x_pos?_then" * FV(a) + "c_1_h_b_x_pos?_then" * FV(b) + "d_1_h_x_pos?_then"
+*)
+let rec make_high_bound_var fvs id fun_num branch_trace = 
+  let id_pos = lookup_pos id branch_trace !var_locations in
+  match fvs with
+  | [] -> 
+    let var_name = asprintf "d_%d_h_%s_%d_%a" fun_num id id_pos pp_branch_trace branch_trace in
+    Id(var_name)
+  | fv :: fvs' ->
+    let var_name = asprintf "c_%d_h_%s_%s_%d_%a" fun_num fv id id_pos pp_branch_trace branch_trace in
+    Add( Mul(Id(var_name), FV(fv)), make_high_bound_var fvs' id fun_num branch_trace)
+
 
