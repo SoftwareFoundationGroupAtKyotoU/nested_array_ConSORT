@@ -1,5 +1,6 @@
 open Syntax
 open SimpleTyping
+open Printf
 
 exception Error of string
 let err s = raise (Error s)
@@ -81,3 +82,13 @@ let rec elim_int_var env fun_name args exp =
     else 
       Var x
   | _ -> exp
+
+type branch =
+  | Then
+  | Else
+
+let rec branch_trace_to_str branch_trace = 
+  match branch_trace with
+  | [] -> ""
+  | Then :: branch_trace' -> sprintf "_then%s" (branch_trace_to_str branch_trace')
+  | Else :: branch_trace' -> sprintf "_else%s" (branch_trace_to_str branch_trace')
