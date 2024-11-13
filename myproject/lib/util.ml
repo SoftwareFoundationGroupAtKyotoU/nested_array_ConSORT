@@ -87,6 +87,20 @@ type branch =
   | Then
   | Else
 
+
+let pp_branch fmt branch =
+  match branch with
+  | Then -> Format.fprintf fmt "then"
+  | Else -> Format.fprintf fmt "else"
+
+let rec pp_branch_trace fmt branch_trace =
+  match branch_trace with
+  | [] -> Format.fprintf fmt ""
+  | branch :: branch_trace' -> Format.fprintf fmt "_%a%a" pp_branch branch pp_branch_trace branch_trace'
+
+(* let f =
+  Format.asprintf "%a" pp_branch Then *)
+
 let rec branch_trace_to_str branch_trace = 
   match branch_trace with
   | [] -> ""
