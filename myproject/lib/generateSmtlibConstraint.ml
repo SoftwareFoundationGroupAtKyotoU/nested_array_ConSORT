@@ -32,3 +32,16 @@ let new_id id position branch_trace =
     Unbound -> var_locations := (id, (position, branch_trace)) :: !var_locations
     
 
+(* resは返り値用のリスト，末尾再帰のため？
+var_locations((変数id, (関数内での場所, branch_trace))のリスト)から
+branch_traceの分岐が同じ変数idを重複なしでリストにして全て返す関数 *)
+let rec collect_same_trace_vars branch_trace var_locations = 
+  let rec iterative_collect_same_trace_vars branch_trace var_locations res =
+    (match var_locations with
+    | [] -> res
+    | (x, (_,lst)) :: var_locations' -> 
+      if List.mem x res || branch_trace <> lst then 
+        iterative_collect_same_trace_vars branch_trace var_locations' res 
+      else 
+        iterative_collect_same_trace_vars branch_trace var_locations' (x :: res))
+  in iterative_collect_same_trace_vars branch_trace var_locations []
