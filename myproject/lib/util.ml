@@ -1,10 +1,13 @@
 open Syntax
 open SimpleTyping
 open Printf
+open SmtlibSyntax
 
+exception ElimError
 exception Error of string
 let err s = raise (Error s)
 
+(* 環境からxに該当するものを探す *)
 let rec lookup x env =
   try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
 
@@ -83,26 +86,94 @@ let rec elim_int_var env fun_name args exp =
       Var x
   | _ -> exp
 
+(* if節の分岐を表す構造体 *)
 type branch =
   | Then
   | Else
 
-
+(* branchのフォーマッター *)
 let pp_branch fmt branch =
   match branch with
   | Then -> Format.fprintf fmt "then"
   | Else -> Format.fprintf fmt "else"
 
+(* branch listのフォーマッター *)
 let rec pp_branch_trace fmt branch_trace =
   match branch_trace with
   | [] -> Format.fprintf fmt ""
   | branch :: branch_trace' -> Format.fprintf fmt "_%a%a" pp_branch branch pp_branch_trace branch_trace'
 
-(* let f =
-  Format.asprintf "%a" pp_branch Then *)
-
+(* branch listの文字列化 *)
 let rec branch_trace_to_str branch_trace = 
   match branch_trace with
   | [] -> ""
   | Then :: branch_trace' -> sprintf "_then%s" (branch_trace_to_str branch_trace')
   | Else :: branch_trace' -> sprintf "_else%s" (branch_trace_to_str branch_trace')
+
+(* プログラムの制約式をsmtlibの読める制約の形に直す *)
+let rec exp_to_smtlib exp = 
+  match exp with 
+  | EqExp (e1,e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Eq(s1, s2)
+  | LtExp (e1, e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Lt(s1, s2)
+  | GtExp (e1, e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Gt(s1, s2)
+  | LeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Leq(s1, s2)
+  | GeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Geq(s1, s2)
+  | NeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Not(Eq(s1, s2))
+  | AndExp (e1,e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    And(s1, s2)
+  | OrExp (e1,e2) ->
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Or(s1, s2)
+  | NotExp e ->
+    let s = exp_to_smtlib e in
+    Not s
+  | PlusExp (e1,e2) -> 
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Add(s1, s2)
+  | MinusExp (e1,e2) -> 
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Sub(s1, s2)
+  | MultExp (e1,e2) -> 
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Mul(s1, s2)
+  (* | EDiv (e1,e2) -> 
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Div(s1, s2) *)
+  | ILit i ->
+    if i >= 0 then
+      Id (string_of_int i)
+    else 
+      Id (sprintf "_then%d" (-i))
+  | Var x -> FV x
+  | _ -> raise ElimError
+
+(* リストls1とls2を重複を除いて結合する *)
+let rec union_list ls1 ls2 = 
+  match ls1 with
+  | [] -> ls2
+  | x :: ls1' -> if List.mem x ls2 then union_list ls1' ls2 else union_list ls1' (x :: ls2)
