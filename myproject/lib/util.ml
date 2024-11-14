@@ -168,7 +168,7 @@ let rec exp_to_smtlib exp =
     if i >= 0 then
       Id (string_of_int i)
     else 
-      Id (sprintf "_then%d" (-i))
+      Id (sprintf "(%d)" (-i))
   | Var x -> FV x
   | _ -> raise ElimError
 
