@@ -14,7 +14,7 @@ type constr =
   | CMkArray of id * exp * simpleTy * pos
   | CAssignInt of id * pos
   | CAssignRef of id * id * pos
-  | CAlias of id * id * pos
+  (* | CAlias of id * id * pos *)
   | CAliasDeref of id * id * pos
   | CAliasAddPtr of id * id * exp * pos
   | CDeref of id * pos
