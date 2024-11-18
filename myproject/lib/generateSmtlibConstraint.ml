@@ -57,7 +57,7 @@ let rec collect_same_trace_vars branch_trace var_locations =
 (* id fun_num branch_traceを元にsmtlibに渡す所有権の変数を生成 *)
 let make_own_var id fun_num branch_trace = 
   let var_pos = lookup_pos id branch_trace !var_locations in
-  let var_name = asprintf "o_%d_%s_%d_%a" fun_num id var_pos pp_branch_trace branch_trace in 
+  let var_name = asprintf "o_%d_%s_%d%a" fun_num id var_pos pp_branch_trace branch_trace in 
   Id(var_name)
   (* Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_pos id branch_trace !var_locations)) ^ (branch_trace_to_str branch_trace)) *)
 
@@ -65,7 +65,7 @@ let make_own_var id fun_num branch_trace =
       引数が表す場所での変数の直前の所有権の変数を表している*)
 let make_pre_own_var id fun_num branch_trace = 
   let var_pre_pos = lookup_pre_pos id branch_trace !var_locations in
-  let var_name = asprintf "o_%d_%s_%d_%a" fun_num id var_pre_pos pp_branch_trace branch_trace in 
+  let var_name = asprintf "o_%d_%s_%d%a" fun_num id var_pre_pos pp_branch_trace branch_trace in 
   Id(var_name)
 
 (* 関数評価の最初と最後の状態での所有権を表す
@@ -84,10 +84,10 @@ let rec make_low_bound_exp fvs id fun_num branch_trace =
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_l_%s_%d_%a" fun_num id id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_l_%s_%d%a" fun_num id id_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_l_%s_%s_%d_%a" fun_num fv id id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_l_%s_%s_%d%a" fun_num fv id id_pos pp_branch_trace branch_trace in
     Add( Mul(Id(var_name), FV(fv)), make_low_bound_exp fvs' id fun_num branch_trace)
 
 (* 所有範囲の上限を定める (cかd)_(fun_num)_h_(fv)_(id)_(pos)_(branch_trace)
@@ -98,20 +98,20 @@ let rec make_high_bound_exp fvs id fun_num branch_trace =
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_h_%s_%d_%a" fun_num id id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_h_%s_%d%a" fun_num id id_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_h_%s_%s_%d_%a" fun_num fv id id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_h_%s_%s_%d%a" fun_num fv id id_pos pp_branch_trace branch_trace in
     Add( Mul(Id(var_name), FV(fv)), make_high_bound_exp fvs' id fun_num branch_trace)
 
 let rec make_bound_exp fvs id h_or_l fun_num branch_trace = 
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d_%a" fun_num id h_or_l id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num id h_or_l id_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d_%a" fun_num fv id h_or_l id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num fv id h_or_l id_pos pp_branch_trace branch_trace in
     Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace)
 
 (*直前の所有範囲の下限,または上限を環境変数の一次式で表す *)
@@ -119,10 +119,10 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace =
   let id_pre_pos = lookup_pre_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d_%a" fun_num id h_or_l id_pre_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num id h_or_l id_pre_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d_%a" fun_num fv id h_or_l id_pre_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num fv id h_or_l id_pre_pos pp_branch_trace branch_trace in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace)
 
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
@@ -655,7 +655,7 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
   let smtlibs_after_eval = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
   (* 任意の変数の任意の位置における所有権が0以上1以下である制約を付加する関数 *)
   let make_scope_limit_smtlib (id, (pos,branch_trace)) =
-    let var_name = asprintf "o_%d_%s_%d_%a" fun_num id pos pp_branch_trace branch_trace in
+    let var_name = asprintf "o_%d_%s_%d%a" fun_num id pos pp_branch_trace branch_trace in
     let o_id = Id(var_name) in
     [Geq(o_id, Id "0.");
      Leq(o_id, Id "1.")]
