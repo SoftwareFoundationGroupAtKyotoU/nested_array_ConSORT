@@ -577,9 +577,88 @@ let find_ref_id param =
 
 (* 関数仮引数のうち参照型である引数の所有権の加減，添え字の上限，所有権の組を返す
 こんなに周りくどいやり方する必要ある？？？？ *)
-let rec assoc_ft ref_id params = 
+let rec find_own_annotation ref_id params = 
   match params with
   | (id, FTRef (_,el,eh,f)) :: _ when id = ref_id -> (el,eh,f)
-  | _ :: params' -> assoc_ft ref_id params'
+  | _ :: params' -> find_own_annotation ref_id params'
   | [] -> raise Not_found
 
+(* ある関数全体の制約をsmtlib形式に直す
+funid_constr:関数名とその関数内の制約のリストの組み
+fun_num:関数の通し番号
+funnames_numberings:関数名とその関数の通し番号の組のリスト *)
+let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
+  (* 関数名と制約をicsから抽出 *)
+  let (fun_id, constrs) = funid_constrs in
+  (* 評価前と評価後の関数の引数の型を抽出 *)
+  let (params_before_eval, params_after_eval) = lookup fun_id !fn_env in
+  (* 関数引数のうち整数変数名を抽出 *)
+  let fvs = List.concat (List.map find_intv params_before_eval) in
+  (* 関数仮引数のうち参照型である引数名を抽出 *)
+  let ref_ids = List.concat (List.map find_ref_id params_before_eval) in
+  (* 関数引数名をvar_locations(変数id, (変数の位置, branch_trace))のリストに代入 *)
+  var_locations := List.map (fun id -> (id, (1, []))) ref_ids;
+  (* smtlibで関数宣言するために必要な情報を初期化 *)
+  varown_count := [];
+  (* 関数開始時の制約を生成する関数，id:変数名 *)
+  let ref_id_before_eval_to_smtlibs id = 
+    let (exp_low,exp_high,f1) = find_own_annotation id params_before_eval in 
+    match exp_low with
+    (* 所有権指定がない場合 *)
+    | ENull ->
+      (* smtlibに渡すためvarown_countを更新 *)
+      varown_count := (id, "b", fun_num) :: !varown_count;
+      (* 関数引数の最初の所有権と当初決まっている所有権は等しい
+      関数引数の最初の所有範囲の下限と当初決まっている所有範囲の下限は等しい
+      関数引数の最初の所有範囲の上限と当初決まっている所有範囲の上限は等しい *)
+      [Eq(make_own_var id fun_num [], make_own_var_be id fun_num "b");
+       Eq(make_bound_exp fvs id "l" fun_num [], make_bound_exp_be fvs id "l" fun_num "b");
+       Eq(make_bound_exp fvs id "h" fun_num [], make_bound_exp_be fvs id "h" fun_num "b")]
+      (* 所有権指定がある場合 *)
+    | _ ->
+      (* 関数引数の最初の所有権と所有権の指定は等しい
+      関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
+      関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
+      [Eq(make_own_var id fun_num [], Id (string_of_float f1));
+       Eq(make_bound_exp fvs id "l" fun_num [], exp_to_smtlib exp_low);
+       Eq(make_bound_exp fvs id "h" fun_num [], exp_to_smtlib exp_high)]
+  in
+  (* 関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
+  let s1 = List.concat (List.map ref_id_before_eval_to_smtlibs ref_ids) in
+  (* 関数内部の制約をsmtlibの形式に変換 *)
+  let ss = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings []) constrs) in
+  (* 関数終了時の制約を生成する関数，id:変数名 *)
+  let ref_id_after_eval_to_smtlibs id = 
+    let (el2,eh2,f2) = find_own_annotation id params_after_eval in 
+    match el2 with
+    | ENull ->
+      varown_count := (id, "e", fun_num) :: !varown_count;
+      (* 評価終了時の引数の所有権は0　または
+      　　　　(評価終了時の引数の所有権がその時の所有権以下　かつ
+      　　　　評価終了時の引数の所有範囲の下限がその時の所有範囲の下限以上　かつい
+      　　　　評価終了時の引数の所有範囲の上限がその時の所有範囲の上限以下) *)
+      [Or(Eq(make_own_var_be id fun_num "e", Id "0."),
+       And(Leq(make_own_var_be id fun_num "e", make_own_var id fun_num []),
+       And(Geq(make_bound_exp_be fvs id "l" fun_num "e", make_bound_exp fvs id "l" fun_num []),
+           Leq(make_bound_exp_be fvs id "h" fun_num "e", make_bound_exp fvs id "h" fun_num []))))]
+    | _ ->
+      (* 評価終了時の引数のプログラマ指定の所有権は0　または
+      　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
+      　　　　評価終了時の引数のプログラマ指定の所有範囲の下限がその時の所有範囲の下限以上　かつい
+      　　　　評価終了時の引数のプログラマ指定の所有範囲の上限がその時の所有範囲の上限以下) *)
+      [Or(Eq(Id (string_of_float f2), Id "0."),
+       And(Leq(Id (string_of_float f2), make_own_var id fun_num []),
+       And(Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num []),
+           Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num []))))]
+  in
+  (* 評価後の関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
+  let s2 = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
+  (* 任意の変数の任意の位置における所有権が0以上1以下である制約を付加する関数 *)
+  let g_lh (id, (i,branch_trace)) =
+    let o_id = Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int i) ^ (branch_trace_to_str branch_trace)) in
+    [Geq(o_id, Id "0.");
+     Leq(o_id, Id "1.")]
+  in
+  (* 所有権の値の範囲の制約生成 *)
+  let s_olh = List.concat (List.map g_lh !var_locations) in 
+  (s_olh @ s1 @ ss @ s2, !var_locations, !varown_count, fvs)
