@@ -177,3 +177,40 @@ let rec union_list ls1 ls2 =
   match ls1 with
   | [] -> ls2
   | x :: ls1' -> if List.mem x ls2 then union_list ls1' ls2 else union_list ls1' (x :: ls2)
+
+
+(* st中の変数をsubstに従って別の制約式に置き換える *)
+let rec smtlib_subst subst st = 
+  match st with
+  | Or (st1,st2) ->
+    Or(smtlib_subst subst st1, smtlib_subst subst st2)
+  | And (st1,st2) ->
+    And(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Imply (st1,st2) ->
+    Imply(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Not st ->
+    Not (smtlib_subst subst st)
+  | Eq (st1,st2) ->
+    Eq(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Lt (st1,st2) ->
+    Lt(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Gt (st1,st2) ->
+    Gt(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Leq (st1,st2) ->
+    Leq(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Geq (st1,st2) ->
+    Geq(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Add (st1,st2) ->
+    Add(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Sub (st1,st2) ->
+    Sub(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Mul (st1,st2) ->
+    Mul(smtlib_subst subst st1, smtlib_subst subst st2)
+  | Div (st1,st2) ->
+    Div(smtlib_subst subst st1, smtlib_subst subst st2)
+  | FV x -> 
+    (try 
+       exp_to_smtlib (lookup x subst)
+     with
+       Error _ -> st)
+  | _ -> st
