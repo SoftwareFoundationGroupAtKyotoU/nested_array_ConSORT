@@ -4,6 +4,8 @@ open OwnConstraintSyntax
 open SmtlibSyntax
 open Util
 open Format
+open CollectOwnConstraint
+open Syntax
 
 exception Unbound
 exception ConstrError
@@ -66,6 +68,12 @@ let make_pre_own_var id fun_num branch_trace =
   let var_name = asprintf "o_%d_%s_%d_%a" fun_num id var_pre_pos pp_branch_trace branch_trace in 
   Id(var_name)
 
+(* 関数評価の最初と最後の状態での所有権を表す
+b_or_eはbまたはeでbeginとendの意 *)
+let o_be id fun_num b_or_e = 
+  let var_name = asprintf "o_%d_%s_%s" fun_num id b_or_e in
+  Id(var_name)
+
 (* 所有範囲の下限を定める (cかd)_(fun_num)_l_(fv)_(id)_(pos)_(branch_trace)
   nって何，idはどの変数の所有権を計算しているか？
   fvs=["a", "b"], id="x", fun_num=1, branch_trace=[then]の場合
@@ -117,6 +125,15 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace =
     let var_name = asprintf "c_%d_%s_%s_%s_%d_%a" fun_num fv id h_or_l id_pre_pos pp_branch_trace branch_trace in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace)
 
+(* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
+b_or_eはbまたはeでbeginとendの意 *)
+let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e = 
+  match fvs with
+  | [] -> 
+    let var_name = asprintf "d_%d_%s_%s_%s" fun_num h_or_l id b_or_e in
+    Id(var_name)
+  | fv :: fvs' ->
+    let var_name = asprintf "c_%d_%s_%s_%s_%s" fun_num h_or_l fv id b_or_e in
+    Add(Mul(Id(var_name), FV(fv)), make_bound_exp_be fvs' id h_or_l fun_num b_or_e)
 
 
-    
