@@ -1,7 +1,5 @@
 %{
 open Syntax
-open Printf
-exception Parse_error of Lexing.position * Lexing.position
 %}
 
 // value
@@ -199,14 +197,3 @@ DerefExpr :
 ID :
   | x=ID_NAME { x }
   | NU { "v" } 
-
-%%
-
-let parse_error lexbuf =
-  let pos = lexbuf.Lexing.lex_curr_p in
-  raise (Parse_error (pos, pos))
-
-(* Menhirは自動的に %parse_error を定義する *)
-let () =
-  (* ここでは Menhir のエラーハンドリングをカスタマイズする必要はありません *)
-  ()
