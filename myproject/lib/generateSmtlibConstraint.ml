@@ -70,7 +70,7 @@ let make_pre_own_var id fun_num branch_trace =
 
 (* 関数評価の最初と最後の状態での所有権を表す
 b_or_eはbまたはeでbeginとendの意 *)
-let o_be id fun_num b_or_e = 
+let make_own_var_be id fun_num b_or_e = 
   let var_name = asprintf "o_%d_%s_%s" fun_num id b_or_e in
   Id(var_name)
 
@@ -145,6 +145,10 @@ let make_same_scope_smtlib id1_low id1_high id2_low id2_high =
 その範囲が隣接しているという制約を返す関数 *)
 let make_adjacent_scope_smtlib id1_high id2_low =
   Eq(Add(id1_high, Id "1"), id2_low)
+
+(* smtlibで変数宣言するために必要そう？
+変数のid, b or e, 関数の通し番号の組 *)
+let varown_count = ref []
 
 (** Main procedure for generating the ownership constraints 
 オーナーシップ制約生成のためのメイン手続き
@@ -505,8 +509,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
         　　　　(実引数の所有権が関数開始時に必要な所有権以上　かつ
         　　　　実引数の所有範囲の下限が関数開始時に必要な所有範囲の下限以下　かつ
         　　　　実引数の所有範囲の上限が関数開始時に必要な所有範囲の上限以上)　 *)
-        [Or(Eq(Id "0.", o_be id_param num "b"), 
-         And(Geq(make_own_var id fun_num branch_trace, o_be id_param num "b"),
+        [Or(Eq(Id "0.", make_own_var_be id_param num "b"), 
+         And(Geq(make_own_var id fun_num branch_trace, make_own_var_be id_param num "b"),
          And(Leq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll),
              Geq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh))))]
          (* x | () ref (left, right, ownership) *)
@@ -538,7 +542,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
         let slh = make_bound_exp_be fvs' "h" id_param num "e" in
         (* 引数のvar_locationsを生成 *)
         new_id id pos branch_trace;
-        [Eq(make_own_var id fun_num branch_trace, o_be id_param num "e");
+        [Eq(make_own_var id fun_num branch_trace, make_own_var_be id_param num "e");
          Eq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll);
          Eq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh)]
       | (_, FTRef (_,el,eh,f)), AId id -> 
@@ -571,5 +575,11 @@ let find_ref_id param =
   | (id, FTRef _) -> [id]
   | _ -> [] 
 
+(* 関数仮引数のうち参照型である引数の所有権の加減，添え字の上限，所有権の組を返す
+こんなに周りくどいやり方する必要ある？？？？ *)
+let rec assoc_ft ref_id params = 
+  match params with
+  | (id, FTRef (_,el,eh,f)) :: _ when id = ref_id -> (el,eh,f)
+  | _ :: params' -> assoc_ft ref_id params'
+  | [] -> raise Not_found
 
-  
