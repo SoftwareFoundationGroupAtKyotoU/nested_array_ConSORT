@@ -11,7 +11,7 @@ type constr =
   | CLetDeref of id * id * pos
   | CLetAddPtr of id * id * exp * pos
   | CLetSubPtr of id * id * exp * pos
-  | CMkArray of id * constr list * simpleTy * pos
+  | CMkArray of id * exp * simpleTy * pos
   | CAssignInt of id * pos
   | CAssignRef of id * id * pos
   | CAlias of id * id * pos
