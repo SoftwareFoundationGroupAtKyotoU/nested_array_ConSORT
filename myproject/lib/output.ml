@@ -18,11 +18,10 @@ let rec main_int_sub_declare oc all_cs bool_id fun_num iter =
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs false fun_num in
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
     print_declare oc var_locations fvs fun_num;
-(*     
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
-    print_declare_varown oc varown_count fvs n;
+    print_declare_begin_and_end oc varown_count fvs fun_num;
     (* 関数ブロックごとに一行区切る *)
-    output_string oc "\n"; *)
+    output_string oc "\n";
     (* 次の関数の所有権をsmtlib形式で宣言 *)
     main_int_sub_declare oc all_cs bool_id (fun_num-1) iter)
 
