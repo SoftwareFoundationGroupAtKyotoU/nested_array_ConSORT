@@ -1,5 +1,7 @@
 %{
 open Syntax
+open Printf
+exception Parse_error of Lexing.position * Lexing.position
 %}
 
 // value
@@ -60,7 +62,7 @@ FunDefs : (* 関数定義の集合は関数を表す構造体のリスト *)
 
 FunDef : (* 関数定義 *)
   func_name = ID LPAREN args=IDs RPAREN LBRACKET annotation = Annotation RBRACKET LBRACE func_body = Expr RBRACE 
-  { FunDef(func_name, args, annotation, func_body) }
+  { (func_name, args, annotation, func_body) }
 
 IDs: (* 関数の引数名のコンマ区切り *)
   | x = ID { [x] }
@@ -68,7 +70,7 @@ IDs: (* 関数の引数名のコンマ区切り *)
 
 Annotation: // 関数の引数に単純型の情報を付加
   LT args_before_eval = ID_Funtypes GT RARROW LT args_after_eval = ID_Funtypes BAR return_type = Ftype GT 
-  { Annotation(args_before_eval, args_after_eval, return_type) }
+  { (args_before_eval, args_after_eval, return_type) }
 
 ID_Funtypes: (* 関数の評価前後の引数名と型のコンマ区切り *)
   | x = ID_Funtype { [x] }
@@ -103,7 +105,7 @@ IfExpr :
 
 LetExpr :
   | LET x=ID EQ e1 = Expr IN e2 = Expr { Let (x, e1, e2) }
-  | LET x=ID EQ ALLOC y=ID COLON ty=SimpleTyExpr REF IN e=Expr { LetAllocExp(x, Var y, SRef ( ty ), e) }
+  | LET x=ID EQ ALLOC e1=Expr COLON ty=SimpleTyExpr REF IN e2=Expr { LetAllocExp(x, e1, SRef ( ty ), e2) }
 //   | LET x=ID EQ STAR y=ID IN e=Expr { LetDerefExp(x, Var y, e) }
 //   | LET x=ID EQ e1=BinOpExpr IN e2=Expr { LetBinOpExp(x, e1, e2) }
 //   | LET x=ID EQ e1=Expr IN e2=Expr { LetBindExp(x, e1, e2) }
@@ -116,9 +118,11 @@ SimpleTyExpr :
 PlusMinusExpr :
   | x=PlusMinusExpr PLUS y=MultExpr { PlusExp(x, y) }
   | x=PlusMinusExpr MINUS y=MultExpr { MinusExp(x, y) }
+  | e=MultExpr { e }
 
 MultExpr :
   | x=MultExpr STAR y=AExpr { MultExp(x, y) }
+  | e=AExpr { e }
 
 // FunCallExpr :
 //   | i=ID LPAREN v=VarSeq RPAREN { FunCall(i, v)}
@@ -180,7 +184,7 @@ AExpr :
   | TRUE { BLit true }
   | FALSE { BLit false }
   | NONDET { Nondet }
-  | UNIT { Unit }
+  | UNITV { Unit }
 
 AppExpr :
   | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }
@@ -195,3 +199,14 @@ DerefExpr :
 ID :
   | x=ID_NAME { x }
   | NU { "v" } 
+
+%%
+
+let parse_error lexbuf =
+  let pos = lexbuf.Lexing.lex_curr_p in
+  raise (Parse_error (pos, pos))
+
+(* Menhirは自動的に %parse_error を定義する *)
+let () =
+  (* ここでは Menhir のエラーハンドリングをカスタマイズする必要はありません *)
+  ()
