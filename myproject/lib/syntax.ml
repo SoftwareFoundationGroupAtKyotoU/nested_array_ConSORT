@@ -66,8 +66,8 @@ type ftype =
   | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
   | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
 
-type annotation = Annotation of (id * ftype) list * (id * ftype) list * ftype
-type fdef = FunDef of id * id list * annotation * exp
+type annotation = (id * ftype) list * (id * ftype) list * ftype
+type fdef = id * id list * annotation * exp
 type program = fdef list * exp
 
 
