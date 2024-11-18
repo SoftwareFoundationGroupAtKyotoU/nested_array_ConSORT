@@ -664,4 +664,27 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
   let scope_limit_smtlib = List.concat (List.map make_scope_limit_smtlib !var_locations) in 
   (scope_limit_smtlib @ smtlibs_before_eval @ smtlibs_among_eval @ smtlibs_after_eval, !var_locations, !varown_count, fvs)
 
-  
+(* プログラム全体の制約から関数名とその関数の順番の組のリストを返す関数 *)
+let numbering_function all_cs = 
+  let rec iterative_numbering_function all_cs cnt res =
+    match all_cs with
+    | [] -> res
+    | ics :: all_cs' -> 
+      let (id,_) = ics in
+      iterative_numbering_function all_cs' (cnt+1) ((id, cnt) :: res)
+  in iterative_numbering_function all_cs 0 []
+
+let all_cs_to_smtlib all_cs flag fun_num =
+  (* 関数名とその順番の組のリストを作成 *)
+  let funnames_numberings = numbering_function all_cs in
+  (* n番目の関数の制約，var_locations, varown_count, 自由変数の集合 *)
+  let (smtlibs, var_locations, varown_count, fvs) = fun_constrs_to_smtlib (List.nth all_cs fun_num) fun_num funnames_numberings in
+  let ss' = 
+    (* flag次第でおそらく一つも成り立たない？？？？？ *)
+    if flag then 
+      [Not(Ands smtlibs)]
+    else
+      smtlibs
+  in
+  (var_locations, varown_count, fvs, ss')
+    
