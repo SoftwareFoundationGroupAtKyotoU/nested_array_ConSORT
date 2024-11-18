@@ -136,4 +136,15 @@ let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e =
     let var_name = asprintf "c_%d_%s_%s_%s_%s" fun_num h_or_l fv id b_or_e in
     Add(Mul(Id(var_name), FV(fv)), make_bound_exp_be fvs' id h_or_l fun_num b_or_e)
 
+(* 二つの参照の所有範囲の下限と上限を受け取り
+その範囲が等しいという制約を返す関数 *)
+let make_same_scope_smtlib id1_low id1_high id2_low id2_high = 
+  And(Eq(id1_low, id2_low), Eq(id1_high, id2_high))
 
+(* 二つの参照の所有範囲の上限と下限を受け取り
+その範囲が隣接しているという制約を返す関数 *)
+let make_adjacent_scope_smtlib id1_high id2_low =
+  Eq(Add(id1_high, Id "1"), id2_low)
+
+
+    
