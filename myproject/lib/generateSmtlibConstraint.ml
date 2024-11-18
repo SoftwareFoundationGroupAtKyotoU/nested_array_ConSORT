@@ -146,5 +146,531 @@ let make_same_scope_smtlib id1_low id1_high id2_low id2_high =
 let make_adjacent_scope_smtlib id1_high id2_low =
   Eq(Add(id1_high, Id "1"), id2_low)
 
+(** Main procedure for generating the ownership constraints 
+オーナーシップ制約生成のためのメイン手続き
+fvs: 関数引数のうちint型である変数の名前
+n: 関数の通し番号
+funnames_numberings: 関数名と通し番号の組のリスト
+branch_trace: if節のどちらを通ってきたかを表す文字列のリスト
+c: 制約のリスト
+関数内の所有権は関数の整数引数とインデックスにしか依存できない？
+*)
+let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
+  match c with
+  | CIf (e,cs1,cs2,pos) -> 
+    (* if式直前の変数idのリスト *)
+    let ids_pre = collect_same_trace_vars branch_trace !var_locations in 
+    (* var_locations((変数id, (所有権のレベルl, branch_trace))のリスト)にthenブランチとelseブランチに対応する変数idが追加 *)
+    List.iter (fun id -> new_id id pos (Then :: branch_trace); new_id id pos (Else :: branch_trace)) ids_pre;
+    let constraints_pre = 
+      (* 制約のリスト[Eq(...); Eq(...); ..., Eq(...)]を作る *)
+      List.concat (List.map 
+        (fun id -> 
+          (* if式の制約
+           if直前，then節に入った時，else節に入った時の所有権は等しい
+           if直前，then節に入った時，else節に入った時の所有範囲の下限は等しい
+           if直前，then節に入った時，else節に入った時の所有範囲の上限は等しい*)
+          [Eq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Then :: branch_trace));
+           Eq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Else :: branch_trace));
+           Eq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Then :: branch_trace));
+           Eq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Else :: branch_trace));
+           Eq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Then :: branch_trace));
+           Eq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Else :: branch_trace))]
+        ) ids_pre) in
+    (* then節側の制約をsmtlibが読める制約の形に直す *)
+    let constraints1 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Then :: branch_trace)) cs1) in
+    (* 条件式が成り立つならばthen節の制約が成り立つ，という形に変更 *)
+    let constraints1' = List.map (fun s -> Imply(exp_to_smtlib e, s)) constraints1 in
+    (* else節側の制約をsmtlibが読める制約の形に直す *)
+    let constraints2 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Else :: branch_trace)) cs2) in
+    (* 条件式が成り立たないならばelse節の制約が成り立つ，という形に変更 *)
+    let constraints2' = List.map (fun s -> Imply(Not(exp_to_smtlib e), s)) constraints2 in
+    (* then節評価後の変数のリスト *)
+    let ids_post_if = collect_same_trace_vars (Then :: branch_trace) !var_locations in
+    (* else節評価後の変数のリスト *)
+    let ids_post_el = collect_same_trace_vars (Else :: branch_trace) !var_locations in
+    (* then節とelse節評価後の変数のリストを結合 *)
+    let ids_post = union_list ids_post_if ids_post_el in
+    (* then節とelse節評価後の各変数について，レベルを1増やしてvar_locationsに追加 *)
+    List.iter (fun id -> new_id id (pos+1) branch_trace) ids_post; 
+    let constraints_post_if = 
+      List.map 
+        (fun s -> Imply(exp_to_smtlib e, s))
+        (List.concat (List.map 
+        (* then式評価後の各変数について 
+            条件式がなりたつならば
+          　　評価前の所有権が0と等しい　または
+                (評価前の所有権はthen節評価時の所有権以下　かつ
+                評価前の所有範囲の下限はthen節評価時の所有範囲の下限以上　かつ
+                評価前の所有範囲の上限はthen節評価時の所有範囲の上限以下) *)
+          (fun id -> 
+            [Or(Eq(make_own_var id fun_num branch_trace, Id "0."),
+             And(Leq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Then :: branch_trace)),
+             And(Geq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Then :: branch_trace)),
+                 Leq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Then :: branch_trace)))))]
+          ) ids_post_if)) in
+    let constraints_post_el = 
+      List.map 
+        (fun s -> Imply(Not(exp_to_smtlib e), s))
+        (* else式評価後の各変数について 
+            条件式がなりたたないならば
+          　　評価前の所有権が0と等しい　または
+                (評価前の所有権はelse節評価時の所有権以下　かつ
+                評価前の所有範囲の下限はelse節評価時の所有範囲の下限以上　かつ
+                評価前の所有範囲の上限はelse節評価時の所有範囲の上限以下) *)
+        (List.concat (List.map 
+          (fun id -> 
+            [Or(Eq(make_own_var id fun_num branch_trace, Id "0."),
+             And(Leq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Else :: branch_trace)),
+             And(Geq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Else :: branch_trace)),
+                 Leq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Else :: branch_trace)))))]
+          ) ids_post_el)) in
+    (* 制約をつなげて返す *)
+    constraints_pre @ constraints1' @ constraints2' @ constraints_post_if @ constraints_post_el
+  (* | CLet (id1,id2,l) -> (* let x = y in ... *) 
+    (* x,yに対応するvar_locationsを追加
+    ここ下とマージできる *)
+    new_id id1 l branch_trace; new_id id2 l branch_trace;
+    (* 
+    評価直前のyの所有権は評価後のxとyの所有権の和以上　または
+    評価後のxの所有範囲の下限は評価後のyの所有範囲の上限より大きい　または
+    評価後のyの所有範囲の上限は評価後のxの所有範囲の下限より大きい;
+    評価直前のyの所有権は評価後のxの所有権以上;
+    評価直前のyの所有権は評価後のyの所有権以上;
+    評価直前のyの所有範囲の下限は評価後のxの所有範囲の下限以下;
+    評価直前のyの所有範囲の下限は評価後のyの所有範囲の下限以下;
+    評価直前のyの所有範囲の上限は評価後のxの所有範囲の上限以上;
+    評価直前のyの所有範囲の上限は評価後のyの所有範囲の上限以上;
+    評価後のxの添え字の下限は評価後のxの添え字の上限以下;
+    評価後のyの添え字の下限は評価後のyの添え字の上限以下*)
+    [Or(Geq(id2_pre_own, Add(id1_post_own, id2_post_own)),
+     Or(Gt(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace), 
+        Gt(make_bound_exp fvs id2 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace)));
+     Geq(id2_pre_own, id1_post_own);
+     Geq(id2_pre_own, id2_post_own);
+     Leq(id2_pre_scope_low, make_bound_exp fvs id1 fun_num branch_trace);
+     Leq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace);
+     Geq(id2_pre_scope_high, make_bound_exp fvs id1 fun_num branch_trace);
+     Geq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace);
+     Leq(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace);
+     Leq(make_bound_exp fvs id2 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace)]  *)
+  | CLetAddPtr (id1,id2,e,pos) ->  (* Corresponds to the example on p.15, let x = y + num in ... *)
+    (* x,yに対応するvar_locationsを追加 *)
+    new_id id1 pos branch_trace; 
+    new_id id2 pos branch_trace;
+    (* numをsmtlibの読める形に変形 *)
+    let sl = exp_to_smtlib e in
+    (* 
+    評価直前のyの所有権は評価後のxとyの所有権の和以上　または
+    評価後のxの所有範囲の下限+numは評価後のyの所有範囲の上限より大きい　または
+    評価後のyの所有範囲のは評価後のxの所有範囲の添え字の下限+numより大きい;
+    評価直前のyの所有権は評価後のxの所有権以上;
+    評価直前のyの所有権は評価後のyの所有権以上;
+    評価直前のyの所有範囲の下限は評価後のxの所有範囲の下限+num以下;
+    評価直前のyの所有範囲の下限は評価後のyの添え字の下限以下;
+    評価直前のyの所有範囲の上限は評価後のxの所有範囲の添え字の上限+num以上;
+    評価直前のyの所有範囲の上限は評価後のyの添え字の上限以上 *)
+    [Or(Geq(make_pre_own_var id2 fun_num branch_trace, Add(make_own_var id1 fun_num branch_trace, make_own_var id2 fun_num branch_trace)),
+     Or(Gt(Add(make_bound_exp fvs id1 "l" fun_num branch_trace, sl), make_bound_exp fvs id2 "h" fun_num branch_trace), 
+        Gt(make_bound_exp fvs id2 "l" fun_num branch_trace, Add(make_bound_exp fvs id1 "h" fun_num branch_trace, sl))));
+     Geq(make_pre_own_var id2 fun_num branch_trace, make_own_var id1 fun_num branch_trace);
+     Geq(make_pre_own_var id2 fun_num branch_trace, make_own_var id2 fun_num branch_trace);
+     Leq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace, Add(make_bound_exp fvs id1 "l" fun_num branch_trace, sl));
+     Leq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace, make_bound_exp fvs id2 "l" fun_num branch_trace);
+     Geq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace, Add(make_bound_exp fvs id1 "h" fun_num branch_trace, sl));
+     Geq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace, make_bound_exp fvs id2 "h" fun_num branch_trace)]  
+  (* | CLetSubPtr (id1,id2,e,l) -> (*let x = y - num in ...*)
+    (*let x = y + num in ... の+-を入れ替えた
+    ここもマージできる*)
+    new_id id1 l branch_trace; new_id id2 l branch_trace;
+    let sl = exp_to_smtlib e in
+    [Or(Geq(id2_pre_own, Add(id1_post_own, id2_post_own)),
+     Or(Gt(Sub(make_bound_exp fvs id1 fun_num branch_trace, sl), make_bound_exp fvs id2 fun_num branch_trace), 
+        Gt(make_bound_exp fvs id2 fun_num branch_trace, Sub(make_bound_exp fvs id1 fun_num branch_trace, sl))));
+     Geq(id2_pre_own, id1_post_own);
+     Geq(id2_pre_own, id2_post_own);
+     Leq(id2_pre_scope_low, Sub(make_bound_exp fvs id1 fun_num branch_trace, sl));
+     Leq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace);
+     Geq(id2_pre_scope_high, Sub(make_bound_exp fvs id1 fun_num branch_trace, sl));
+     Geq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace)]   *)
+  | CMkArray (id,e, simpleTy,pos) -> 
+    let upper_bound =
+      match e with
+      | ILit i -> Id (string_of_int (i-1))
+      | Var id -> FV(id)
+      | _ -> raise ConstrError in
+    (* let x = alloc i in ... *)
+    (* xに対応するvar_locationsを追加 *)
+    new_id id pos branch_trace;
+    (* 
+    xの所有権は1;
+    xの所有範囲の下限は0;
+    xの所有範囲の上限はe-1 *)
+    [Eq(make_own_var id fun_num branch_trace, Id "1"); 
+     Eq(make_bound_exp fvs id "l" fun_num branch_trace, Id "0"); 
+     Eq(make_bound_exp fvs id "h" fun_num branch_trace, upper_bound)]
+  | CAssignInt (id,_) -> (* Corresponds to the example on p.14 *)
+    (* x := num; ... *)
+    (* 
+    xの所有権は1;
+    xの所有範囲の下限は0以下;
+    xの所有範囲の上限は0以上 *)
+    [Eq(make_own_var id fun_num branch_trace, Id "1");
+     Leq(make_bound_exp fvs id "l" fun_num branch_trace, Id "0"); 
+     Geq(make_bound_exp fvs id "h" fun_num branch_trace, Id "0")]
+  (* | CAlias (id1,id2,l) -> 
+    (* alias(x = y); ... *)
+    (* x,yに対応するvar_locationsを追加 *)
+    new_id id1 l branch_trace; new_id id2 l branch_trace;
+    (* 
+    　　(評価前のxとyの所有権の和と評価後のxとyの所有権の和は等しい　かつ
+    　　評価前のxの所有範囲の下限と評価前のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の下限と評価後のxの所有範囲の下限が等しい　かつ
+    　　評価前のyの所有範囲の下限と評価後のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の上限と評価前のyの所有範囲の上限が等しい　かつ
+    　　評価前のxの所有範囲の上限と評価後のxの所有範囲の上限が等しい　かつ
+    　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい) *)
+    [Or(And(Eq(Add(o_p id1 fun_num branch_trace, id2_pre_own), Add(id1_post_own, id2_post_own)),
+        And(Eq(lo_p fvs id1 fun_num branch_trace, id2_pre_scope_low),
+        And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace),
+        And(Eq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace),
+        And(Eq(hi_p fvs id1 fun_num branch_trace, id2_pre_scope_high),
+        And(Eq(hi_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace),
+            Eq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace))))))),
+    (* 
+    または
+    　　(評価前のxとyの所有権の和と評価後のxの所有権が等しい　かつ
+    　　評価前のxとyの所有権の和と評価後のyの所有権が等しい　かつ
+    　　評価前のxの所有範囲の下限と評価前のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の上限と評価前のyの所有範囲の上限が等しい　かつ
+    　　　　((評価前のxの所有範囲の下限と評価後のxの所有範囲の下限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい かつ
+    　　　　評価後のxの所有範囲の上限+1と評価後のyの添え字の下限が等しい)
+    　　　または
+    　　　　(評価前のxの所有範囲の下限と評価後のyの所有範囲の下限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のxの所有範囲の上限が等しい　かつ
+    　　　　評価後のyの所有範囲の上限+1と評価後のxの所有範囲の下限が等しい))
+    　　) *)
+     Or(And(Eq(Add(o_p id1 fun_num branch_trace, id2_pre_own), id1_post_own),
+        And(Eq(Add(o_p id1 fun_num branch_trace, id2_pre_own), id2_post_own),
+        And(Eq(lo_p fvs id1 fun_num branch_trace, id2_pre_scope_low),
+        And(Eq(hi_p fvs id1 fun_num branch_trace, id2_pre_scope_high),
+            Or(And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace), 
+               And(Eq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace),
+                   Eq(Add(make_bound_exp fvs id1 fun_num branch_trace, Id "1"), make_bound_exp fvs id2 fun_num branch_trace))),
+               And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace), 
+               And(Eq(id2_pre_scope_high, make_bound_exp fvs id1 fun_num branch_trace),
+                   Eq(Add(make_bound_exp fvs id2 fun_num branch_trace, Id "1"), make_bound_exp fvs id1 fun_num branch_trace)))))))),
+    (* 
+    または
+    　　(評価前のxの所有権が評価後のxとyの所有権の和に等しい　かつ
+    　　評価前のyの所有権が評価後のxとyの所有権の和に等しい　かつ
+    　　評価後のxの所有範囲の下限と評価後のyの所有範囲の下限が等しい　かつ
+    　　評価後のxの所有範囲の上限と評価後のyの所有範囲の上限が等しい　かつ
+    　　　　((評価前のxの所有範囲の下限と評価後のxの所有範囲の下限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい　かつ
+    　　　　評価前のxの所有範囲の上限+1と評価前のyの所有範囲の下限が等しい)
+    　　　または
+    　　　　(評価前のyの所有範囲の下限と評価後のxの所有範囲の下限が等しい　かつ
+    　　　　評価前のxの所有範囲の上限と評価後のyの所有範囲の上限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限+1と評価前のxの所有範囲の下限が等しい))
+    ) *)
+     Or(And(Eq(o_p id1 fun_num branch_trace, Add(id1_post_own, id2_post_own)),
+        And(Eq(id2_pre_own, Add(id1_post_own, id2_post_own)),
+        And(Eq(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace),
+        And(Eq(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace),
+            Or(And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace), 
+               And(Eq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace),
+                   Eq(Add(hi_p fvs id1 fun_num branch_trace, Id "1"), id2_pre_scope_low))),
+               And(Eq(id2_pre_scope_low, make_bound_exp fvs id1 fun_num branch_trace), 
+               And(Eq(hi_p fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace),
+                   Eq(Add(id2_pre_scope_high, Id "1"), lo_p fvs id1 fun_num branch_trace)))))))),
+      (* 
+     または
+     　　(評価前のxの所有権と評価後のxの所有権が等しい　かつ
+     　　評価前のyの所有権と評価後のyの所有権が等しい　かつ
+        評価後のxの所有権と評価後のyの所有権が等しい　かつ
+        　　((評価前のxの所有範囲の下限が評価後のxの所有範囲の下限と等しい　かつ
+        　　評価前のyの所有範囲の上限が評価後のyの所有範囲の上限と等しい　かつ
+        　　評価前のxの所有範囲の上限+1が評価前のyの所有範囲の下限と等しい　かつ
+        　　評価後のxの所有範囲の上限+1が評価後のyの所有範囲の下限と等しい)
+        　または
+        　　(評価前のxの所有範囲の下限が評価後のyの所有範囲の下限と等しい　かつ
+        　　評価前のyの所有範囲の上限が評価後のxの所有範囲の上限と等しい　かつ
+        　　評価前のxの所有範囲の上限+1が評価前のyの所有範囲の下限と等しい　かつ
+        　　評価後のyの所有範囲の上限+1が評価後のxの所有範囲の下限と等しい)
+          または
+          　(評価前のyの所有範囲の下限が評価後のxの所有範囲の下限と等しい　かつ
+        　　評価前のxの所有範囲の上限が評価後のyの所有範囲の上限と等しい　かつ
+        　　評価前のyの所有範囲の上限+1が評価前のxの所有範囲の下限と等しい　かつ
+        　　評価後のxの所有範囲の上限+1が評価後のyの所有範囲の下限と等しい)
+        　または
+        　　(評価前のyの所有範囲の下限が評価後のyの所有範囲の下限と等しい　かつ
+        　　評価前のxの所有範囲の上限が評価後のxの所有範囲の上限と等しい　かつ
+        　　評価前のyの所有範囲の上限+1が評価前のxの所有範囲の下限と等しい　かつ
+        　　評価後のyの所有範囲の上限+1が評価後のxの所有範囲の下限と等しい))
+        );　 *)
+        And(Eq(o_p id1 fun_num branch_trace, id1_post_own),
+        And(Eq(id2_pre_own, id2_post_own),
+        And(Eq(id1_post_own, id2_post_own),
+            Or(And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace), 
+               And(Eq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace),
+               And(Eq(Add(hi_p fvs id1 fun_num branch_trace, Id "1"), id2_pre_scope_low),
+                   Eq(Add(make_bound_exp fvs id1 fun_num branch_trace, Id "1"), make_bound_exp fvs id2 fun_num branch_trace)))),
+            Or(And(Eq(lo_p fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace), 
+               And(Eq(id2_pre_scope_high, make_bound_exp fvs id1 fun_num branch_trace),
+               And(Eq(Add(hi_p fvs id1 fun_num branch_trace, Id "1"), id2_pre_scope_low),
+                   Eq(Add(make_bound_exp fvs id2 fun_num branch_trace, Id "1"), make_bound_exp fvs id1 fun_num branch_trace)))),
+            Or(And(Eq(id2_pre_scope_low, make_bound_exp fvs id1 fun_num branch_trace), 
+               And(Eq(hi_p fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace),
+               And(Eq(Add(id2_pre_scope_high, Id "1"), lo_p fvs id1 fun_num branch_trace),
+                   Eq(Add(make_bound_exp fvs id1 fun_num branch_trace, Id "1"), make_bound_exp fvs id2 fun_num branch_trace)))),
+               And(Eq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace), 
+               And(Eq(hi_p fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace),
+               And(Eq(Add(id2_pre_scope_high, Id "1"), lo_p fvs id1 fun_num branch_trace),
+                   Eq(Add(make_bound_exp fvs id2 fun_num branch_trace, Id "1"), make_bound_exp fvs id1 fun_num branch_trace)))))))))))));
+    (* 評価後のxの所有範囲の下限が評価後のxの所有範囲の上限以下;
+      評価後のyの所有範囲の下限が評価後のyの所有範囲の上限以下 *)
+     Leq(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace);
+     Leq(make_bound_exp fvs id2 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace)] *)
+  | CAliasAddPtr (id1,id2,e,l) -> (* alias(x = y + num); ... *)
+     (* x,yに対応するvar_locationsを追加 *)
+    new_id id1 l branch_trace; new_id id2 l branch_trace;
+      (* numをsmtlibの制約の形に変形 *)
+    let sl = exp_to_smtlib e in
+    (* 式評価前後のid1, id2の所有権の値と所有範囲 *)
+    let id1_pre_own = make_pre_own_var id1 fun_num branch_trace in
+    let id1_pre_scope_low = Add(make_pre_bound_exp fvs id1 "l" fun_num branch_trace, sl) in
+    let id1_pre_scope_high = Add(make_pre_bound_exp fvs id1 "h" fun_num branch_trace, sl) in
+    let id2_pre_own = make_pre_own_var id2 fun_num branch_trace in
+    let id2_pre_scope_low = make_pre_bound_exp fvs id2 "l" fun_num branch_trace in
+    let id2_pre_scope_high = make_pre_bound_exp fvs id2 "h" fun_num branch_trace in
+    let id1_post_own = make_own_var id1 fun_num branch_trace in
+    let id1_post_scope_low = Add(make_bound_exp fvs id1 "l" fun_num branch_trace, sl) in
+    let id1_post_scope_high = Add(make_bound_exp fvs id1 "h" fun_num branch_trace, sl) in
+    let id2_post_own = make_own_var id2 fun_num branch_trace in
+    let id2_post_scope_low = make_bound_exp fvs id2 "l" fun_num branch_trace in
+    let id2_post_scope_high = make_bound_exp fvs id2 "h" fun_num branch_trace in
+    (* 所有範囲が隣接しているという制約 *)
+    let adjacent_id1_pre_hi_id2_pre_lo = make_adjacent_scope_smtlib id1_pre_scope_high id2_pre_scope_low in
+    let adjacent_id2_pre_hi_id1_pre_lo = make_adjacent_scope_smtlib id2_pre_scope_high id1_pre_scope_low in
+    let adjacent_id1_post_hi_id2_post_lo = make_adjacent_scope_smtlib id1_post_scope_high id2_post_scope_low in
+    let adjacent_id2_post_hi_id1_post_lo = make_adjacent_scope_smtlib id2_post_scope_high id1_post_scope_low in
+    (* 
+    -----   -----
+    | x |   | x |
+    |---| ->|---|
+    | y |   | y |
+    -----   -----
+    (評価前のxとyの所有権の和と評価後のxとyの所有権の和は等しい　かつ
+    　　評価前のxの所有範囲の下限+numと評価前のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の下限+numと評価後のxの所有範囲の下限+numが等しい　かつ
+    　　評価前のyの所有範囲の下限と評価後のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の上限+numと評価前のyの所有範囲の上限が等しい　かつ
+    　　評価前のxの所有範囲の上限+numと評価後のxの所有範囲の上限+numが等しい　かつ
+    　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい) *)
+    let smtlib1 = 
+      And(Eq(Add(id1_pre_own, id2_pre_own), Add(id1_post_own, id2_post_own)),
+      And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id2_pre_scope_low id2_pre_scope_high,
+      And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id1_post_scope_low id1_post_scope_high,
+        make_same_scope_smtlib id2_pre_scope_low id2_pre_scope_high id2_post_scope_low id2_post_scope_high))) in
+    (* 
+    -----   
+    | x |   ---------    ---------
+    |---| ->| x | y | or | y | x |
+    | y |   ---------    ---------
+    -----   
+    または
+    　　(評価前のxとyの所有権の和と評価後のxの所有権が等しい　かつ
+    　　評価前のxとyの所有権の和と評価後のyの所有権が等しい　かつ
+    　　評価前のxの所有範囲の下限+numと評価前のyの所有範囲の下限が等しい　かつ
+    　　評価前のxの所有範囲の上限+numと評価前のyの所有範囲の上限が等しい　かつ
+    　　　　((評価前のxの所有範囲の下限+numと評価後のxの所有範囲の下限+numが等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい かつ
+    　　　　評価後のxの所有範囲の上限+num+1と評価後のyの添え字の下限が等しい)
+    　　　または
+    　　　　(評価前のxの所有範囲の下限+numと評価後のyの所有範囲の下限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のxの所有範囲の上限+numが等しい　かつ
+    　　　　評価後のyの所有範囲の上限+1と評価後のxの所有範囲の下限+numが等しい))
+    　　) *)
+    let smtlib2 = 
+      And(Eq(Add(id1_pre_own, id2_pre_own), id1_post_own),
+      And(Eq(Add(id1_pre_own, id2_pre_own), id2_post_own),
+      And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id2_pre_scope_low id2_pre_scope_high,
+      Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id1_post_scope_low id2_post_scope_high,
+           adjacent_id1_post_hi_id2_post_lo),
+         And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id2_post_scope_low id1_post_scope_high,
+           adjacent_id2_post_hi_id1_post_lo ))))) in
+(* 
+                              -----
+    ---------    ---------    | x |
+    | x | y | or | y | x | -> |---|
+    ---------    ---------    | y |
+                              -----
 
+    または
+    　　(評価前のxの所有権が評価後のxとyの所有権の和に等しい　かつ
+    　　評価前のyの所有権が評価後のxとyの所有権の和に等しい　かつ
+    　　評価後のxの所有範囲の下限+numと評価後のyの所有範囲の下限が等しい　かつ
+    　　評価後のxの所有範囲の上限+numと評価後のyの所有範囲の上限が等しい　かつ
+    　　　　((評価前のxの所有範囲の下限+numと評価後のxの所有範囲の下限+numが等しい　かつ
+    　　　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい　かつ
+    　　　　評価前のxの所有範囲の上限+num+1と評価前のyの所有範囲の下限が等しい)
+    　　　または
+    　　　　(評価前のyの所有範囲の下限と評価後のxの所有範囲の下限+numが等しい　かつ
+    　　　　評価前のxの所有範囲の上限+numと評価後のyの所有範囲の上限が等しい　かつ
+    　　　　評価前のyの所有範囲の上限+1と評価前のxの所有範囲の下限+numが等しい))
+        ) *)
+    let smtlib3 = 
+      And(Eq(id1_pre_own, Add(id1_post_own, id2_post_own)),
+      And(Eq(id2_pre_own, Add(id1_post_own, id2_post_own)),
+      And(make_same_scope_smtlib id1_post_scope_low id1_post_scope_high id2_post_scope_low id2_post_scope_high,
+        Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id1_post_scope_low id2_post_scope_high,
+              adjacent_id1_pre_hi_id2_pre_lo),
+           And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id1_post_scope_low id2_post_scope_high,
+              adjacent_id2_pre_hi_id1_pre_lo))))) in 
+    (*                             
+    ---------    ---------    ---------    ---------    
+    | x | y | or | y | x | -> | x | y | or | y | x |
+    ---------    ---------    ---------    ---------
+                              
+     または
+     　　(評価前のxの所有権と評価後のxの所有権が等しい　かつ
+     　　評価前のyの所有権と評価後のyの所有権が等しい　かつ
+        評価後のxの所有権と評価後のyの所有権が等しい　かつ
+        　　((評価前のxの所有範囲の下限+numが評価後のxの所有範囲の下限+numと等しい　かつ
+        　　評価前のyの所有範囲の上限が評価後のyの所有範囲の上限と等しい　かつ
+        　　評価前のxの所有範囲の上限+num+1が評価前のyの所有範囲の下限と等しい　かつ
+        　　評価後のxの所有範囲の上限+num+1が評価後のyの所有範囲の下限と等しい)
+        　または
+        　　(評価前のxの所有範囲の下限+numが評価後のyの所有範囲の下限と等しい　かつ
+        　　評価前のyの所有範囲の上限が評価後のxの所有範囲の上限+numと等しい　かつ
+        　　評価前のxの所有範囲の上限+num+1が評価前のyの所有範囲の下限と等しい　かつ
+        　　評価後のyの所有範囲の上限+1が評価後のxの所有範囲の下限+numと等しい)
+          または
+          　(評価前のyの所有範囲の下限が評価後のxの所有範囲の下限+numと等しい　かつ
+        　　評価前のxの所有範囲の上限+numが評価後のyの所有範囲の上限と等しい　かつ
+        　　評価前のyの所有範囲の上限+1が評価前のxの所有範囲の下限+numと等しい　かつ
+        　　評価後のxの所有範囲の上限+num+1が評価後のyの所有範囲の下限と等しい)
+        　または
+        　　(評価前のyの所有範囲の下限が評価後のyの所有範囲の下限と等しい　かつ
+        　　評価前のxの所有範囲の上限+numが評価後のxの所有範囲の上限+numと等しい　かつ
+        　　評価前のyの所有範囲の上限+1が評価前のxの所有範囲の下限+numと等しい　かつ
+        　　評価後のyの所有範囲の上限+1が評価後のxの所有範囲の下限+numと等しい))
+        );　 *)
+    let smtlib4 = 
+    And(Eq(id1_pre_own, id1_post_own),
+    And(Eq(id2_pre_own, id2_post_own),
+    And(Eq(id1_post_own, id2_post_own),
+        Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id1_post_scope_low id2_post_scope_high,
+           And(adjacent_id1_pre_hi_id2_pre_lo,
+              adjacent_id1_post_hi_id2_post_lo)),
+        Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id2_post_scope_low id1_post_scope_high,
+           And(adjacent_id1_pre_hi_id2_pre_lo,
+              adjacent_id2_post_hi_id1_post_lo)),
+        Or(And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id1_post_scope_low id2_post_scope_high,
+           And(adjacent_id2_pre_hi_id1_pre_lo,
+              adjacent_id1_post_hi_id2_post_lo)),
+           And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id2_post_scope_low id1_post_scope_high,
+           And(adjacent_id2_pre_hi_id1_pre_lo,
+              adjacent_id2_post_hi_id1_post_lo)))))))) in
+    [Or(smtlib1,
+     Or(smtlib2,
+     Or(smtlib3,
+        smtlib4)))]
+    (* 評価後のxの所有範囲の下限が評価後のxの所有範囲の上限以下;
+      評価後のyの所有範囲の下限が評価後のyの所有範囲の上限以下 *)
+     @ [Leq(id1_post_scope_low, id1_post_scope_high); Leq(id2_post_scope_low, id2_post_scope_high)]
+  | CDeref (id,_) -> 
+    (* let x = *y in ...
+    評価後のyの所有権は0より大きい
+    評価後のyの所有範囲の下限は0以下
+    評価後のyの所有範囲の上限は0以上 *)
+    [Gt(make_own_var id fun_num branch_trace, Id "0");
+     Leq(make_bound_exp fvs id "l" fun_num branch_trace, Id "0"); 
+     Geq(make_bound_exp fvs id "h" fun_num branch_trace, Id "0")]
+  | CApp (id_fn,args,pos) -> 
+    (* f(y1, y2, ..., yn) *)
+    (* 整数引数の変数名と実引数の式の組を返す
+    それ以外は何も返さない *)
+    let find_subst param arg = 
+      match param, arg with
+      | (id, FTInt _), AExp e -> [(id, e)]
+      | (_, FTRef _), AId _ -> []
+      | _ -> raise ConstrError
+    in
+    (* 評価前の引数の型:ftid_ftsと評価後の引数の型:ftid_fts2を抽出 *)
+    let (params_before_eval, params_after_eval) = lookup id_fn !fn_env in
+    (* 仮引数名と整数引数に渡された式のリスト *)
+    let subst = List.concat (List.map2 find_subst params_before_eval args) in
+    (* 関数定義の制約生成 *)
+    let subst_param_before_eval param arg = 
+      match param, arg with
+      (* x | () ref *)
+      | (id_param, FTRef (_,ENull,ENull,_)), AId id ->
+        (* 関数が定義された順番 *)
+        let num = lookup id_fn funnames_numberings in
+        (* 呼び出された関数の整数変数名と呼び出した関数の整数自由変数の和集合 *)
+        let fvs' = union_list (List.map fst subst) fvs in
+        (* 所有範囲の下限を表すデータ構造 *)
+        let sll = make_bound_exp_be fvs' "l" id_param num "b" in
+        (* 所有範囲の上限を表すデータ構造 *)
+        let slh = make_bound_exp_be fvs' "h" id_param num "b" in
+        (* 引数xの関数開始時の所有権は0　または
+        　　　　(実引数の所有権が関数開始時に必要な所有権以上　かつ
+        　　　　実引数の所有範囲の下限が関数開始時に必要な所有範囲の下限以下　かつ
+        　　　　実引数の所有範囲の上限が関数開始時に必要な所有範囲の上限以上)　 *)
+        [Or(Eq(Id "0.", o_be id_param num "b"), 
+         And(Geq(make_own_var id fun_num branch_trace, o_be id_param num "b"),
+         And(Leq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll),
+             Geq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh))))]
+         (* x | () ref (left, right, ownership) *)
+      | (_, FTRef (_,el,eh,f)), AId id -> 
+        (* 引数の篩型中の整数変数を別の式で置き換え *)
+        let scope_low = exp_to_smtlib (exp_subst subst el) in
+        let scope_high = exp_to_smtlib (exp_subst subst eh) in
+        (* プログラマ指定の所有権が0　または
+        　　　　(実引数の所有権がプログラマ指定の所有権以上　かつ
+        　　　　実引数の所有範囲の下限がプログラマ指定の所有範囲の下限以下　かつ
+        　　　　実引数の所有範囲の上限がプログラマ指定の所有範囲の上限以上) *)
+        [Or(Eq(Id "0.", Id (string_of_float f)),
+         And(Geq(make_own_var id fun_num branch_trace, Id (string_of_float f)),
+         And(Leq(make_bound_exp fvs id "l" fun_num branch_trace, scope_low),
+             Geq(make_bound_exp fvs id "h" fun_num branch_trace, scope_high))))]
+        (* 整数の時は何もしない *)
+      | _, AExp _ -> []
+      | _ -> raise ConstrError
+    in
+    (* 関数引数に対するsmtlibの条件式の生成 *)
+    let constraints1 = List.concat (List.map2 subst_param_before_eval params_before_eval args) in
+    (* g1とほぼ同様,呼び出した関数の評価終了時の制約 *)
+    let subst_param_after_eval ftid_ft arg = 
+      match ftid_ft, arg with
+      | (id_param, FTRef (_,ENull,ENull,_)), AId id ->
+        let num = lookup id_fn funnames_numberings in
+        let fvs' = union_list (List.map fst subst) fvs in
+        let sll = make_bound_exp_be fvs' "l" id_param num "e" in
+        let slh = make_bound_exp_be fvs' "h" id_param num "e" in
+        (* 引数のvar_locationsを生成 *)
+        new_id id pos branch_trace;
+        [Eq(make_own_var id fun_num branch_trace, o_be id_param num "e");
+         Eq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll);
+         Eq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh)]
+      | (_, FTRef (_,el,eh,f)), AId id -> 
+        let l_arg_exp = exp_subst subst el in
+        let h_arg_exp = exp_subst subst eh in
+        (* 引数のvar_locationsを生成 *)
+        new_id id pos branch_trace;
+        [Eq(make_own_var id fun_num branch_trace, Id (string_of_float f));
+         Eq(make_bound_exp fvs id "l" fun_num branch_trace, exp_to_smtlib l_arg_exp);
+         Eq(make_bound_exp fvs id "h" fun_num branch_trace, exp_to_smtlib h_arg_exp)]
+      | _, AExp _ -> []
+      | _ -> raise ConstrError
+    in
+    (* 関数評価後に対するsmtlibの条件式の生成 *)
+    let constraints2 = List.concat (List.map2 subst_param_after_eval params_after_eval args) in
+    (* 関数評価前と評価後の条件式を結合 *)
+    constraints1 @ constraints2
+    | _ -> raise ConstrError
+    (*追加分，あとで消す*)
     
