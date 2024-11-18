@@ -128,7 +128,7 @@ let infer_fdef fun_tyenv fdef =
   | _ -> err ("The function from_annnotation_to_simpleTy must return SFun")
 
 (* プログラム全体を解析して型推論を行い、各関数や式の型を推論する役割を果たす *)
-let infer_prog program = 
+let infer_prog_simpleTy program = 
   let (fdefs, exp) = program in
   let fun_tyenv = List.fold_left infer_fdef [] fdefs in
   let tyenv = ref fun_tyenv in
