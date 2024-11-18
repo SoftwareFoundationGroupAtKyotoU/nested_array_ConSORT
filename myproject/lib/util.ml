@@ -216,72 +216,73 @@ let rec smtlib_subst subst st =
   | _ -> st
 
 
-  let rec exp_subst subst exp = 
-    match exp with
-    | LetIntExp (id,e1,e2) -> 
-      LetIntExp(id, exp_subst subst e1, exp_subst subst e2)
-    (* | LetVarPtr (id1,id2,e) ->
-      ELetVarPtr(id1, id2, exp_subst subst e) *)
-    | LetDerefExp (id1,id2,e) ->
-      LetDerefExp(id1, id2, exp_subst subst e)
-    | LetAddPtrExp (id1,id2,e1,e2) ->
-      LetAddPtrExp(id1, id2, exp_subst subst e1, exp_subst subst e2)
-    | Let _ ->
-      err ("exp_subst Error: If this error occurs, the elaborate module is wrong.")
-    | IfExp (e1,e2,e3) ->
-      IfExp(exp_subst subst e1, exp_subst subst e2, exp_subst subst e3)
-    | IfnpExp (id,e1,e2) ->
-      IfnpExp(id, exp_subst subst e1, exp_subst subst e2)
-    | LetAllocExp (id,e1,simpleTy,e2) ->
-      LetAllocExp (id,exp_subst subst e1,simpleTy,exp_subst subst e2)
-    | Assign (id1,e1,e2) ->
-      Assign(id1, exp_subst subst e1, exp_subst subst e2)
-    | AssignInt (id,e1,e2) ->
-      AssignInt(id, exp_subst subst e1, exp_subst subst e2)
-    | AssignPtr (id1,id2,e) ->
-      AssignPtr(id1, id2, exp_subst subst e)
-    | Alias (e1,e2,e3) ->
-      Alias(exp_subst subst e1, exp_subst subst e2, exp_subst subst e3) 
-    | AliasDeref(id1,id2,e) ->
-      AliasDeref(id1, id2, exp_subst subst e)
-    | AliasAddPtr (id1,id2,i,e) ->
-      AliasAddPtr(id1, id2, i, exp_subst subst e)
-    | Assert (e1,e2) ->
-      Assert(exp_subst subst e1, exp_subst subst e2)
-    | Seq (e1,e2) ->
-      Seq(exp_subst subst e1, exp_subst subst e2)
-    | AppExp (id,es) ->
-      AppExp(id, List.map (exp_subst subst) es)
-    | EqExp (e1,e2) ->
-      EqExp(exp_subst subst e1, exp_subst subst e2)
-    | LtExp (e1, e2) ->
-      LtExp(exp_subst subst e1, exp_subst subst e2)
-    | GtExp (e1, e2) ->
-      GtExp(exp_subst subst e1, exp_subst subst e2)
-    | LeqExp (e1, e2) ->
-      LeqExp(exp_subst subst e1, exp_subst subst e2)
-    | GeqExp (e1, e2) ->
-      GeqExp(exp_subst subst e1, exp_subst subst e2)
-    | NeqExp (e1, e2) ->
-      NeqExp(exp_subst subst e1, exp_subst subst e2)
-    | AndExp (e1,e2) ->
-      AndExp(exp_subst subst e1, exp_subst subst e2)
-    | OrExp (e1,e2) ->
-      OrExp(exp_subst subst e1, exp_subst subst e2)
-    | NotExp e ->
-      NotExp (exp_subst subst e)
-    | PlusExp (e1,e2) -> 
-      PlusExp(exp_subst subst e1, exp_subst subst e2)
-    | MinusExp (e1,e2) -> 
-      MinusExp(exp_subst subst e1, exp_subst subst e2)
-    | MultExp (e1,e2) -> 
-      MultExp(exp_subst subst e1, exp_subst subst e2)
-    (* | EDiv (e1,e2) -> 
-      EDiv(exp_subst subst e1, exp_subst subst e2) *)
-    | Var x -> 
-      (try 
-         lookup x subst
-       with
-         Error _ -> exp)
-    | _ -> exp
+(* 式exp中の変数をsubstに従って別の式に置き換える *)
+let rec exp_subst subst exp = 
+  match exp with
+  | LetIntExp (id,e1,e2) -> 
+    LetIntExp(id, exp_subst subst e1, exp_subst subst e2)
+  (* | LetVarPtr (id1,id2,e) ->
+    ELetVarPtr(id1, id2, exp_subst subst e) *)
+  | LetDerefExp (id1,id2,e) ->
+    LetDerefExp(id1, id2, exp_subst subst e)
+  | LetAddPtrExp (id1,id2,e1,e2) ->
+    LetAddPtrExp(id1, id2, exp_subst subst e1, exp_subst subst e2)
+  | Let _ ->
+    err ("exp_subst Error: If this error occurs, the elaborate module is wrong.")
+  | IfExp (e1,e2,e3) ->
+    IfExp(exp_subst subst e1, exp_subst subst e2, exp_subst subst e3)
+  | IfnpExp (id,e1,e2) ->
+    IfnpExp(id, exp_subst subst e1, exp_subst subst e2)
+  | LetAllocExp (id,e1,simpleTy,e2) ->
+    LetAllocExp (id,exp_subst subst e1,simpleTy,exp_subst subst e2)
+  | Assign (id1,e1,e2) ->
+    Assign(id1, exp_subst subst e1, exp_subst subst e2)
+  | AssignInt (id,e1,e2) ->
+    AssignInt(id, exp_subst subst e1, exp_subst subst e2)
+  | AssignPtr (id1,id2,e) ->
+    AssignPtr(id1, id2, exp_subst subst e)
+  | Alias (e1,e2,e3) ->
+    Alias(exp_subst subst e1, exp_subst subst e2, exp_subst subst e3) 
+  | AliasDeref(id1,id2,e) ->
+    AliasDeref(id1, id2, exp_subst subst e)
+  | AliasAddPtr (id1,id2,i,e) ->
+    AliasAddPtr(id1, id2, i, exp_subst subst e)
+  | Assert (e1,e2) ->
+    Assert(exp_subst subst e1, exp_subst subst e2)
+  | Seq (e1,e2) ->
+    Seq(exp_subst subst e1, exp_subst subst e2)
+  | AppExp (id,es) ->
+    AppExp(id, List.map (exp_subst subst) es)
+  | EqExp (e1,e2) ->
+    EqExp(exp_subst subst e1, exp_subst subst e2)
+  | LtExp (e1, e2) ->
+    LtExp(exp_subst subst e1, exp_subst subst e2)
+  | GtExp (e1, e2) ->
+    GtExp(exp_subst subst e1, exp_subst subst e2)
+  | LeqExp (e1, e2) ->
+    LeqExp(exp_subst subst e1, exp_subst subst e2)
+  | GeqExp (e1, e2) ->
+    GeqExp(exp_subst subst e1, exp_subst subst e2)
+  | NeqExp (e1, e2) ->
+    NeqExp(exp_subst subst e1, exp_subst subst e2)
+  | AndExp (e1,e2) ->
+    AndExp(exp_subst subst e1, exp_subst subst e2)
+  | OrExp (e1,e2) ->
+    OrExp(exp_subst subst e1, exp_subst subst e2)
+  | NotExp e ->
+    NotExp (exp_subst subst e)
+  | PlusExp (e1,e2) -> 
+    PlusExp(exp_subst subst e1, exp_subst subst e2)
+  | MinusExp (e1,e2) -> 
+    MinusExp(exp_subst subst e1, exp_subst subst e2)
+  | MultExp (e1,e2) -> 
+    MultExp(exp_subst subst e1, exp_subst subst e2)
+  (* | EDiv (e1,e2) -> 
+    EDiv(exp_subst subst e1, exp_subst subst e2) *)
+  | Var x -> 
+    (try 
+        lookup x subst
+      with
+        Error _ -> exp)
+  | _ -> exp
   
