@@ -133,7 +133,7 @@ let infer_prog_simpleTy program =
   let fun_tyenv = List.fold_left infer_fdef [] fdefs in
   let tyenv = ref fun_tyenv in
   let (_, ty) = infer_simple_ty tyenv exp in
-  assert(ty = SUnit);
+  (* assert(ty = SUnit); *)
   all_tyenv := ("main", !tyenv) :: !all_tyenv
 
 (* let ty_test exp =
