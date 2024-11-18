@@ -624,9 +624,9 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
        Eq(make_bound_exp fvs id "h" fun_num [], exp_to_smtlib exp_high)]
   in
   (* 関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
-  let s1 = List.concat (List.map ref_id_before_eval_to_smtlibs ref_ids) in
+  let smtlibs_before_eval = List.concat (List.map ref_id_before_eval_to_smtlibs ref_ids) in
   (* 関数内部の制約をsmtlibの形式に変換 *)
-  let ss = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings []) constrs) in
+  let smtlibs_among_eval = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings []) constrs) in
   (* 関数終了時の制約を生成する関数，id:変数名 *)
   let ref_id_after_eval_to_smtlibs id = 
     let (el2,eh2,f2) = find_own_annotation id params_after_eval in 
@@ -651,14 +651,17 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
        And(Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num []),
            Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num []))))]
   in
-  (* 評価後の関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
-  let s2 = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
+  (* 評価後の関数仮引数のうち参照型である引数集合の制約を生成 *)
+  let smtlibs_after_eval = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
   (* 任意の変数の任意の位置における所有権が0以上1以下である制約を付加する関数 *)
-  let g_lh (id, (i,branch_trace)) =
-    let o_id = Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int i) ^ (branch_trace_to_str branch_trace)) in
+  let make_scope_limit_smtlib (id, (pos,branch_trace)) =
+    let var_name = asprintf "o_%d_%s_%d_%a" fun_num id pos pp_branch_trace branch_trace in
+    let o_id = Id(var_name) in
     [Geq(o_id, Id "0.");
      Leq(o_id, Id "1.")]
   in
   (* 所有権の値の範囲の制約生成 *)
-  let s_olh = List.concat (List.map g_lh !var_locations) in 
-  (s_olh @ s1 @ ss @ s2, !var_locations, !varown_count, fvs)
+  let scope_limit_smtlib = List.concat (List.map make_scope_limit_smtlib !var_locations) in 
+  (scope_limit_smtlib @ smtlibs_before_eval @ smtlibs_among_eval @ smtlibs_after_eval, !var_locations, !varown_count, fvs)
+
+  
