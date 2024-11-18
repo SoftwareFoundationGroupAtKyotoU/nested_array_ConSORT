@@ -674,6 +674,7 @@ let numbering_function all_cs =
       iterative_numbering_function all_cs' (cnt+1) ((id, cnt) :: res)
   in iterative_numbering_function all_cs 0 []
 
+(* 関数の制約生成及び，制約の書き出しに必要な情報を返す関数 *)
 let all_cs_to_smtlib all_cs flag fun_num =
   (* 関数名とその順番の組のリストを作成 *)
   let funnames_numberings = numbering_function all_cs in
