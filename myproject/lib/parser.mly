@@ -131,7 +131,7 @@ MultExpr :
 
 InsertSEMIExpr :
   | x=ID ASSIGN e1=Expr SEMI e2=Expr { Assign(x, e1, e2) }
-  | ALIAS LPAREN e1=Expr EQ e2=Expr RPAREN SEMI e3=Expr { Alias(e1, e2, e3) }
+  | ALIAS LPAREN e1=ID EQ e2=Expr RPAREN SEMI e3=Expr { Alias(Var e1, e2, e3) }
   | ASSERT LPAREN e1=Expr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
   | e1=Expr SEMI e2=Expr { Seq(e1, e2) }
 // PreSEMIExpr :
