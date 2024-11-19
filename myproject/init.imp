@@ -9,6 +9,7 @@ init(n, p)
     let q = p + 1 in
     let m = n - 1 in
     let d = init(m, q) in
+    alias(q=p+1);
     1
   }
 }
@@ -25,6 +26,7 @@ verify(n, p)
     let q = p + 1 in
     let m = n - 1 in
     let d = verify(m, q) in
+    alias(q=p+1);
     1
   }
 }
