@@ -11,6 +11,226 @@ let err s = raise (Error s)
 let rec lookup x env =
   try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
 
+
+let rec print_exp exp =
+  match exp with
+  | Let (id,e1,e2) ->
+    (print_string ("ELet(" ^ id ^ ", ");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | LetIntExp (id,e1,e2) ->
+    (print_string ("ELetInt(" ^ id ^ ", ");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  (* | LetVarPtr (id1,id2,e) ->
+    (print_string ("ELetVarPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e;
+      print_string ")")
+  | ELetDerefPtr (id1,id2,e) ->
+    (print_string ("ELetDerefPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e;
+      print_string ")") *)
+  | LetAddPtrExp (id1,id2,e1,e2) ->
+    (print_string ("ELetAddPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  (* | ELetSubPtr (id1,id2,e1,e2) ->
+    (print_string ("ELetSubPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")") *)
+  | IfExp (e1,e2,e3) ->
+    (print_string "EIf(";
+      print_exp e1;
+      print_string ", "; 
+      print_exp e2;
+      print_string ", ";
+      print_exp e3;
+      print_string ")")
+  | LetAllocExp (id,e1,simpleTy,e2) ->
+    (print_string ("EMkarray(" ^ id ^ ", ");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | Assign (id1,e1,e2) ->
+    (print_string ("EAssign(" ^ id1 ^ ", ");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | AssignInt (id,e1,e2) ->
+    (print_string ("EAssignInt(" ^ id ^ ", ");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | AssignPtr (id1,id2,e) ->
+    (print_string ("EAssignPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e;
+      print_string ")")
+  | Alias (e1,e2,e3) ->
+    (print_string "EAlias(";
+      print_exp e1;
+      print_string ", "; 
+      print_exp e2;
+      print_string ", ";
+      print_exp e3;
+      print_string ")")
+  (* | EAliasVarPtr (id1,id2,e) ->
+    (print_string ("EAliasVarPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e;
+      print_string ")") *)
+  | AliasDeref (id1,id2,e) ->
+    (print_string ("EAliasDerefPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e;
+      print_string ")")
+  | AliasAddPtr (id1,id2,i,e) ->
+    (print_string ("EAliasAddPtr(" ^ id1 ^ ", ");
+      print_string id2;
+      print_string ", ";
+      print_exp i;
+      print_string ", ";
+      print_exp e;
+      print_string ")")
+  | Assert (e1,e2) ->
+    (print_string "EAssert(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | Seq (e1,e2) ->
+    (print_string "ESeq(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | Deref id ->
+    print_string ("EDeref(" ^ id ^ ")")
+  | AppExp (id,es) ->
+    (print_string ("EApp(" ^ id ^ ", ");
+      print_exps es;
+      print_string ")") 
+  (* | EEq (e1,e2) ->
+    (print_string "EEq(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | ELt (e1, e2) ->
+    (print_string "ELt(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | EGt (e1, e2) ->
+    (print_string "EGt(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")") *)
+  | LeqExp (e1, e2) ->
+    (print_string "ELeq(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | GeqExp (e1, e2) ->
+    (print_string "EGeq(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | NeqExp (e1, e2) ->
+    (print_string "ENeq(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  (* | EAnd (e1,e2) ->
+    (print_string "EAnd(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | EOr (e1,e2) ->
+    (print_string "EOr(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | ENot e ->
+    (print_string "ENot(";
+      print_exp e;
+      print_string ")")
+  | EAdd (e1,e2) -> 
+    (print_string "EAdd(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")") *)
+  (* | MinusExp (e1,e2) -> 
+    (print_string "ESub(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | EMul (e1,e2) -> 
+    (print_string "EMul(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
+  | EDiv (e1,e2) -> 
+    (print_string "EDiv(";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")") *)
+  | Unit -> 
+    print_string "()"
+  (* | EConstFail ->
+    print_string "fail" *)
+  | ILit i ->
+    print_int i
+  | Nondet ->
+    print_string "nondet"
+  (* | EConstTrue ->
+    print_string "true"
+  | EConstFalse ->
+    print_string "false" *)
+  | Var x -> 
+    print_string x
+  | ENull ->
+    print_string "ENull"
+  | _ -> ()
+and print_exps es =
+  match es with
+  | [] -> ()
+  | e :: [] -> print_exp e
+  | e :: es' -> print_exp e; print_string ", "; print_exps es'
+
 (* 
 env: 式内で定義された整数変数名と式の組
 fun_name: 関数名
@@ -206,13 +426,13 @@ let rec smtlib_subst subst st =
     Sub(smtlib_subst subst st1, smtlib_subst subst st2)
   | Mul (st1,st2) ->
     Mul(smtlib_subst subst st1, smtlib_subst subst st2)
-  | Div (st1,st2) ->
-    Div(smtlib_subst subst st1, smtlib_subst subst st2)
+  (* | Div (st1,st2) ->
+    Div(smtlib_subst subst st1, smtlib_subst subst st2) *)
   | FV x -> 
     (try 
        exp_to_smtlib (lookup x subst)
      with
-       Error _ -> st)
+       _ -> st)
   | _ -> st
 
 
