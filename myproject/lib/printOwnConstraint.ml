@@ -1,5 +1,6 @@
 open Util
 open Format
+open SmtlibSyntax
 
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
 let rec print_declare oc var_locations fvs fun_num =
@@ -57,3 +58,266 @@ and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num =
     (fun fv ->
       fprintf formatter "(declare-fun c_%d_%s_%s_%s_%s () Int)\n" fun_num l_or_h fv id b_or_e;
        ) fvs
+
+(* listから重複を除いたリストを返す *)
+let rec list_to_set li res = 
+  match li with
+  | [] -> res
+  | [x] -> if List.mem x res then res else x :: res
+  | x :: li' ->
+    let res' = list_to_set li' res in
+    if List.mem x res' then res' else x :: res' 
+
+
+(* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
+  slはsmtlibの制約
+mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
+bool_idは使われていない？
+numは篩型の識別番号？
+*)
+let rec print_smtlib oc sl bool_id map num = 
+  match sl with 
+  | Or (s1,s2) -> 
+    (output_string oc "(or ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | And (s1,s2) -> 
+    (output_string oc "(and ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Imply (s1,s2) -> 
+    (output_string oc "(=> ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Not s -> 
+    (output_string oc "(not ";
+     print_smtlib oc s bool_id map num;
+     output_string oc ")")
+  | Eq (s1,s2) -> 
+    (output_string oc "(= ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Lt (s1,s2) -> 
+    (output_string oc "(< ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Gt (s1,s2) -> 
+    (output_string oc "(> ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Leq (s1,s2) -> 
+    (output_string oc "(<= ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Geq (s1,s2) -> 
+    (output_string oc "(>= ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Add (s1,s2) -> 
+    (output_string oc "(+ ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Sub (s1,s2) -> 
+    (output_string oc "(- ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  | Mul (s1,s2) -> 
+    (output_string oc "(* ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")")
+  (* | Div (s1,s2) -> 
+    (output_string oc "(div ";
+     print_smtlib oc s1 bool_id map num;
+     output_string oc " ";
+     print_smtlib oc s2 bool_id map num;
+     output_string oc ")") *)
+  | FV fv -> 
+    (try
+      let n = lookup fv map in
+      output_string oc (string_of_int n)
+    with Not_found -> output_string oc fv)
+  | Id id -> output_string oc id
+  | IntPred (id1,ids) -> 
+    (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
+     List.iter
+       (fun id -> 
+          output_string oc (" " ^ id)) ids;
+    output_string oc ")")
+  | IntVarPred (num',id1,ids) -> 
+    (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id1);
+     List.iter
+       (fun id -> 
+          output_string oc (" " ^ id)) ids;
+    output_string oc ")")
+  | PtrPred (id,l,i_sl,ids) -> 
+    (output_string oc ("(P" ^ (string_of_int num) ^ "_" ^ id ^ "_" ^ l ^ " ");
+     print_smtlib oc i_sl bool_id map num;
+     output_string oc " v";
+     List.iter
+       (fun id -> 
+          output_string oc (" " ^ id)) ids;
+     output_string oc ")")
+  | PtrVarPred (num',id,be,i_sl,ids) -> 
+    (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id ^ "_" ^ be ^ " ");
+     print_smtlib oc i_sl bool_id map num;
+     output_string oc " v";
+     List.iter
+       (fun id -> 
+          output_string oc (" " ^ id)) ids;
+     output_string oc ")")
+  | VarPred ->
+    output_string oc "Pvar"
+  | Ands smtlibs -> 
+    match smtlibs with
+    | [] -> output_string oc "true"
+    | sl :: [] -> print_smtlib oc sl bool_id map num
+    | _ -> 
+      (output_string oc "(and";
+       List.iter 
+         (fun sl ->
+            output_string oc " ";
+            print_smtlib oc sl bool_id map num) smtlibs;
+       output_string oc ")")
+
+let rec print_smtlibs oc smtlibs bool_id fvs num iter =
+  if bool_id then
+    (
+      (* List.iter
+      (fun fv -> 
+        output_string oc "(declare-fun ";
+        output_string oc fv;
+        output_string oc " () Int)\n"
+        ) fvs; *)
+      List.iter (print_smtlibs_sub oc num) smtlibs)
+    (* (List.iter 
+      (fun sl -> 
+        output_string oc "(assert (forall ";
+        output_string oc (make_args fvs);
+        print_smtlib oc sl true 0; 
+        output_string oc "))\n"
+        ) smtlibs;
+    output_string oc "\n") *)
+  else 
+    (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
+    let rec range m n =
+      if m > n then []
+      else m :: range (m + 1) n
+    in
+    (* 自由変数fv1, fv2, ... と整数リスト[m, m+1, ... , n]について 
+    [[(fv1, m), (fv1, m+1), ... (fv1, n)], [(fv2, m), (fv2, m+1), ...]]
+    を返す関数 
+    fvの順番逆かも*)
+    let rec generate_combinations fvs int_range =
+      match fvs with
+      | [] -> [[]]
+      | hd :: tl ->
+        let combinations_hd = List.map (fun x -> (hd, x)) int_range in
+        let combinations_tl = generate_combinations tl int_range in
+        List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
+    in
+    (* [(fv1, -iter), (fv1, -iter+1), ... (fv1, iter), (fv2, -iter), (fv2, -iter+1), ...] 
+    自由変数を-iterからiterに代入して所有権の値を計算するための準備*)
+    let comb = generate_combinations fvs (range (-iter) iter) in
+    (* assertにより制約をファイルに書き出す，自由変数に-iterからiterの数値の代入も行う *)
+    List.iter
+      (fun map ->
+        (List.iter 
+          (fun sl -> 
+            output_string oc "(assert ";
+            (* smtlibの制約部分の記述 
+            slはsmtlibの制約
+            mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
+            bool_idは使われていない？
+            numは特定のsmtlibの識別番号
+            *)
+            print_smtlib oc sl false map num; 
+            output_string oc ")\n"
+            ) smtlibs;
+          output_string oc "\n")) comb
+and print_smtlibs_sub oc num sl = 
+  (* 制約内の重複を除いた自由変数のリスト *)
+  let fvs = list_to_set (fvs_of_smtlib sl) [] in
+  if fvs = [] then
+    (output_string oc "(assert ";
+    (* smtlibの制約部分の記述 *)
+      print_smtlib oc sl true [] num; 
+      output_string oc ")\n")
+  else 
+    (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
+    (output_string oc "(assert (forall (";
+      output_string oc (make_args fvs);
+      output_string oc ") ";
+      print_smtlib oc sl true [] num; 
+      output_string oc "))\n")
+and make_args fvs = 
+  match fvs with
+  | [] -> ""
+  | fv :: [] -> "(" ^ fv ^ " Int)" 
+  | fv :: fvs' -> "(" ^ fv ^ " Int) " ^ (make_args fvs')
+(* smtlib形式から自由変数のリストを返す関数 *)
+and fvs_of_smtlib sl =
+  match sl with 
+  | Or (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | And (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Imply (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Not s -> 
+    fvs_of_smtlib s
+  | Eq (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Lt (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Gt (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Leq (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Geq (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Add (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Sub (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Mul (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  (* | Div (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
+  | FV fv -> 
+    [fv]
+  | Id id -> 
+    []
+  | IntPred (_,ids) ->
+    ids
+  | IntVarPred (_,_,ids) ->
+    ids
+  | PtrPred (_,_,s1,fvs) ->
+    "v" :: (fvs_of_smtlib s1) @ fvs 
+  | PtrVarPred (_,_,_,s1,fvs) ->
+    "v" :: (fvs_of_smtlib s1) @ fvs 
+  | VarPred ->
+    []
+  | Ands ss ->
+    List.concat (List.map fvs_of_smtlib ss)
