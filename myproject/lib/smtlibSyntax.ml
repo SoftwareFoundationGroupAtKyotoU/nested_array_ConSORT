@@ -14,7 +14,7 @@ type smtlib =
   | Add of smtlib * smtlib
   | Sub of smtlib * smtlib
   | Mul of smtlib * smtlib
-  | Div of smtlib * smtlib
+  (* | Div of smtlib * smtlib *)
   | FV of id
   | Id of id
   | IntPred of id * id list
