@@ -31,13 +31,13 @@ let rec print_exp exp =
       print_string id2;
       print_string ", ";
       print_exp e;
-      print_string ")")
-  | ELetDerefPtr (id1,id2,e) ->
+      print_string ")") *)
+  | LetDerefExp (id1,id2,e) ->
     (print_string ("ELetDerefPtr(" ^ id1 ^ ", ");
       print_string id2;
       print_string ", ";
       print_exp e;
-      print_string ")") *)
+      print_string ")")
   | LetAddPtrExp (id1,id2,e1,e2) ->
     (print_string ("ELetAddPtr(" ^ id1 ^ ", ");
       print_string id2;
@@ -61,6 +61,14 @@ let rec print_exp exp =
       print_exp e2;
       print_string ", ";
       print_exp e3;
+      print_string ")")
+  | IfnpExp (id,e1,e2) ->
+    (print_string "EIfnp(";
+      print_string id;
+      print_string ", "; 
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
       print_string ")")
   | LetAllocExp (id,e1,simpleTy,e2) ->
     (print_string ("EMkarray(" ^ id ^ ", ");
@@ -132,24 +140,24 @@ let rec print_exp exp =
     (print_string ("EApp(" ^ id ^ ", ");
       print_exps es;
       print_string ")") 
-  (* | EEq (e1,e2) ->
+  | EqExp (e1,e2) ->
     (print_string "EEq(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | ELt (e1, e2) ->
+  | LtExp (e1, e2) ->
     (print_string "ELt(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | EGt (e1, e2) ->
+  | GtExp (e1, e2) ->
     (print_string "EGt(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
-      print_string ")") *)
+      print_string ")")
   | LeqExp (e1, e2) ->
     (print_string "ELeq(";
       print_exp e1;
@@ -168,41 +176,41 @@ let rec print_exp exp =
       print_string ", ";
       print_exp e2;
       print_string ")")
-  (* | EAnd (e1,e2) ->
+  | AndExp (e1,e2) ->
     (print_string "EAnd(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | EOr (e1,e2) ->
+  | OrExp (e1,e2) ->
     (print_string "EOr(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | ENot e ->
+  | NotExp e ->
     (print_string "ENot(";
       print_exp e;
       print_string ")")
-  | EAdd (e1,e2) -> 
+  | PlusExp (e1,e2) -> 
     (print_string "EAdd(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
-      print_string ")") *)
-  (* | MinusExp (e1,e2) -> 
+      print_string ")")
+  | MinusExp (e1,e2) -> 
     (print_string "ESub(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | EMul (e1,e2) -> 
+  | MultExp (e1,e2) -> 
     (print_string "EMul(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | EDiv (e1,e2) -> 
+  (* | EDiv (e1,e2) -> 
     (print_string "EDiv(";
       print_exp e1;
       print_string ", ";
@@ -214,6 +222,8 @@ let rec print_exp exp =
     print_string "fail" *)
   | ILit i ->
     print_int i
+  | BLit b ->
+    if b then print_string "true" else print_string "false"
   | Nondet ->
     print_string "nondet"
   (* | EConstTrue ->
