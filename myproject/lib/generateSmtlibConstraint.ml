@@ -108,10 +108,10 @@ let rec make_bound_exp fvs id h_or_l fun_num branch_trace =
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num id h_or_l id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num h_or_l id id_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num fv id h_or_l id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace in
     Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace)
 
 (*直前の所有範囲の下限,または上限を環境変数の一次式で表す *)
@@ -119,10 +119,10 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace =
   let id_pre_pos = lookup_pre_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num id h_or_l id_pre_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num h_or_l id id_pre_pos pp_branch_trace branch_trace in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num fv id h_or_l id_pre_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace)
 
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
@@ -297,7 +297,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
      Leq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace);
      Geq(id2_pre_scope_high, Sub(make_bound_exp fvs id1 fun_num branch_trace, sl));
      Geq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace)]   *)
-  | CMkArray (id,e, simpleTy,pos) -> 
+  | CMkArray (id,e, _,pos) -> 
     let upper_bound =
       match e with
       | ILit i -> Id (string_of_int (i-1))
@@ -363,6 +363,16 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
       And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id2_pre_scope_low id2_pre_scope_high,
       And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id1_post_scope_low id1_post_scope_high,
         make_same_scope_smtlib id2_pre_scope_low id2_pre_scope_high id2_post_scope_low id2_post_scope_high))) in
+    (* let smtlib1 =
+      And(Eq(Add(id1_pre_own, id2_pre_own), Add(id1_post_own, id2_post_own)),
+      And(Eq(id1_pre_scope_low, id2_pre_scope_low),
+      And(Eq(id1_pre_scope_high, id2_pre_scope_high),
+      And(Eq(id1_pre_scope_low, id1_post_scope_low),
+      And(Eq(id1_pre_scope_high, id1_post_scope_high),
+      And(Eq(id2_pre_scope_low, id2_post_scope_low),
+      
+      
+          Eq(id2_pre_scope_high, id2_post_scope_high))))))) in *)
     (* 
     -----   
     | x |   ---------    ---------
@@ -390,6 +400,17 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
            adjacent_id1_post_hi_id2_post_lo),
          And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id2_post_scope_low id1_post_scope_high,
            adjacent_id2_post_hi_id1_post_lo ))))) in
+    (* let smtlib2 = 
+      And(Eq(Add(id1_pre_own, id2_pre_own), id1_post_own),
+      And(Eq(Add(id1_pre_own, id2_pre_own), id2_post_own),
+      And(Eq(id1_pre_scope_low, id2_pre_scope_low),
+      And(Eq(id1_pre_scope_high, id2_pre_scope_high),
+          Or(And(Eq(id1_pre_scope_low,id1_post_scope_low), 
+              And(Eq(id2_pre_scope_high, id2_post_scope_high),
+                adjacent_id1_post_hi_id2_post_lo)),
+              And(Eq(id1_pre_scope_low, id2_post_scope_low), 
+              And(Eq(id2_pre_scope_high, id1_post_scope_high),
+                adjacent_id2_post_hi_id1_post_lo))))))) in *)
 (* 
                               -----
     ---------    ---------    | x |
@@ -418,6 +439,17 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
               adjacent_id1_pre_hi_id2_pre_lo),
            And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id1_post_scope_low id2_post_scope_high,
               adjacent_id2_pre_hi_id1_pre_lo))))) in 
+    (* let smtlib3 = 
+      And(Eq(id1_pre_own, Add(id1_post_own, id2_post_own)),
+      And(Eq(id2_pre_own, Add(id1_post_own, id2_post_own)),
+      And(Eq(id1_post_scope_low, id2_post_scope_low),
+      And(Eq(id1_post_scope_high, id2_post_scope_high),
+          Or(And(Eq(id1_pre_scope_low, id1_post_scope_low), 
+              And(Eq(id2_pre_scope_high, id2_post_scope_high),
+                adjacent_id1_pre_hi_id2_pre_lo)),
+              And(Eq(id2_pre_scope_low, id1_post_scope_low), 
+              And(Eq(id1_pre_scope_high, id2_post_scope_high),
+                adjacent_id2_pre_hi_id1_pre_lo))))))) in *)
     (*                             
     ---------    ---------    ---------    ---------    
     | x | y | or | y | x | -> | x | y | or | y | x |
@@ -463,13 +495,34 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
            And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id2_post_scope_low id1_post_scope_high,
            And(adjacent_id2_pre_hi_id1_pre_lo,
               adjacent_id2_post_hi_id1_post_lo)))))))) in
+    (* let smtlib4 = 
+      And(Eq(id1_pre_own, id1_post_own),
+      And(Eq(id2_pre_own, id2_post_own),
+      And(Eq(id1_post_own, id2_post_own),
+          Or(And(Eq(id1_pre_scope_low, id1_post_scope_low), 
+              And(Eq(id2_pre_scope_high, id2_post_scope_high),
+              And(adjacent_id1_pre_hi_id2_pre_lo,
+                adjacent_id1_post_hi_id2_post_lo))),
+          Or(And(Eq(id1_pre_scope_low, id2_post_scope_low), 
+              And(Eq(id2_pre_scope_high, id1_post_scope_high),
+              And(adjacent_id1_pre_hi_id2_pre_lo,
+                adjacent_id2_post_hi_id1_post_lo))),
+          Or(And(Eq(id2_pre_scope_low, id1_post_scope_low), 
+              And(Eq(id1_pre_scope_high, id2_post_scope_high),
+              And(adjacent_id2_pre_hi_id1_pre_lo,
+                adjacent_id1_post_hi_id2_post_lo))),
+              And(Eq(id2_pre_scope_low, id2_post_scope_low), 
+              And(Eq(id1_pre_scope_high, id1_post_scope_high),
+              And(adjacent_id2_pre_hi_id1_pre_lo,
+                adjacent_id2_post_hi_id1_post_lo))))))))) in *)
     [Or(smtlib1,
      Or(smtlib2,
      Or(smtlib3,
         smtlib4)))]
     (* 評価後のxの所有範囲の下限が評価後のxの所有範囲の上限以下;
       評価後のyの所有範囲の下限が評価後のyの所有範囲の上限以下 *)
-     @ [Leq(id1_post_scope_low, id1_post_scope_high); Leq(id2_post_scope_low, id2_post_scope_high)]
+     @ [Leq(make_bound_exp fvs id1 "l" fun_num branch_trace, make_bound_exp fvs id1 "h" fun_num branch_trace);
+      Leq(make_bound_exp fvs id2 "l" fun_num branch_trace, make_bound_exp fvs id2 "h" fun_num branch_trace)]
   | CDeref (id,_) -> 
     (* let x = *y in ...
     評価後のyの所有権は0より大きい
@@ -502,14 +555,14 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
         (* 呼び出された関数の整数変数名と呼び出した関数の整数自由変数の和集合 *)
         let fvs' = union_list (List.map fst subst) fvs in
         (* 所有範囲の下限を表すデータ構造 *)
-        let sll = make_bound_exp_be fvs' "l" id_param num "b" in
+        let sll = make_bound_exp_be fvs' id_param "l"  num "b" in
         (* 所有範囲の上限を表すデータ構造 *)
-        let slh = make_bound_exp_be fvs' "h" id_param num "b" in
+        let slh = make_bound_exp_be fvs' id_param "h"  num "b" in
         (* 引数xの関数開始時の所有権は0　または
         　　　　(実引数の所有権が関数開始時に必要な所有権以上　かつ
         　　　　実引数の所有範囲の下限が関数開始時に必要な所有範囲の下限以下　かつ
         　　　　実引数の所有範囲の上限が関数開始時に必要な所有範囲の上限以上)　 *)
-        [Or(Eq(Id "0.", make_own_var_be id_param num "b"), 
+                [Or(Eq(Id "0.", make_own_var_be id_param num "b"), 
          And(Geq(make_own_var id fun_num branch_trace, make_own_var_be id_param num "b"),
          And(Leq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll),
              Geq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh))))]
@@ -538,8 +591,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
       | (id_param, FTRef (_,ENull,ENull,_)), AId id ->
         let num = lookup id_fn funnames_numberings in
         let fvs' = union_list (List.map fst subst) fvs in
-        let sll = make_bound_exp_be fvs' "l" id_param num "e" in
-        let slh = make_bound_exp_be fvs' "h" id_param num "e" in
+        let sll = make_bound_exp_be fvs' id_param "l"  num "e" in
+        let slh = make_bound_exp_be fvs' id_param "h"  num "e" in
         (* 引数のvar_locationsを生成 *)
         new_id id pos branch_trace;
         [Eq(make_own_var id fun_num branch_trace, make_own_var_be id_param num "e");
