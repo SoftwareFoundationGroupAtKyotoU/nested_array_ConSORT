@@ -157,7 +157,7 @@ let rec print_smtlib oc sl bool_id map num =
     (try
       let n = lookup fv map in
       output_string oc (string_of_int n)
-    with Not_found -> output_string oc fv)
+    with Error _ -> output_string oc fv)
   | Id id -> output_string oc id
   | IntPred (id1,ids) -> 
     (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
