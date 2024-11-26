@@ -11,7 +11,7 @@ let err s = raise (Error s)
 let rec lookup x env =
   try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
 
-
+(* プログラムの構文木の出力 *)
 let rec print_exp exp =
   match exp with
   | Let (id,e1,e2) ->
@@ -71,8 +71,10 @@ let rec print_exp exp =
       print_exp e2;
       print_string ")")
   | LetAllocExp (id,e1,simpleTy,e2) ->
-    (print_string ("EMkarray(" ^ id ^ ", ");
+    (print_string ("EAlloc(" ^ id ^ ", ");
       print_exp e1;
+      print_string ": ";
+      print_simplety simpleTy;
       print_string ", ";
       print_exp e2;
       print_string ")")
@@ -234,7 +236,6 @@ let rec print_exp exp =
     print_string x
   | ENull ->
     print_string "ENull"
-  | _ -> ()
 and print_exps es =
   match es with
   | [] -> ()
@@ -332,13 +333,6 @@ let rec pp_branch_trace fmt branch_trace =
   match branch_trace with
   | [] -> Format.fprintf fmt ""
   | branch :: branch_trace' -> Format.fprintf fmt "_%a%a" pp_branch branch pp_branch_trace branch_trace'
-
-(* branch listの文字列化 *)
-let rec branch_trace_to_str branch_trace = 
-  match branch_trace with
-  | [] -> ""
-  | Then :: branch_trace' -> sprintf "_then%s" (branch_trace_to_str branch_trace')
-  | Else :: branch_trace' -> sprintf "_else%s" (branch_trace_to_str branch_trace')
 
 (* プログラムの制約式をsmtlibの読める制約の形に直す *)
 let rec exp_to_smtlib exp = 
