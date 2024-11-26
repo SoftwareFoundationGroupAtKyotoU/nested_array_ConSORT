@@ -3,7 +3,7 @@ open Elaborate
 open CollectOwnConstraint
 open GenerateSmtlibConstraint
 open PrintOwnConstraint
-open Printf
+open Z3Syntax
 
 exception Parse_error of Lexing.position * Lexing.position
 
@@ -62,4 +62,36 @@ let generate_constrs file iter =
   output_string oc1 "(check-sat)\n";
   (* 充足可能な場合に具体的な値を取得 *)
   output_string oc1 "(get-model)\n";
-  close_out oc1;
+  close_out oc1
+
+(** Second phase of the ownershipip inference:
+    Checks the validity of \forall x phi(x, a), where a is the witeness for \exist y obtasined in the first phase. *)
+let main_fv file =
+  let oc_r1 = open_in file  in
+  let oc_r2 = open_in "experiment/result_int" in
+  (* プログラムの読み出し *)
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+  (* main_intで得られた所有権関数の係数の候補 *)
+  let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+  close_in oc_r1; close_in oc_r2;
+  let (fdefs, _) = program in
+  let n = List.length fdefs in 
+  infer_prog_simpleTy program;
+  let elaborate_program = elaborate_prog program in
+  let all_constrs = collect_program_own_constraints elaborate_program in 
+  let oc = open_out "experiment/out_fv.smt2" in
+  
+  (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
+  main_int_sub_declare oc all_constrs true n 0;
+  (* 所有権計算に必要なsmtlibでのassert式の書き出し
+  ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
+  (* Printf.eprintf "Error:\n"; *)
+  main_int_sub oc all_constrs true false n 0;
+  (* Printf.eprintf "Error:\n"; *)
+  (* main_intで得られた所有権の係数をassert形式で表現 *)
+  print_z3result oc z3res;
+  output_string oc "\n\n";
+  (* 充足可能か調べる *)
+  output_string oc "(check-sat)\n";
+  output_string oc "(get-model)\n";
+  close_out oc
