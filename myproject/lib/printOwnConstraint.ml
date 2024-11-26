@@ -201,24 +201,16 @@ let rec print_smtlib oc sl bool_id map num =
             print_smtlib oc sl bool_id map num) smtlibs;
        output_string oc ")")
 
-let rec print_smtlibs oc smtlibs bool_id fvs num iter =
-  if bool_id then
-    (
-      (* List.iter
-      (fun fv -> 
-        output_string oc "(declare-fun ";
-        output_string oc fv;
-        output_string oc " () Int)\n"
-        ) fvs; *)
-      List.iter (print_smtlibs_sub oc num) smtlibs)
-    (* (List.iter 
-      (fun sl -> 
-        output_string oc "(assert (forall ";
-        output_string oc (make_args fvs);
-        print_smtlib oc sl true 0; 
-        output_string oc "))\n"
-        ) smtlibs;
-    output_string oc "\n") *)
+(* smtlibの制約をファイルに書き出し
+oc 書き出し先
+smtlibs 制約
+is_unconcrete 自由変数を具体化するかどうか falseで具体化 trueで制約をそのまま書き出し
+fvs 所有権termが依存できる自由変数
+num 篩型用の数字
+iter 自由変数を具体化する値の範囲 *)
+let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
+  if is_unconcrete then
+    List.iter (print_smtlibs_sub oc num) smtlibs
   else 
     (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
     let rec range m n =
@@ -249,7 +241,6 @@ let rec print_smtlibs oc smtlibs bool_id fvs num iter =
             (* smtlibの制約部分の記述 
             slはsmtlibの制約
             mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
-            bool_idは使われていない？
             numは特定のsmtlibの識別番号
             *)
             print_smtlib oc sl false map num; 
@@ -307,7 +298,7 @@ and fvs_of_smtlib sl =
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
   | FV fv -> 
     [fv]
-  | Id id -> 
+  | Id _ -> 
     []
   | IntPred (_,ids) ->
     ids
