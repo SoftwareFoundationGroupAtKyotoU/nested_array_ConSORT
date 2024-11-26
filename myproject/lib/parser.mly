@@ -43,8 +43,8 @@ open Syntax
 %token TOP RARROW
 %token NU INT REF UNIT TOR TAND TIMPLY TNOT
 
-// others | (end_of_file)
-%token BAR EOF
+// others # | (end_of_file)
+%token HASH BAR EOF
 
 %start toplevel
 %type <Syntax.program> toplevel 
@@ -75,7 +75,8 @@ ID_Funtypes: (* 関数の評価前後の引数名と型のコンマ区切り *)
   | x = ID_Funtype COMMA y = ID_Funtypes { x :: y }
 
 ID_Funtype: (* 関数の評価前後の引数名と型 *)
-| x = ID COLON idtype = Ftype { (x, idtype) }
+| x = ID COLON idtype = Ftype { (RawId(x), idtype) }
+| HASH x = ID COLON idtype = Ftype { (HashId(x), idtype) }
 
 Ftype: // プログラム内に記述する型
 // | LBRACE NU COLON TINT BAR smtlib RBRACE

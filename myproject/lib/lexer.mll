@@ -54,6 +54,7 @@ rule main = parse
   | "=>" { Parser.TIMPLY }
   | "," { Parser.COMMA }
   | "|" { Parser.BAR }
+  | "#" { Parser.HASH }
   | "/*" { comment lexbuf; main lexbuf }
   (*コメントの先頭を読んだ際はエントリポイント「コメント」に移ったのちメインに戻ってくる*)
   | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']*
