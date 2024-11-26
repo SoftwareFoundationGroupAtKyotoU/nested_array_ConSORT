@@ -1,3 +1,3 @@
 # nested_array_ConSORT
-- dune runtest でテストが走る
-- dune exec myproject ファイル名 でファイル中のプログラムをASTになおしたものを出力
+- dune exec myproject ファイルのパス でファイル中のプログラムの所有権推論
+例 dune exec myproject ./example/init_10.imp
