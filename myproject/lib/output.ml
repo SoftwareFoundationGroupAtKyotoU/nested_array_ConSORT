@@ -8,10 +8,9 @@ open Z3Syntax
 exception Parse_error of Lexing.position * Lexing.position
 
 
-(* 所有権計算に必要なsmtlibでの宣言の書き出し 
-bool_id使ってない？
+(* 所有権計算に必要なsmtlibでの宣言(declare)の書き出し 
 *)
-let rec main_int_sub_declare oc all_cs bool_id fun_num iter = 
+let rec main_int_declare oc all_cs fun_num iter = 
   if fun_num < 0 then 
     ()
   else
@@ -23,20 +22,28 @@ let rec main_int_sub_declare oc all_cs bool_id fun_num iter =
     (* 関数ブロックごとに一行区切る *)
     output_string oc "\n";
     (* 次の関数の所有権をsmtlib形式で宣言 *)
-    main_int_sub_declare oc all_cs bool_id (fun_num-1) iter)
+    main_int_declare oc all_cs (fun_num-1) iter)
 
-let rec main_int_sub oc all_cs bool_id flag fun_num iter = 
+(* 所有権の制約のsmtlib形式（assert）での書き出し 
+oc 出力ファイル
+all_cs 制約集合
+is_unconcrete 変数を具体化するかどうか，所有権推論のFirst phaseかSecond phaseかを表す
+flag 現状使ってない
+fun_num 関数の通し番号
+iter 変数の具体化の範囲
+*)
+let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter = 
   if fun_num < 0 then 
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
     (let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     (* 制約をassertとしてファイルに書き出し，bool_idは関数print_smtlibsの分岐 *)
-    print_smtlibs oc smtlibs bool_id fvs (-1) iter;
+    print_smtlibs oc smtlibs is_unconcrete fvs (-1) iter;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
     (* 次の関数の制約出力へ *)
-    main_int_sub oc all_cs bool_id flag (fun_num-1) iter)
+    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1) iter)
 
 (** First phase of the ownershipip inference:
     Generates n_1, ..., n_k and checks the validity of \exists y . phi(n_1, y) /\ ... /\ phi(n_k, y) *)
@@ -54,10 +61,10 @@ let generate_constrs file iter =
 
   let oc1 = open_out "experiment/out_int.smt2" in
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
-  main_int_sub_declare oc1 all_constrs false fun_num iter;
+  main_int_declare oc1 all_constrs fun_num iter;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *)  
-  main_int_sub oc1 all_constrs false false fun_num iter;
+  main_int_smtlibs oc1 all_constrs false false fun_num iter;
   (* 充足可能か調べる *)
   output_string oc1 "(check-sat)\n";
   (* 充足可能な場合に具体的な値を取得 *)
@@ -82,11 +89,11 @@ let main_fv file =
   let oc = open_out "experiment/out_fv.smt2" in
   
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
-  main_int_sub_declare oc all_constrs true n 0;
+  main_int_declare oc all_constrs n 0;
   (* 所有権計算に必要なsmtlibでのassert式の書き出し
   ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
   (* Printf.eprintf "Error:\n"; *)
-  main_int_sub oc all_constrs true false n 0;
+  main_int_smtlibs oc all_constrs true false n 0;
   (* Printf.eprintf "Error:\n"; *)
   (* main_intで得られた所有権の係数をassert形式で表現 *)
   print_z3result oc z3res;
