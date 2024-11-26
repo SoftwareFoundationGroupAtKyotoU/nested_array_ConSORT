@@ -17,6 +17,7 @@ type smtlib =
   (* | Div of smtlib * smtlib *)
   | FV of id
   | Id of id
+  (* 以下篩型用 *)
   | IntPred of id * id list
   | IntVarPred of int * id * id list
   | PtrPred of id * id * smtlib * id list

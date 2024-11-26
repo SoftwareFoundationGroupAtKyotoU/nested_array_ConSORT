@@ -79,11 +79,13 @@ let rec collect_exp env fun_name args position exp =
     | _ -> raise ConstrError)
   | _ -> []
 
+(* 関数引数から#をとって変数名を抽出 *)
 let elim_hash ftid =
   match ftid with
   | RawId id -> id
   | HashId id -> id
 
+(* ある一つの関数の関数定義を受け取り，関数名と制約集合を表すリスト「を返す *)
 let collect_function_own_constraints fdef =
   let (id, _, annotation, e) = fdef in
   let (args_before_eval, args_after_eval, _) = annotation in
@@ -91,6 +93,7 @@ let collect_function_own_constraints fdef =
   fn_env := (id, (args_before_eval, args_after_eval)) :: !fn_env;
   (id, collect_exp [] id args 1 e)
 
+(* プログラム全体の制約集合を返す *)
 let collect_program_own_constraints prog = 
   let (fdefs, exp) = prog in
   let fun_constraints = List.map collect_function_own_constraints fdefs in
