@@ -730,7 +730,7 @@ let numbering_function all_cs =
 let all_cs_to_smtlib all_cs flag fun_num =
   (* 関数名とその順番の組のリストを作成 *)
   let funnames_numberings = numbering_function all_cs in
-  (* n番目の関数の制約，var_locations, varown_count, 自由変数の集合 *)
+  (* fun_num番目の関数の制約，var_locations, varown_count, 自由変数の集合 *)
   let (smtlibs, var_locations, varown_count, fvs) = fun_constrs_to_smtlib (List.nth all_cs fun_num) fun_num funnames_numberings in
   let ss' = 
     (* flag次第でおそらく一つも成り立たない？？？？？ *)
