@@ -53,7 +53,7 @@ let rec elaborate_exp fun_name exp =
   | _ -> exp
 
 let elaborate_prog prog = 
-  let (fdefs, e) = prog in
-  let fdefs' = List.map (fun (id,ids,ann,e) -> (id, ids, ann, elaborate_exp id e)) fdefs in
-  let e' = elaborate_exp "main" e in
-  (fdefs', e')
+  let (fdefs, exp) = prog in
+  let fdefs' = List.map (fun (id,ids,ann,exp) -> (id, ids, ann, elaborate_exp id exp)) fdefs in
+  let exp' = elaborate_exp "main" exp in
+  (fdefs', exp')
