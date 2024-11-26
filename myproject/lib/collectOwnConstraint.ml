@@ -7,7 +7,7 @@ open Util
 exception ConstrError
 
 (* (関数名 * ((引数名*引数の型)のリスト　*　(評価後の引数名*引数の型)のリスト))のリスト *)
-let fn_env : (id * ((id * ftype) list * (id * ftype) list)) list ref = ref []
+let fn_env : (id * ((ftype_id * ftype) list * (ftype_id * ftype) list)) list ref = ref []
 
 let rec collect_exp env fun_name args position exp =
   match exp with
@@ -79,11 +79,15 @@ let rec collect_exp env fun_name args position exp =
     | _ -> raise ConstrError)
   | _ -> []
 
+let elim_hash ftid =
+  match ftid with
+  | RawId id -> id
+  | HashId id -> id
 
 let collect_function_own_constraints fdef =
   let (id, _, annotation, e) = fdef in
   let (args_before_eval, args_after_eval, _) = annotation in
-  let args = List.map fst args_before_eval in 
+  let args = List.map elim_hash (List.map fst args_before_eval) in 
   fn_env := (id, (args_before_eval, args_after_eval)) :: !fn_env;
   (id, collect_exp [] id args 1 e)
 
