@@ -1,3 +1,5 @@
+exception Error of string
+
 type id = string
 (* type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq *)
 
@@ -15,6 +17,14 @@ type simpleTy =
   | SUnit
   | SFun of simpleTy list * simpleTy
   | SVar of tyvar
+
+let rec print_simplety simpleTy = 
+  match simpleTy with
+  | SInt -> print_string "int"
+  | SRef simpleTy' -> 
+    (print_simplety simpleTy';
+    print_string " ref")
+  | _ -> raise (Error "perhaps source program error")
 
 type funcallexp = 
     FunCall of id * (id list)
