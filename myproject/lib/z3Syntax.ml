@@ -23,12 +23,12 @@ and print_z3result_sub oc def =
      output_string oc (id ^ " ");
      output_string oc (string_of_int i);
      output_string oc "))\n")
-  | (id,t,Float f) ->
+  | (id,_,Float f) ->
     (output_string oc "(assert (= ";
      output_string oc (id ^ " ");
      output_string oc (string_of_float f);
      output_string oc "))\n")
-  | (id,t,Div (f1,f2)) ->
+  | (id,_,Div (f1,f2)) ->
     (output_string oc "(assert (= ";
      output_string oc (id ^ " (/ ");
      output_string oc (string_of_float f1);
