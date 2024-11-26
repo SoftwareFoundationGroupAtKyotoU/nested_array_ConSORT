@@ -32,9 +32,9 @@ verify(n, p)
 }
 
 {
-  let p = alloc 1000 : int ref in
-  let m = 1000 in
+  let p = alloc 10 : int ref in
+  let m = 10 in
   let d = init(m, p) in
   let d2 = verify(m, p) in
-  1
+  ()
 }

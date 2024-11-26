@@ -5,14 +5,14 @@ sum(n, p)
   if n <= 0 then {
     0
   } else {
-    let x = *p in
-    let q = p + 1 in
     let m = n - 1 in
-    let s = sum(m, q) in
-    let y = x + s in
-    alias(q = p + 1);
-    y
-  }
+    let q = p + m in
+    let y = *q in
+    let s = sum(m, p) in
+    alias(q=p+1);
+    let z = y + s in
+    z
+  } 
 }
 
 abs(m)
@@ -37,7 +37,7 @@ init_x(n, x, p)
     let q = p + 1 in
     let m = n - 1 in
     let d = init_x(m, x, q) in
-    alias(q = p+1);
+    alias(q=p+1);
     1
   }
 }
