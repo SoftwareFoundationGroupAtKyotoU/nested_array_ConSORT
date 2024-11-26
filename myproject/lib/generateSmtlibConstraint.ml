@@ -346,11 +346,11 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     let adjacent_id1_post_hi_id2_post_lo = make_adjacent_scope_smtlib id1_post_scope_high id2_post_scope_low in
     let adjacent_id2_post_hi_id1_post_lo = make_adjacent_scope_smtlib id2_post_scope_high id1_post_scope_low in
     (* 
-    -----   -----
-    | x |   | x |
-    |---| ->|---|
-    | y |   | y |
-    -----   -----
+    -----    -----
+    | x |    | x |
+    |---| -> |---|
+    | y |    | y |
+    -----    -----
     (評価前のxとyの所有権の和と評価後のxとyの所有権の和は等しい　かつ
     　　評価前のxの所有範囲の下限+numと評価前のyの所有範囲の下限が等しい　かつ
     　　評価前のxの所有範囲の下限+numと評価後のxの所有範囲の下限+numが等しい　かつ
@@ -358,21 +358,19 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     　　評価前のxの所有範囲の上限+numと評価前のyの所有範囲の上限が等しい　かつ
     　　評価前のxの所有範囲の上限+numと評価後のxの所有範囲の上限+numが等しい　かつ
     　　評価前のyの所有範囲の上限と評価後のyの所有範囲の上限が等しい) *)
-    let smtlib1 = 
+    (* let smtlib1 = 
       And(Eq(Add(id1_pre_own, id2_pre_own), Add(id1_post_own, id2_post_own)),
       And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id2_pre_scope_low id2_pre_scope_high,
       And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id1_post_scope_low id1_post_scope_high,
-        make_same_scope_smtlib id2_pre_scope_low id2_pre_scope_high id2_post_scope_low id2_post_scope_high))) in
-    (* let smtlib1 =
+        make_same_scope_smtlib id2_pre_scope_low id2_pre_scope_high id2_post_scope_low id2_post_scope_high))) in *)
+    let smtlib1 =
       And(Eq(Add(id1_pre_own, id2_pre_own), Add(id1_post_own, id2_post_own)),
       And(Eq(id1_pre_scope_low, id2_pre_scope_low),
-      And(Eq(id1_pre_scope_high, id2_pre_scope_high),
       And(Eq(id1_pre_scope_low, id1_post_scope_low),
-      And(Eq(id1_pre_scope_high, id1_post_scope_high),
       And(Eq(id2_pre_scope_low, id2_post_scope_low),
-      
-      
-          Eq(id2_pre_scope_high, id2_post_scope_high))))))) in *)
+      And(Eq(id1_pre_scope_high, id2_pre_scope_high),
+      And(Eq(id1_pre_scope_high, id1_post_scope_high),
+      Eq(id2_pre_scope_high, id2_post_scope_high))))))) in
     (* 
     -----   
     | x |   ---------    ---------
@@ -392,15 +390,15 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     　　　　評価前のyの所有範囲の上限と評価後のxの所有範囲の上限+numが等しい　かつ
     　　　　評価後のyの所有範囲の上限+1と評価後のxの所有範囲の下限+numが等しい))
     　　) *)
-    let smtlib2 = 
+    (* let smtlib2 = 
       And(Eq(Add(id1_pre_own, id2_pre_own), id1_post_own),
       And(Eq(Add(id1_pre_own, id2_pre_own), id2_post_own),
       And(make_same_scope_smtlib id1_pre_scope_low id1_pre_scope_high id2_pre_scope_low id2_pre_scope_high,
       Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id1_post_scope_low id2_post_scope_high,
            adjacent_id1_post_hi_id2_post_lo),
          And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id2_post_scope_low id1_post_scope_high,
-           adjacent_id2_post_hi_id1_post_lo ))))) in
-    (* let smtlib2 = 
+           adjacent_id2_post_hi_id1_post_lo ))))) in *)
+    let smtlib2 = 
       And(Eq(Add(id1_pre_own, id2_pre_own), id1_post_own),
       And(Eq(Add(id1_pre_own, id2_pre_own), id2_post_own),
       And(Eq(id1_pre_scope_low, id2_pre_scope_low),
@@ -410,7 +408,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
                 adjacent_id1_post_hi_id2_post_lo)),
               And(Eq(id1_pre_scope_low, id2_post_scope_low), 
               And(Eq(id2_pre_scope_high, id1_post_scope_high),
-                adjacent_id2_post_hi_id1_post_lo))))))) in *)
+                adjacent_id2_post_hi_id1_post_lo))))))) in
 (* 
                               -----
     ---------    ---------    | x |
@@ -431,15 +429,15 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     　　　　評価前のxの所有範囲の上限+numと評価後のyの所有範囲の上限が等しい　かつ
     　　　　評価前のyの所有範囲の上限+1と評価前のxの所有範囲の下限+numが等しい))
         ) *)
-    let smtlib3 = 
+    (* let smtlib3 = 
       And(Eq(id1_pre_own, Add(id1_post_own, id2_post_own)),
       And(Eq(id2_pre_own, Add(id1_post_own, id2_post_own)),
       And(make_same_scope_smtlib id1_post_scope_low id1_post_scope_high id2_post_scope_low id2_post_scope_high,
         Or(And(make_same_scope_smtlib id1_pre_scope_low id2_pre_scope_high id1_post_scope_low id2_post_scope_high,
               adjacent_id1_pre_hi_id2_pre_lo),
            And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id1_post_scope_low id2_post_scope_high,
-              adjacent_id2_pre_hi_id1_pre_lo))))) in 
-    (* let smtlib3 = 
+              adjacent_id2_pre_hi_id1_pre_lo))))) in  *)
+    let smtlib3 = 
       And(Eq(id1_pre_own, Add(id1_post_own, id2_post_own)),
       And(Eq(id2_pre_own, Add(id1_post_own, id2_post_own)),
       And(Eq(id1_post_scope_low, id2_post_scope_low),
@@ -449,7 +447,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
                 adjacent_id1_pre_hi_id2_pre_lo)),
               And(Eq(id2_pre_scope_low, id1_post_scope_low), 
               And(Eq(id1_pre_scope_high, id2_post_scope_high),
-                adjacent_id2_pre_hi_id1_pre_lo))))))) in *)
+                adjacent_id2_pre_hi_id1_pre_lo))))))) in
     (*                             
     ---------    ---------    ---------    ---------    
     | x | y | or | y | x | -> | x | y | or | y | x |
@@ -479,7 +477,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
         　　評価前のyの所有範囲の上限+1が評価前のxの所有範囲の下限+numと等しい　かつ
         　　評価後のyの所有範囲の上限+1が評価後のxの所有範囲の下限+numと等しい))
         );　 *)
-    let smtlib4 = 
+    (* let smtlib4 = 
     And(Eq(id1_pre_own, id1_post_own),
     And(Eq(id2_pre_own, id2_post_own),
     And(Eq(id1_post_own, id2_post_own),
@@ -494,8 +492,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
               adjacent_id1_post_hi_id2_post_lo)),
            And(make_same_scope_smtlib id2_pre_scope_low id1_pre_scope_high id2_post_scope_low id1_post_scope_high,
            And(adjacent_id2_pre_hi_id1_pre_lo,
-              adjacent_id2_post_hi_id1_post_lo)))))))) in
-    (* let smtlib4 = 
+              adjacent_id2_post_hi_id1_post_lo)))))))) in *)
+    let smtlib4 = 
       And(Eq(id1_pre_own, id1_post_own),
       And(Eq(id2_pre_own, id2_post_own),
       And(Eq(id1_post_own, id2_post_own),
@@ -514,7 +512,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
               And(Eq(id2_pre_scope_low, id2_post_scope_low), 
               And(Eq(id1_pre_scope_high, id1_post_scope_high),
               And(adjacent_id2_pre_hi_id1_pre_lo,
-                adjacent_id2_post_hi_id1_post_lo))))))))) in *)
+                adjacent_id2_post_hi_id1_post_lo))))))))) in
     [Or(smtlib1,
      Or(smtlib2,
      Or(smtlib3,
@@ -537,7 +535,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     それ以外は何も返さない *)
     let find_subst param arg = 
       match param, arg with
-      | (id, FTInt _), AExp e -> [(id, e)]
+      | (RawId _ , FTInt _), AExp _ -> []
+      | (HashId id, FTInt _), AExp e -> [(id, e)]
       | (_, FTRef _), AId _ -> []
       | _ -> raise ConstrError
     in
@@ -549,7 +548,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     let subst_param_before_eval param arg = 
       match param, arg with
       (* x | () ref *)
-      | (id_param, FTRef (_,ENull,ENull,_)), AId id ->
+      | (RawId id_param, FTRef (_,ENull,ENull,_)), AId id ->
         (* 関数が定義された順番 *)
         let num = lookup id_fn funnames_numberings in
         (* 呼び出された関数の整数変数名と呼び出した関数の整数自由変数の和集合 *)
@@ -567,7 +566,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
          And(Leq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll),
              Geq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh))))]
          (* x | () ref (left, right, ownership) *)
-      | (_, FTRef (_,el,eh,f)), AId id -> 
+      | (RawId _, FTRef (_,el,eh,f)), AId id -> 
         (* 引数の篩型中の整数変数を別の式で置き換え *)
         let scope_low = exp_to_smtlib (exp_subst subst el) in
         let scope_high = exp_to_smtlib (exp_subst subst eh) in
@@ -585,10 +584,10 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     in
     (* 関数引数に対するsmtlibの条件式の生成 *)
     let constraints1 = List.concat (List.map2 subst_param_before_eval params_before_eval args) in
-    (* g1とほぼ同様,呼び出した関数の評価終了時の制約 *)
+    (* subst_param_before_evalとほぼ同様,呼び出した関数の評価終了時の制約 *)
     let subst_param_after_eval ftid_ft arg = 
       match ftid_ft, arg with
-      | (id_param, FTRef (_,ENull,ENull,_)), AId id ->
+      | (RawId id_param, FTRef (_,ENull,ENull,_)), AId id ->
         let num = lookup id_fn funnames_numberings in
         let fvs' = union_list (List.map fst subst) fvs in
         let sll = make_bound_exp_be fvs' id_param "l"  num "e" in
@@ -598,7 +597,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
         [Eq(make_own_var id fun_num branch_trace, make_own_var_be id_param num "e");
          Eq(make_bound_exp fvs id "l" fun_num branch_trace, smtlib_subst subst sll);
          Eq(make_bound_exp fvs id "h" fun_num branch_trace, smtlib_subst subst slh)]
-      | (_, FTRef (_,el,eh,f)), AId id -> 
+      | (RawId _, FTRef (_,el,eh,f)), AId id -> 
         let l_arg_exp = exp_subst subst el in
         let h_arg_exp = exp_subst subst eh in
         (* 引数のvar_locationsを生成 *)
@@ -616,23 +615,23 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
     | _ -> raise ConstrError
     (*追加分，あとで消す*)
   
-(* 関数仮引数のうち整数引数名を返す *)
+(* 関数仮引数のうち#付き整数引数名を返す *)
 let find_intv param = 
   match param with
-  | (id, FTInt _) -> [id]
+  | (HashId id, FTInt _) -> [id]
   | _ -> []
 
 (* 関数仮引数のうち参照型である場合はその引数名を返す *)
 let find_ref_id param = 
   match param with
-  | (id, FTRef _) -> [id]
+  | (RawId id, FTRef _) -> [id]
   | _ -> [] 
 
 (* 関数仮引数のうち参照型である引数の所有権の加減，添え字の上限，所有権の組を返す
 こんなに周りくどいやり方する必要ある？？？？ *)
 let rec find_own_annotation ref_id params = 
   match params with
-  | (id, FTRef (_,el,eh,f)) :: _ when id = ref_id -> (el,eh,f)
+  | (RawId id, FTRef (_,el,eh,f)) :: _ when id = ref_id -> (el,eh,f)
   | _ :: params' -> find_own_annotation ref_id params'
   | [] -> raise Not_found
 
