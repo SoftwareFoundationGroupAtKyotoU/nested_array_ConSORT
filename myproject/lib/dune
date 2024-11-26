@@ -1,8 +1,8 @@
 (menhir
-  (modules parser)
+  (modules parser z3Parser)
 )
 (ocamllex
-  (modules lexer)
+  (modules lexer z3Lexer)
 )
 
 (library
