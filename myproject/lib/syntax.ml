@@ -1,13 +1,13 @@
 exception Error of string
 
-type id = string
+type id = string [@@deriving show]
 (* type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq *)
 
 (** Type representing the syntax of the SMT-LIB language *)
 type smtlib = 
   | VarPred
 
-type tyvar = int
+type tyvar = int [@@deriving show]
 
 (* 単純型 *)
 type simpleTy =
@@ -17,13 +17,14 @@ type simpleTy =
   | SUnit
   | SFun of simpleTy list * simpleTy
   | SVar of tyvar
+  [@@deriving show]
 
 let rec print_simplety simpleTy = 
   match simpleTy with
-  | SInt -> print_string "int"
+  | SInt -> print_string "SInt"
   | SRef simpleTy' -> 
-    (print_simplety simpleTy';
-    print_string " ref")
+    (print_string "SRef ";
+    print_simplety simpleTy')
   | _ -> raise (Error "perhaps source program error")
 
 type funcallexp = 

@@ -3,10 +3,13 @@ open Syntax
 
 exception Error of string
 
+type infer_simple_ty_res = (simpleTy * simpleTy) list * simpleTy [@@deriving show]
+
 let err s = raise (Error s)
 let lookup x env =
   try List.assoc x env with Not_found -> err ("variable not bound: " ^ x)
 
+type all_tyenv_type = (id * (id * simpleTy) list) list ref [@@deriving show]
 (* (関数名 * (変数 * 単純型)list)list *)
 let all_tyenv = ref []
 let err s = raise (Error s)
