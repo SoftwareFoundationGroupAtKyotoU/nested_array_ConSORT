@@ -15,13 +15,13 @@ let rec lookup x env =
 let rec print_exp exp =
   match exp with
   | Let (id,e1,e2) ->
-    (print_string ("ELet(" ^ id ^ ", ");
+    (print_string ("Let( \"" ^ id ^ "\", ");
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | LetIntExp (id,e1,e2) ->
-    (print_string ("ELetInt(" ^ id ^ ", ");
+    (print_string ("LetIntExp( \"" ^ id ^ "\", ");
       print_exp e1;
       print_string ", ";
       print_exp e2;
@@ -33,13 +33,13 @@ let rec print_exp exp =
       print_exp e;
       print_string ")") *)
   | LetDerefExp (id1,id2,e) ->
-    (print_string ("ELetDerefPtr(" ^ id1 ^ ", ");
+    (print_string ("LetDerefExp( \""^ id1 ^ "\", ");
       print_string id2;
       print_string ", ";
       print_exp e;
       print_string ")")
   | LetAddPtrExp (id1,id2,e1,e2) ->
-    (print_string ("ELetAddPtr(" ^ id1 ^ ", ");
+    (print_string ("LetAddPtrExp( \"" ^ id1 ^ "\", ");
       print_string id2;
       print_string ", ";
       print_exp e1;
@@ -55,7 +55,7 @@ let rec print_exp exp =
       print_exp e2;
       print_string ")") *)
   | IfExp (e1,e2,e3) ->
-    (print_string "EIf(";
+    (print_string "IfExp(";
       print_exp e1;
       print_string ", "; 
       print_exp e2;
@@ -63,41 +63,41 @@ let rec print_exp exp =
       print_exp e3;
       print_string ")")
   | IfnpExp (id,e1,e2) ->
-    (print_string "EIfnp(";
+    (print_string "IfnpExp( \"";
       print_string id;
-      print_string ", "; 
+      print_string "\", "; 
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | LetAllocExp (id,e1,simpleTy,e2) ->
-    (print_string ("EAlloc(" ^ id ^ ", ");
+    (print_string ("LetAllocExp( \"" ^ id ^ "\", ");
       print_exp e1;
-      print_string ": ";
+      print_string ", ";
       print_simplety simpleTy;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | Assign (id1,e1,e2) ->
-    (print_string ("EAssign(" ^ id1 ^ ", ");
+    (print_string ("Assign( \"" ^ id1 ^ "\", ");
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | AssignInt (id,e1,e2) ->
-    (print_string ("EAssignInt(" ^ id ^ ", ");
+    (print_string ("AssignInt( \"" ^ id ^ "\", ");
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | AssignPtr (id1,id2,e) ->
-    (print_string ("EAssignPtr(" ^ id1 ^ ", ");
+    (print_string ("AssignPtr( \"" ^ id1 ^ "\", \"");
       print_string id2;
-      print_string ", ";
+      print_string "\", ";
       print_exp e;
       print_string ")")
   | Alias (e1,e2,e3) ->
-    (print_string "EAlias(";
+    (print_string "Alias(";
       print_exp e1;
       print_string ", "; 
       print_exp e2;
@@ -111,103 +111,103 @@ let rec print_exp exp =
       print_exp e;
       print_string ")") *)
   | AliasDeref (id1,id2,e) ->
-    (print_string ("EAliasDerefPtr(" ^ id1 ^ ", ");
+    (print_string ("AliasDeref( \"" ^ id1 ^ "\", ");
       print_string id2;
       print_string ", ";
       print_exp e;
       print_string ")")
   | AliasAddPtr (id1,id2,i,e) ->
-    (print_string ("EAliasAddPtr(" ^ id1 ^ ", ");
+    (print_string ("AliasAddPtr( \"" ^ id1 ^ "\", \"");
       print_string id2;
-      print_string ", ";
+      print_string "\", ";
       print_exp i;
       print_string ", ";
       print_exp e;
       print_string ")")
   | Assert (e1,e2) ->
-    (print_string "EAssert(";
+    (print_string "Assert(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | Seq (e1,e2) ->
-    (print_string "ESeq(";
+    (print_string "Seq(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | Deref id ->
-    print_string ("EDeref(" ^ id ^ ")")
+    print_string ("Deref( \"" ^ id ^ "\")")
   | AppExp (id,es) ->
-    (print_string ("EApp(" ^ id ^ ", ");
+    (print_string ("AppExp( \"" ^ id ^ "\", [");
       print_exps es;
-      print_string ")") 
+      print_string "])") 
   | EqExp (e1,e2) ->
-    (print_string "EEq(";
+    (print_string "EqExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | LtExp (e1, e2) ->
-    (print_string "ELt(";
+    (print_string "LtExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | GtExp (e1, e2) ->
-    (print_string "EGt(";
+    (print_string "GtExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | LeqExp (e1, e2) ->
-    (print_string "ELeq(";
+    (print_string "LeqExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | GeqExp (e1, e2) ->
-    (print_string "EGeq(";
+    (print_string "GeqExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | NeqExp (e1, e2) ->
-    (print_string "ENeq(";
+    (print_string "NeqExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | AndExp (e1,e2) ->
-    (print_string "EAnd(";
+    (print_string "AndExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | OrExp (e1,e2) ->
-    (print_string "EOr(";
+    (print_string "OrExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | NotExp e ->
-    (print_string "ENot(";
+    (print_string "NotExp(";
       print_exp e;
       print_string ")")
   | PlusExp (e1,e2) -> 
-    (print_string "EAdd(";
+    (print_string "PlusExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | MinusExp (e1,e2) -> 
-    (print_string "ESub(";
+    (print_string "MinusExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
       print_string ")")
   | MultExp (e1,e2) -> 
-    (print_string "EMul(";
+    (print_string "MultExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
@@ -219,28 +219,31 @@ let rec print_exp exp =
       print_exp e2;
       print_string ")") *)
   | Unit -> 
-    print_string "()"
+    print_string "Unit"
   (* | EConstFail ->
     print_string "fail" *)
   | ILit i ->
+    print_string "ILit ";
     print_int i
   | BLit b ->
+    print_string "BLit ";
     if b then print_string "true" else print_string "false"
   | Nondet ->
-    print_string "nondet"
+    print_string "Nondet"
   (* | EConstTrue ->
     print_string "true"
   | EConstFalse ->
     print_string "false" *)
   | Var x -> 
-    print_string x
+    print_string "Var \"";
+    print_string (x ^ "\"")
   | ENull ->
     print_string "ENull"
 and print_exps es =
   match es with
   | [] -> ()
   | e :: [] -> print_exp e
-  | e :: es' -> print_exp e; print_string ", "; print_exps es'
+  | e :: es' -> print_exp e; print_string "; "; print_exps es'
 
 (* 
 env: 式内で定義された整数変数名と式の組
