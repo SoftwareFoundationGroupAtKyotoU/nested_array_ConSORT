@@ -6,7 +6,9 @@
 )
 
 (library
- (name myproject))
+ (name myproject)
+ (libraries ounit2)
+ (preprocess (pps ppx_deriving.std)))
 
 (env
  (dev

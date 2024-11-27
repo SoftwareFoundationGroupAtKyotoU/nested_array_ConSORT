@@ -1,7 +1,8 @@
 (executable
  (public_name myproject)
  (name main)
- (libraries myproject))
+ (libraries myproject)
+ (preprocess (pps ppx_deriving.std)))
 
 (env
  (dev
