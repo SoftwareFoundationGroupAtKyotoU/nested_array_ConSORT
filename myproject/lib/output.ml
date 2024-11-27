@@ -102,3 +102,18 @@ let main_fv file =
   output_string oc "(check-sat)\n";
   output_string oc "(get-model)\n";
   close_out oc
+
+let print_program file = 
+  let oc = open_in file in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  close_in oc;
+  infer_prog_simpleTy program;
+  (* ASTの精緻化 *)
+  let (_,elaborate_program) = elaborate_prog program in
+  ()
+  (* let oc = open_in file in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  close_in oc;
+  let (_, elaborate_program) = elaborate_prog program in
+  infer_prog_simpleTy program;
+  Util.print_exp elaborate_program *)

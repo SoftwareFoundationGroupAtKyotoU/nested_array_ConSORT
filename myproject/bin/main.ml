@@ -28,6 +28,8 @@ let () =
       done;
       (* read_eval_print initial_env input *)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg)
+  | [_; file_name; "print_program"] ->
+    print_program file_name
   | [_; file_name; iter] ->
     generate_constrs file_name (int_of_string iter)
   | _ -> Printf.eprintf "予期せぬエラーが発生しました"
