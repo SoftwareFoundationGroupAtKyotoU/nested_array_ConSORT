@@ -57,7 +57,7 @@ rule main = parse
   | "#" { Parser.HASH }
   | "/*" { comment lexbuf; main lexbuf }
   (*コメントの先頭を読んだ際はエントリポイント「コメント」に移ったのちメインに戻ってくる*)
-  | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']*
+  | ['A'-'z'] ['A'-'z' '0'-'9' '_' '\'']*
       { let id = Lexing.lexeme lexbuf in
         try
           List.assoc id reservedWords(*予約語に含まれている場合は予約語として機能*)
