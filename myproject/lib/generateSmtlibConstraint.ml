@@ -143,16 +143,32 @@ let rec make_if_smtlib id fvs fun_num branch_trace depth =
     let sl2 = make_if_smtlib id fvs fun_num branch_trace depth in
     sl @ sl2
 
+let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
+  let rec make_post_if_smtlib_sub depth =
+    if depth == 1 then
+      And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
+      And(Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (branch :: branch_trace) depth),
+      Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Else :: branch_trace) depth)))
+    else
+      let sl = make_post_if_smtlib_sub (depth - 1) in
+      let sl2 = And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
+      And(Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (branch :: branch_trace) depth),
+      And(Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (branch :: branch_trace) depth), sl))) in
+      sl2 in
+  [Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), make_post_if_smtlib_sub depth)]
+
+
+
 (** Main procedure for generating the ownership constraints 
 オーナーシップ制約生成のためのメイン手続き
 fvs: 関数引数のうちint型である変数の名前
-n: 関数の通し番号
-funnames_numberings: 関数名と通し番号の組のリスト
+fun_num: 関数の通し番号
+funnames_numberings: 関数名と通し番号の組のリスト いらんかも？？？
 branch_trace: if節のどちらを通ってきたかを表す文字列のリスト
 c: 制約のリスト
 関数内の所有権は関数の整数引数とインデックスにしか依存できない？
 *)
-let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
+let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
   match c with
   | CIf (e,cs1,cs2,pos) -> 
     (* if式直前の変数idのリスト *)
@@ -163,18 +179,19 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
       (* 制約のリスト[Eq(...); Eq(...); ..., Eq(...)]を作る *)
       List.concat (List.map 
         (fun id -> 
+          let depth = lookup id ty_env in
           (* if式の制約
            if直前，then節に入った時，else節に入った時の所有権は等しい
            if直前，then節に入った時，else節に入った時の所有範囲の下限は等しい
            if直前，then節に入った時，else節に入った時の所有範囲の上限は等しい*)
-           make_if_smtlib id fvs fun_num branch_trace ty_env
+           make_if_smtlib id fvs fun_num branch_trace depth
         ) ids_pre) in
     (* then節側の制約をsmtlibが読める制約の形に直す *)
-    let constraints1 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Then :: branch_trace)) cs1) in
+    let constraints1 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Then :: branch_trace) ty_env) cs1) in
     (* 条件式が成り立つならばthen節の制約が成り立つ，という形に変更 *)
     let constraints1' = List.map (fun s -> Imply(exp_to_smtlib e, s)) constraints1 in
     (* else節側の制約をsmtlibが読める制約の形に直す *)
-    let constraints2 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Else :: branch_trace)) cs2) in
+    let constraints2 = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings (Else :: branch_trace) ty_env) cs2) in
     (* 条件式が成り立たないならばelse節の制約が成り立つ，という形に変更 *)
     let constraints2' = List.map (fun s -> Imply(Not(exp_to_smtlib e), s)) constraints2 in
     (* then節評価後の変数のリスト *)
@@ -196,10 +213,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
                 評価前の所有範囲の下限はthen節評価時の所有範囲の下限以上　かつ
                 評価前の所有範囲の上限はthen節評価時の所有範囲の上限以下) *)
           (fun id -> 
-            [Or(Eq(make_own_var id fun_num branch_trace, Id "0."),
-             And(Leq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Then :: branch_trace)),
-             And(Geq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Then :: branch_trace)),
-                 Leq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Then :: branch_trace)))))]
+            let depth = lookup id ty_env in
+            make_post_if_smtlib fvs id fun_num branch_trace depth Then
           ) ids_post_if)) in
     let constraints_post_el = 
       List.map 
@@ -212,10 +227,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace c =
                 評価前の所有範囲の上限はelse節評価時の所有範囲の上限以下) *)
         (List.concat (List.map 
           (fun id -> 
-            [Or(Eq(make_own_var id fun_num branch_trace, Id "0."),
-             And(Leq(make_own_var id fun_num branch_trace, make_own_var id fun_num (Else :: branch_trace)),
-             And(Geq(make_bound_exp fvs id "l" fun_num branch_trace, make_bound_exp fvs id "l" fun_num (Else :: branch_trace)),
-                 Leq(make_bound_exp fvs id "h" fun_num branch_trace, make_bound_exp fvs id "h" fun_num (Else :: branch_trace)))))]
+            let depth = lookup id ty_env in
+            make_post_if_smtlib fvs id fun_num branch_trace depth Then
           ) ids_post_el)) in
     (* 制約をつなげて返す *)
     constraints_pre @ constraints1' @ constraints2' @ constraints_post_if @ constraints_post_el
