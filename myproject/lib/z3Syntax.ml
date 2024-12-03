@@ -10,6 +10,13 @@ type value =
   | Float of float
   | Div of float * float
 
+let pp_value fmt value =
+  match value with
+  | Int i -> Format.fprintf fmt "%d" i
+  | Float i -> Format.fprintf fmt "%f" i
+  | Div (f1,f2) -> Format.fprintf fmt "%f/%f" f1 f2
+  
+
 type define = id * z3_type * value
 
 type result = define list
