@@ -336,9 +336,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     xの所有権は1;
     xの所有範囲の下限は0以下;
     xの所有範囲の上限は0以上 *)
-    [Eq(make_own_var id fun_num branch_trace, Id "1");
-     Leq(make_bound_exp fvs id "l" fun_num branch_trace, Id "0"); 
-     Geq(make_bound_exp fvs id "h" fun_num branch_trace, Id "0")]
+    [Eq(make_own_var id fun_num branch_trace 1, Id "1");
+     Leq(make_bound_exp fvs id "l" fun_num branch_trace 1, Id "0"); 
+     Geq(make_bound_exp fvs id "h" fun_num branch_trace 1, Id "0")]
   | CAliasAddPtr (id1,id2,e,l) -> (* alias(x = y + num); ... *)
      (* x,yに対応するvar_locationsを追加 *)
     new_id id1 l branch_trace; new_id id2 l branch_trace;
