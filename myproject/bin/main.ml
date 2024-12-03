@@ -26,6 +26,7 @@ let () =
         flush stdout;
         iter := !iter + 1       
       done;
+      main_sat_ans file_name
       (* read_eval_print initial_env input *)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg)
   | [_; file_name; "print_program"] ->

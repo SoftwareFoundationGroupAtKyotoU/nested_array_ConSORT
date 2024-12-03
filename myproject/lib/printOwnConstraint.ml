@@ -1,6 +1,7 @@
 open Util
 open Format
 open SmtlibSyntax
+open Z3Syntax
 
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
 let rec print_declare oc var_locations fvs fun_num =
@@ -312,3 +313,40 @@ and fvs_of_smtlib sl =
     []
   | Ands ss ->
     List.concat (List.map fvs_of_smtlib ss)
+
+let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
+  let (fun_name, _) = (List.nth all_cs fun_num) in
+  let formatter = formatter_of_out_channel oc in
+  let varown_count = List.rev varown_count in
+  fprintf formatter "%s\n" fun_name;
+  (List.iter
+    (fun (id,b_or_e,fun_num') ->
+      (* let b_or_e_str = if b_or_e == "b" then "begin" else "end" in *)
+        if fun_num' = fun_num then
+          (let s1 = sprintf "o_%d_%s_%s" fun_num id b_or_e in
+          let res1 = lookup s1 z3res in
+          (* 所有権を表す下限の一次式の切片の宣言 *)
+          let s2 = sprintf "d_%d_l_%s_%s" fun_num id b_or_e in
+          let res2 = lookup s2 z3res in
+          fprintf formatter "%s %s : [ %a" id b_or_e pp_value res2;
+          (* 下限の係数を宣言 *)
+          print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num z3res;
+          (* 所有権を表す上限の一次式の切片の宣言 *)
+          let s3 = sprintf "d_%d_h_%s_%s" fun_num id b_or_e in
+          let res3 = lookup s3 z3res in
+          fprintf formatter ", %a" pp_value res3;
+          (* 上限の係数を宣言 *)
+          print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num z3res;
+          (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
+          fprintf formatter "] -> %a\n" pp_value res1)
+        else 
+          ()
+        ) varown_count);
+(* 関数評価前，評価後の上限下限の定数係数の宣言 *)
+and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num z3res =
+  List.iter
+    (fun fv ->
+      let s = sprintf "c_%d_%s_%s_%s_%s" fun_num l_or_h fv id b_or_e in
+      let res = lookup s z3res in
+      fprintf formatter " + %a * %s" pp_value res fv;
+        ) fvs
