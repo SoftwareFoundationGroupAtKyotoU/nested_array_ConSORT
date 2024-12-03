@@ -6,6 +6,7 @@ open Util
 open Format
 open CollectOwnConstraint
 open Syntax
+open SimpleTyping
 
 exception Unbound
 exception ConstrError
@@ -55,56 +56,71 @@ let rec collect_same_trace_vars branch_trace var_locations =
         iterative_collect_same_trace_vars branch_trace var_locations' (x :: res))
   in iterative_collect_same_trace_vars branch_trace var_locations []
 
+let ref_depth id ty_env =
+  let rec iterative_simplety_depth simpleTy depth = 
+    match simpleTy with
+    | SRef simpleTy' -> iterative_simplety_depth simpleTy' (depth+1)
+    | SInt -> depth
+    | _ -> raise (Error "not reference")
+  in
+  iterative_simplety_depth (lookup id ty_env) 0
+ 
 (* id fun_num branch_traceを元にsmtlibに渡す所有権の変数を生成 *)
-let make_own_var id fun_num branch_trace = 
+let make_own_var id fun_num branch_trace ty_env = 
   let var_pos = lookup_pos id branch_trace !var_locations in
-  let var_name = asprintf "o_%d_%s_%d%a" fun_num id var_pos pp_branch_trace branch_trace in 
+  let var_depth = ref_depth id ty_env in
+  let var_name = asprintf "o_%d_%s_%d%a_%d" fun_num id var_pos pp_branch_trace branch_trace var_depth in 
   Id(var_name)
   (* Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_pos id branch_trace !var_locations)) ^ (branch_trace_to_str branch_trace)) *)
 
 (* id, fun_num branch_traceを元にsmtlibに渡す所有権の変数を生成 
       引数が表す場所での変数の直前の所有権の変数を表している*)
-let make_pre_own_var id fun_num branch_trace = 
+let make_pre_own_var id fun_num branch_trace ty_env = 
+  let var_depth = ref_depth id ty_env in
   let var_pre_pos = lookup_pre_pos id branch_trace !var_locations in
-  let var_name = asprintf "o_%d_%s_%d%a" fun_num id var_pre_pos pp_branch_trace branch_trace in 
+  let var_name = asprintf "o_%d_%s_%d%a_%d" fun_num id var_pre_pos pp_branch_trace branch_trace var_depth in 
   Id(var_name)
 
 (* 関数評価の最初と最後の状態での所有権を表す
 b_or_eはbまたはeでbeginとendの意 *)
-let make_own_var_be id fun_num b_or_e = 
-  let var_name = asprintf "o_%d_%s_%s" fun_num id b_or_e in
+let make_own_var_be id fun_num b_or_e ty_env = 
+  let var_depth = ref_depth id ty_env in
+  let var_name = asprintf "o_%d_%s_%s_%d" fun_num id b_or_e var_depth in
   Id(var_name)
 
-let rec make_bound_exp fvs id h_or_l fun_num branch_trace = 
+let rec make_bound_exp fvs id h_or_l fun_num branch_trace ty_env = 
+  let var_depth = ref_depth id ty_env in
   let id_pos = lookup_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num h_or_l id id_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace var_depth in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace in
-    Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace)
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace var_depth in
+    Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace ty_env)
 
 (*直前の所有範囲の下限,または上限を環境変数の一次式で表す *)
-let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace = 
+let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace ty_env = 
+  let var_depth = ref_depth id ty_env in
   let id_pre_pos = lookup_pre_pos id branch_trace !var_locations in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%d%a" fun_num h_or_l id id_pre_pos pp_branch_trace branch_trace in
+    let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pre_pos pp_branch_trace branch_trace var_depth in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%d%a" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace in
-    Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace)
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace var_depth in
+    Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace ty_env)
 
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
 b_or_eはbまたはeでbeginとendの意 *)
-let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e = 
+let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e ty_env = 
+  let var_depth = ref_depth id ty_env in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%s" fun_num h_or_l id b_or_e in
+    let var_name = asprintf "d_%d_%s_%s_%s_%d" fun_num h_or_l id b_or_e in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%s" fun_num h_or_l fv id b_or_e in
+    let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id b_or_e in
     Add(Mul(Id(var_name), FV(fv)), make_bound_exp_be fvs' id h_or_l fun_num b_or_e)
 
 (* 二つの参照の所有範囲の下限と上限を受け取り
@@ -632,9 +648,11 @@ fun_num:関数の通し番号
 funnames_numberings:関数名とその関数の通し番号の組のリスト *)
 let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
   (* 関数名と制約をicsから抽出 *)
-  let (fun_id, constrs) = funid_constrs in
+  let (fun_name, constrs) = funid_constrs in
   (* 評価前と評価後の関数の引数の型を抽出 *)
-  let (params_before_eval, params_after_eval) = lookup fun_id !fn_env in
+  let (params_before_eval, params_after_eval) = lookup fun_name !fn_env in
+  (* 関数の単純型環境 *)
+  let ty_env = lookup fun_name !all_tyenv in
   (* 関数引数のうち整数変数名を抽出 *)
   let fvs = List.concat (List.map find_intv params_before_eval) in
   (* 関数仮引数のうち参照型である引数名を抽出 *)
