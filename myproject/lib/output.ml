@@ -103,6 +103,43 @@ let main_fv file =
   output_string oc "(get-model)\n";
   close_out oc
 
+let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num = 
+  let fun_num' = total_fun_num - fun_num in
+  if fun_num < 0 then 
+    ()
+  else
+    (let (_, varown_count, fvs, _) = all_cs_to_smtlib all_cs false fun_num' in
+    (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
+    (* print_declare oc var_locations fvs fun_num; *)
+    (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
+    print_sat_ans oc varown_count fvs fun_num' z3_res all_cs;
+    (* 関数ブロックごとに一行区切る *)
+    output_string oc "\n";
+    (* 次の関数の所有権をsmtlib形式で宣言 *)
+    main_sat_ans_sub oc all_cs (fun_num-1) iter z3_res total_fun_num)
+
+let main_sat_ans file =
+  let oc_r1 = open_in file  in
+    let oc_r2 = open_in "experiment/result" in
+    (* プログラムの読み出し *)
+    let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+    (* main_intで得られた所有権関数の係数の候補 *)
+    let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+    close_in oc_r1; close_in oc_r2;
+    let (fdefs, _) = program in
+    let n = List.length fdefs in 
+    infer_prog_simpleTy program;
+    let elaborate_program = elaborate_prog program in
+    let all_constrs = collect_program_own_constraints elaborate_program in 
+    let oc = open_out "experiment/out_sat_ans.smt2" in
+  
+    let z3res' = List.map (fun (id , _ , value) -> (id, value)) z3res in
+    output_string oc (file ^ " ->");
+    (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
+    main_sat_ans_sub oc all_constrs n 0 z3res' n;
+    close_out oc
+  
+
 let print_program file = 
   let oc = open_in file in
   let (_, program) = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
