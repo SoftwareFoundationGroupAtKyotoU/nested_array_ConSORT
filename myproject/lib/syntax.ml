@@ -77,6 +77,13 @@ type ftype =
   | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
   | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
 
+let ftref_depth ftype = 
+  let rec iterative_ftref_depth ftype depth =
+    match ftype with
+    | FTInt _ -> depth
+    | FTRef (ftype', _, _, _) -> iterative_ftref_depth ftype' (depth+1)
+  in iterative_ftref_depth ftype 0
+
 type ftype_id =
   | RawId of id
   | HashId of id
