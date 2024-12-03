@@ -117,11 +117,11 @@ let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e ty_env =
   let var_depth = ref_depth id ty_env in
   match fvs with
   | [] -> 
-    let var_name = asprintf "d_%d_%s_%s_%s_%d" fun_num h_or_l id b_or_e in
+    let var_name = asprintf "d_%d_%s_%s_%s_%d" fun_num h_or_l id b_or_e var_depth in
     Id(var_name)
   | fv :: fvs' ->
-    let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id b_or_e in
-    Add(Mul(Id(var_name), FV(fv)), make_bound_exp_be fvs' id h_or_l fun_num b_or_e)
+    let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id b_or_e var_depth in
+    Add(Mul(Id(var_name), FV(fv)), make_bound_exp_be fvs' id h_or_l fun_num b_or_e ty_env)
 
 (* 二つの参照の所有範囲の下限と上限を受け取り
 その範囲が等しいという制約を返す関数 *)
