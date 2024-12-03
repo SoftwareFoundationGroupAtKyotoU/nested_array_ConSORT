@@ -512,4 +512,15 @@ let rec exp_subst subst exp =
       with
         Error _ -> exp)
   | _ -> exp
-  
+
+
+
+let ref_depth simpleTy =
+  let rec iterative_simplety_depth simpleTy depth = 
+    match simpleTy with
+    | SRef simpleTy' -> iterative_simplety_depth simpleTy' (depth+1)
+    | SInt -> depth
+    | _ -> raise (Error "not reference")
+  in
+  iterative_simplety_depth simpleTy 0
+   
