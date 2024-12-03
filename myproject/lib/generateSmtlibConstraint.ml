@@ -157,6 +157,23 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
       sl2 in
   [Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), make_post_if_smtlib_sub depth)]
 
+  let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
+    let rec make_mkarray_sub depth =
+      if depth <= 0 then []
+      else 
+        let sl = make_mkarray_sub (depth - 1) in
+        let sl2 = [Eq(make_own_var id fun_num branch_trace depth, Id "0."); 
+        Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, Id "0."); 
+        Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, Id "0.")] in
+        sl @ sl2 in
+    let main_sl = [Eq(make_own_var id fun_num branch_trace depth, Id "1");
+    Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, Id "0."); 
+    Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, upper_bound)] in
+    if depth == 0 then
+      main_sl
+    else 
+      main_sl @ (make_mkarray_sub (depth - 1)) 
+
 
 
 (** Main procedure for generating the ownership constraints 
@@ -179,7 +196,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       (* 制約のリスト[Eq(...); Eq(...); ..., Eq(...)]を作る *)
       List.concat (List.map 
         (fun id -> 
-          let depth = lookup id ty_env in
+          let depth = ref_depth id ty_env in
           (* if式の制約
            if直前，then節に入った時，else節に入った時の所有権は等しい
            if直前，then節に入った時，else節に入った時の所有範囲の下限は等しい
@@ -213,7 +230,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
                 評価前の所有範囲の下限はthen節評価時の所有範囲の下限以上　かつ
                 評価前の所有範囲の上限はthen節評価時の所有範囲の上限以下) *)
           (fun id -> 
-            let depth = lookup id ty_env in
+            let depth = ref_depth id ty_env in
             make_post_if_smtlib fvs id fun_num branch_trace depth Then
           ) ids_post_if)) in
     let constraints_post_el = 
@@ -227,8 +244,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
                 評価前の所有範囲の上限はelse節評価時の所有範囲の上限以下) *)
         (List.concat (List.map 
           (fun id -> 
-            let depth = lookup id ty_env in
-            make_post_if_smtlib fvs id fun_num branch_trace depth Then
+            let depth = ref_depth id ty_env in
+            make_post_if_smtlib fvs id fun_num branch_trace depth Else
           ) ids_post_el)) in
     (* 制約をつなげて返す *)
     constraints_pre @ constraints1' @ constraints2' @ constraints_post_if @ constraints_post_el
@@ -311,9 +328,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     xの所有権は1;
     xの所有範囲の下限は0;
     xの所有範囲の上限はe-1 *)
-    [Eq(make_own_var id fun_num branch_trace, Id "1"); 
-     Eq(make_bound_exp fvs id "l" fun_num branch_trace, Id "0"); 
-     Eq(make_bound_exp fvs id "h" fun_num branch_trace, upper_bound)]
+    let depth = ref_depth id ty_env in
+    make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound
   | CAssignInt (id,_) -> (* Corresponds to the example on p.14 *)
     (* x := num; ... *)
     (* 
