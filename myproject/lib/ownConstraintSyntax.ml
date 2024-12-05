@@ -7,10 +7,10 @@ type pos = int
 type constr = 
   | CIf of exp * constr list * constr list * pos
   | CIfnp of id * constr list * constr list * pos
-  | CLet of id * id * pos
+  (* | CLet of id * id * pos *)
   | CLetDeref of id * id * pos
   | CLetAddPtr of id * id * exp * pos
-  | CLetSubPtr of id * id * exp * pos
+  (* | CLetSubPtr of id * id * exp * pos *)
   | CMkArray of id * exp * simpleTy * pos
   | CAssignInt of id * pos
   | CAssignRef of id * id * pos
