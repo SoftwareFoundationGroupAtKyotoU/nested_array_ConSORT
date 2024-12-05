@@ -42,8 +42,8 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CAssignInt(id, position) :: c1 @ c2
-  | AssignPtr (id1,id2,esp) ->
-    let c = collect_exp env fun_name args (position+1) esp in
+  | AssignPtr (id1,id2,exp) ->
+    let c = collect_exp env fun_name args (position+1) exp in
     CAssignRef(id1, id2, position) :: c
   | AliasDeref (id1,id2,e) -> 
     let c = collect_exp env fun_name args (position+1) e in
