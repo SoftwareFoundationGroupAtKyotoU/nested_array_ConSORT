@@ -524,3 +524,8 @@ let ref_depth simpleTy =
   in
   iterative_simplety_depth simpleTy 0
    
+let rec depth_to_simpleTy depth =
+  if depth <= 0 then
+    SInt
+  else 
+    SRef (depth_to_simpleTy (depth-1))
