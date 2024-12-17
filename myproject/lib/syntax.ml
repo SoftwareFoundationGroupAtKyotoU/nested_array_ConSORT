@@ -1,11 +1,12 @@
+open SmtlibSyntax
 exception Error of string
 
 type id = string [@@deriving show]
 (* type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq *)
 
 (** Type representing the syntax of the SMT-LIB language *)
-type smtlib = 
-  | VarPred
+(* type smtlib = 
+  | VarPred *)
 
 type tyvar = int [@@deriving show]
 
