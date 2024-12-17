@@ -1,4 +1,6 @@
-open Syntax
+(* open Syntax *)
+
+type id = string
 
 (** Type representing the syntax of the SMT-LIB language *)
 type smtlib = 
@@ -24,3 +26,4 @@ type smtlib =
   | PtrVarPred of int * id * id * smtlib * id list
   | VarPred
   | Ands of smtlib list
+  | True
