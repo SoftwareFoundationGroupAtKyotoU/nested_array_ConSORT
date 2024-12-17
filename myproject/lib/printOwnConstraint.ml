@@ -195,6 +195,8 @@ let rec print_smtlib oc sl bool_id map num =
      output_string oc ")")
   | VarPred ->
     output_string oc "Pvar"
+  | True ->
+    output_string oc "true"
   | Ands smtlibs -> 
     match smtlibs with
     | [] -> output_string oc "true"
@@ -315,6 +317,8 @@ and fvs_of_smtlib sl =
   | PtrVarPred (_,_,_,s1,fvs) ->
     "v" :: (fvs_of_smtlib s1) @ fvs 
   | VarPred ->
+    []
+  | True ->
     []
   | Ands ss ->
     List.concat (List.map fvs_of_smtlib ss)
