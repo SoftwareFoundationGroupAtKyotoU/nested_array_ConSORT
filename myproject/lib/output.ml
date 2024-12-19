@@ -142,9 +142,12 @@ let main_sat_ans file =
 
 let print_program file = 
   let oc = open_in file in
-  let (_, program) = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   close_in oc;
-  Util.print_exp program
+  infer_prog_simpleTy program;
+  let (fdef, main) = elaborate_prog program in
+  let _ = List.map (fun (_, _, _, exp) -> Util.print_exp exp; print_string "\n\n") fdef in
+  Util.print_exp main
   (* let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   close_in oc;
