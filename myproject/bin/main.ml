@@ -19,7 +19,7 @@ let () =
         close_in ic;
         (* 比較して結果を出力 *)
         (if first_line = "sat" then 
-          (Printf.printf "iter: %d sat\nownership: sat" !iter;
+          (Printf.printf "iter: %d sat\nownership: sat\n" !iter;
           continue := false) 
         else 
           Printf.printf "iter: %d unsat \n" !iter );
