@@ -33,9 +33,9 @@ let rec print_exp exp =
       print_exp e;
       print_string ")") *)
   | LetDerefExp (id1,id2,e) ->
-    (print_string ("LetDerefExp( \""^ id1 ^ "\", ");
+    (print_string ("LetDerefExp( \""^ id1 ^ "\", \"");
       print_string id2;
-      print_string ", ";
+      print_string "\", ";
       print_exp e;
       print_string ")")
   | LetAddPtrExp (id1,id2,e1,e2) ->
@@ -111,9 +111,9 @@ let rec print_exp exp =
       print_exp e;
       print_string ")") *)
   | AliasDeref (id1,id2,e) ->
-    (print_string ("AliasDeref( \"" ^ id1 ^ "\", ");
+    (print_string ("AliasDeref( \"" ^ id1 ^ "\", \"");
       print_string id2;
-      print_string ", ";
+      print_string "\", ";
       print_exp e;
       print_string ")")
   | AliasAddPtr (id1,id2,i,e) ->
@@ -523,6 +523,14 @@ let ref_depth simpleTy =
     | _ -> raise (Error "not reference")
   in
   iterative_simplety_depth simpleTy 0
+
+let ftref_depth ftype =
+  let rec iterative_ftype_depth ftype depth = 
+    match ftype with
+    | FTRef (ftype', _, _, _) -> iterative_ftype_depth ftype' (depth+1)
+    | FTInt _ -> depth
+  in
+  iterative_ftype_depth ftype 0
    
 let rec depth_to_simpleTy depth =
   if depth <= 0 then
