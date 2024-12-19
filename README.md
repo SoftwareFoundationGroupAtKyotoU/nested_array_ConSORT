@@ -1,7 +1,7 @@
 # nested_array_ConSORT
 ## 使い方
 - dune buildでビルド
-- dune exec myproject ファイルのパス でファイル中のプログラムの所有権推論　結果は標準出力
+- dune exec myproject ファイルのパス でファイル中のプログラムの所有権推論　結果はout_sat_ans.amt2出力
 
     ` dune exec myproject ./example/init_10.imp `
 
@@ -9,7 +9,7 @@
 
     `  dune exec myproject ./example/init_10.imp 5 ` 
 
-- dune exec myproject ファイルのパス print_program でファイル中のプログラムのメイン部分の構文木を文字列化したものを標準出力
+- dune exec myproject ファイルのパス print_program でファイル中のプログラム全体の構文木を文字列化したものを標準出力
 
     `  dune exec myproject ./example/init_10.imp print_program `
 
