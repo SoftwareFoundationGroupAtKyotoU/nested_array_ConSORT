@@ -33,7 +33,7 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
     (fun fv ->
       (* smtlibに渡す参照の範囲の上限下限を表す一次式のうち，環境の自由変数の係数定数を宣言
       [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のc1やc1'
-      c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(関数内での位置を表す整数)_(if or el) *)
+      c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(関数内での位置を表す整数)_(if or el)_(参照の深さ) *)
       fprintf formatter "(declare-fun c_%d_%s_%s_%s_%d%a_%d () Int)\n"
        fun_num l_or_h fv id pos pp_branch_trace branch_trace depth) fvs
 
@@ -42,25 +42,34 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
 print_declareと大体同じ *)
 let rec print_declare_begin_and_end oc varown_count fvs fun_num =
   let formatter = formatter_of_out_channel oc in
+  let rec nested_ref_declare_begin_and_end id b_or_e depth = 
+    if depth < 1 then ()
+    else
+      (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
+      (fprintf formatter "(declare-fun o_%d_%s_%s_%d () Real)\n" fun_num id b_or_e depth;
+       (* 下限の係数を宣言 *)
+       print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num depth;
+       (* 所有権を表す下限の一次式の切片の宣言 *)
+       fprintf formatter "(declare-fun d_%d_l_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
+       (* 上限の係数を宣言 *)
+       print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num depth;
+       (* 所有権を表す上限の一次式の切片の宣言 *)
+       fprintf formatter "(declare-fun d_%d_h_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
+       nested_ref_declare_begin_and_end id b_or_e (depth-1));
+     in
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
        if fun_num' = fun_num then
-        (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
-        (fprintf formatter "(declare-fun o_%d_%s_%s_%d () Real)\n" fun_num id b_or_e depth;
-         (* 下限の係数を宣言 *)
-         print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num depth;
-         (* 所有権を表す下限の一次式の切片の宣言 *)
-         fprintf formatter "(declare-fun d_%d_l_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
-         (* 上限の係数を宣言 *)
-         print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num depth;
-         (* 所有権を表す上限の一次式の切片の宣言 *)
-         fprintf formatter "(declare-fun d_%d_h_%s_%s_%d () Int)\n" fun_num id b_or_e depth)
+        nested_ref_declare_begin_and_end id b_or_e depth
        else 
          ()
        ) varown_count);
 (* 関数評価前，評価後の上限下限の定数係数の宣言 *)
 and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num depth =
   List.iter
+  (* smtlibに渡す参照の範囲の上限下限を表す一次式のうち，環境の自由変数の係数定数を宣言
+      [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のc1やc1'
+      c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(b(評価前) or e(評価後))_(参照の深さ) *)
     (fun fv ->
       fprintf formatter "(declare-fun c_%d_%s_%s_%s_%s_%d () Int)\n" fun_num l_or_h fv id b_or_e depth;
        ) fvs
@@ -323,32 +332,33 @@ and fvs_of_smtlib sl =
   | Ands ss ->
     List.concat (List.map fvs_of_smtlib ss)
 
-  
+(* ファイルに結果を出力 *)
 let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
   let (fun_name, _) = (List.nth all_cs fun_num) in
   let formatter = formatter_of_out_channel oc in
   let varown_count = List.rev varown_count in
-  fprintf formatter "%s\n" fun_name;
+  fprintf formatter "fun_name:%s \nownership\n" fun_name;
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
-      (* let b_or_e_str = if b_or_e == "b" then "begin" else "end" in *)
         if fun_num' = fun_num then
-          (let s1 = sprintf "o_%d_%s_%s_%d" fun_num id b_or_e depth in
-          let res1 = lookup s1 z3res in
-          (* 所有権を表す下限の一次式の切片の宣言 *)
-          let s2 = sprintf "d_%d_l_%s_%s_%d" fun_num id b_or_e depth in
-          let res2 = lookup s2 z3res in
-          fprintf formatter "%s %s : [ %a" id b_or_e pp_value res2;
-          (* 下限の係数を宣言 *)
-          print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num z3res depth;
-          (* 所有権を表す上限の一次式の切片の宣言 *)
-          let s3 = sprintf "d_%d_h_%s_%s_%d" fun_num id b_or_e depth in
-          let res3 = lookup s3 z3res in
-          fprintf formatter ", %a" pp_value res3;
-          (* 上限の係数を宣言 *)
-          print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num z3res depth;
-          (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
-          fprintf formatter "] -> %a\n" pp_value res1)
+          (for depth' = depth downto 1 do
+            let s1 = sprintf "o_%d_%s_%s_%d" fun_num id b_or_e depth' in
+            let res1 = lookup s1 z3res in
+            (* 所有権を表す下限の一次式の切片の宣言 *)
+            let s2 = sprintf "d_%d_l_%s_%s_%d" fun_num id b_or_e depth' in
+            let res2 = lookup s2 z3res in
+            fprintf formatter "%s %s : ref^%d [ %a" id b_or_e depth' pp_value res2;
+            (* 下限の係数を宣言 *)
+            print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num z3res depth';
+            (* 所有権を表す上限の一次式の切片の宣言 *)
+            let s3 = sprintf "d_%d_h_%s_%s_%d" fun_num id b_or_e depth' in
+            let res3 = lookup s3 z3res in
+            fprintf formatter ", %a" pp_value res3;
+            (* 上限の係数を宣言 *)
+            print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num z3res depth';
+            (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
+            fprintf formatter "] -> %a\n" pp_value res1
+          done)
         else 
           ()
         ) varown_count);
