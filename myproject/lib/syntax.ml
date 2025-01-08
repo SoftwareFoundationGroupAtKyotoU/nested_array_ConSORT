@@ -28,6 +28,14 @@ let rec print_simplety simpleTy =
     print_simplety simpleTy')
   | _ -> raise (Error "perhaps source program error")
 
+(* 単純型のフォーマッタ *)
+let rec pp_simpleTy fmt simpleTy =
+  match simpleTy with
+  | SInt -> Format.fprintf fmt "int"
+  | SRef simpleTy' -> 
+    Format.fprintf fmt "%a ref" pp_simpleTy simpleTy'
+  | _ -> raise (Error "pp_simpleTy Error")
+
 type funcallexp = 
     FunCall of id * (id list)
 
