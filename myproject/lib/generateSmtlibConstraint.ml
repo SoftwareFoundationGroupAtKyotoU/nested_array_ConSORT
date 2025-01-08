@@ -25,7 +25,7 @@ let rec lookup_pos id branch_trace env =
   | [] -> 
     (* Format.printf "unbound %s %a\n" id pp_branch_trace branch_trace; *)
     raise Unbound
-  | (x, (position, branch_trace', simpleTy)) :: left_env -> 
+  | (x, (position, branch_trace', _)) :: left_env -> 
     (* Format.printf "%s: pos %d bt %a sty %a\n" x position pp_branch_trace branch_trace' pp_simpleTy simpleTy; *)
     if id = x && branch_trace = branch_trace' then position else lookup_pos id branch_trace left_env
 
@@ -507,16 +507,16 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
 
 let p c =
   match c with
-  | CIf (exp, constrs, constrs2, pos) -> print_exp exp;print_string "cif ";print_int pos;print_string "\n"; flush stdout;
-  | CLetDeref (id , id2 , pos) -> print_string "cletderef ";print_int pos;print_string "\n"; flush stdout;
-  | CLetAddPtr (id , id2 , exp , pos) -> print_string "cletaddptr ";print_int pos;print_string "\n"; flush stdout;
-  | CMkArray (id , exp , simpleTy , pos) -> print_string "cmkarray ";print_int pos;print_string "\n"; flush stdout;
-  | CAssignInt (id , pos) -> print_string "cassiginint ";print_int pos;print_string "\n"; flush stdout;
-  | CAssignRef (id , id2 , pos) -> print_string "cassignref ";print_int pos;print_string "\n"; flush stdout;
-  | CAliasDeref (id , id2 , pos) -> print_string "caliasderef ";print_int pos;print_string "\n"; flush stdout;
-  | CAliasAddPtr (id , id2 , exp , pos) -> print_string ("caliasaddptr " ^ id ^ " " ^ id2 ^ "\n"); flush stdout;
-  | CDeref (id , pos) -> print_string "cderef ";print_int pos;print_string "\n"; flush stdout;
-  | CApp (id , arg , pos) -> print_string "capp ";print_int pos;print_string "\n"; flush stdout;
+  | CIf (exp, _, _, pos) -> print_exp exp;print_string "cif ";print_int pos;print_string "\n"; flush stdout;
+  | CLetDeref (_ , _ , pos) -> print_string "cletderef ";print_int pos;print_string "\n"; flush stdout;
+  | CLetAddPtr (_ , _ , _ , pos) -> print_string "cletaddptr ";print_int pos;print_string "\n"; flush stdout;
+  | CMkArray (_ , _ , _ , pos) -> print_string "cmkarray ";print_int pos;print_string "\n"; flush stdout;
+  | CAssignInt (_ , pos) -> print_string "cassiginint ";print_int pos;print_string "\n"; flush stdout;
+  | CAssignRef (_ , _ , pos) -> print_string "cassignref ";print_int pos;print_string "\n"; flush stdout;
+  | CAliasDeref (_ , _ , pos) -> print_string "caliasderef ";print_int pos;print_string "\n"; flush stdout;
+  | CAliasAddPtr (id , id2 , _ , _) -> print_string ("caliasaddptr " ^ id ^ " " ^ id2 ^ "\n"); flush stdout;
+  | CDeref (_ , pos) -> print_string "cderef ";print_int pos;print_string "\n"; flush stdout;
+  | CApp (_ ,_ , pos) -> print_string "capp ";print_int pos;print_string "\n"; flush stdout;
   | _ -> print_string "other\n"; flush stdout;()
 (** Main procedure for generating the ownership constraints 
 オーナーシップ制約生成のためのメイン手続き
