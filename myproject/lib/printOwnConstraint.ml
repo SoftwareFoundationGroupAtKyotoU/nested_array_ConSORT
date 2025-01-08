@@ -2,6 +2,7 @@ open Util
 open Format
 open SmtlibSyntax
 open Z3Syntax
+open OwnConstraintSyntax
 
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
 let rec print_declare oc var_locations fvs fun_num =
@@ -334,34 +335,73 @@ and fvs_of_smtlib sl =
 
 (* ファイルに結果を出力 *)
 let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
-  let (fun_name, _) = (List.nth all_cs fun_num) in
+  let (fun_name, constrs) = (List.nth all_cs fun_num) in
   let formatter = formatter_of_out_channel oc in
   let varown_count = List.rev varown_count in
   fprintf formatter "fun_name:%s \nownership\n" fun_name;
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
-        if fun_num' = fun_num then
-          (for depth' = depth downto 1 do
-            let s1 = sprintf "o_%d_%s_%s_%d" fun_num id b_or_e depth' in
-            let res1 = lookup s1 z3res in
-            (* 所有権を表す下限の一次式の切片の宣言 *)
-            let s2 = sprintf "d_%d_l_%s_%s_%d" fun_num id b_or_e depth' in
-            let res2 = lookup s2 z3res in
-            fprintf formatter "%s %s : ref^%d [ %a" id b_or_e depth' pp_value res2;
-            (* 下限の係数を宣言 *)
-            print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num z3res depth';
-            (* 所有権を表す上限の一次式の切片の宣言 *)
-            let s3 = sprintf "d_%d_h_%s_%s_%d" fun_num id b_or_e depth' in
-            let res3 = lookup s3 z3res in
-            fprintf formatter ", %a" pp_value res3;
-            (* 上限の係数を宣言 *)
-            print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num z3res depth';
-            (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
-            fprintf formatter "] -> %a\n" pp_value res1
-          done)
-        else 
-          ()
-        ) varown_count);
+      if fun_num' = fun_num then
+        (for depth' = depth downto 1 do
+          let s1 = sprintf "o_%d_%s_%s_%d" fun_num id b_or_e depth' in
+          let res1 = lookup s1 z3res in
+          (* 所有権を表す下限の一次式の切片の宣言 *)
+          let s2 = sprintf "d_%d_l_%s_%s_%d" fun_num id b_or_e depth' in
+          let res2 = lookup s2 z3res in
+          fprintf formatter "%s %s : ref^%d [ %a" id b_or_e depth' pp_value res2;
+          (* 下限の係数を宣言 *)
+          print_declare_b_and_e_c formatter fvs "l" id b_or_e fun_num z3res depth';
+          (* 所有権を表す上限の一次式の切片の宣言 *)
+          let s3 = sprintf "d_%d_h_%s_%s_%d" fun_num id b_or_e depth' in
+          let res3 = lookup s3 z3res in
+          fprintf formatter ", %a" pp_value res3;
+          (* 上限の係数を宣言 *)
+          print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num z3res depth';
+          (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
+          fprintf formatter "] -> %a\n" pp_value res1
+        done)
+      else 
+        ()
+      ) varown_count);
+  let rec print_body_own branch_trace cons =
+    match cons with
+    | CIf (_, c_lis1, c_lis2, _) ->
+      let s1 = String.concat "" (List.map (print_body_own (Then :: branch_trace)) c_lis1 ) in
+      let s2 = String.concat "" (List.map (print_body_own (Else :: branch_trace)) c_lis2) in
+      asprintf "if exp then {\n  %s} else {\n%s}\n" s1 s2
+    | CLetAddPtr (id1, id2,_ , pos) ->
+      let s = cons_to_program cons in
+      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id1 pos pp_branch_trace branch_trace 1 in
+      let res1 = lookup s1 z3res in
+      let s2 = asprintf "o_%d_%s_%d%a_%d" fun_num id2 pos pp_branch_trace branch_trace 1 in
+      let res2 = lookup s2 z3res in
+      asprintf "%s/*  %s:%a  */\n/*  %s:%a  */\n" s id1 pp_value res1 id2 pp_value res2
+    | CMkArray (id, _, simplety, pos) ->
+      let s = cons_to_program cons in
+      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace 1 in
+      let res1 = lookup s1 z3res in
+      asprintf "%s/*  %s:%a  */\n" s id pp_value res1
+    | CAliasAddPtr (id1, id2, _, pos) ->
+      let s = cons_to_program cons in
+      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id1 pos pp_branch_trace branch_trace 1 in
+      let res1 = lookup s1 z3res in
+      let s2 = asprintf "o_%d_%s_%d%a_%d" fun_num id2 pos pp_branch_trace branch_trace 1 in
+      let res2 = lookup s2 z3res in
+      asprintf "%s/*  %s:%a  */\n/*  %s:%a  */\n" s id1 pp_value res1 id2 pp_value res2
+    | CApp (_, args, pos) ->
+      let s = cons_to_program cons in
+      let print_arg_own arg = 
+        match arg with
+        | AId id -> 
+          let s = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace 1 in
+          let res = lookup s z3res in
+          asprintf "/*  %s:%a  */\n" id pp_value res
+        | _ -> "" in
+      let s1 = String.concat "" (List.map print_arg_own args) in
+      asprintf "%s%s" s s1
+    | _ -> cons_to_program cons in
+  let prog = String.concat " " (List.map (print_body_own []) constrs) in
+  fprintf formatter "%s" prog;
 (* 関数評価前，評価後の上限下限の定数係数の宣言 *)
 and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num z3res depth =
   List.iter
