@@ -134,7 +134,7 @@ let main_sat_ans file =
     let oc = open_out "experiment/out_sat_ans.smt2" in
   
     let z3res' = List.map (fun (id , _ , value) -> (id, value)) z3res in
-    output_string oc (file ^ " ->");
+    output_string oc (file ^ " ->\n");
     (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
     main_sat_ans_sub oc all_constrs n 0 z3res' n;
     close_out oc
