@@ -1,6 +1,7 @@
 open Util
 open Format
 open SmtlibSyntax
+open SimpleTyping
 open Z3Syntax
 open OwnConstraintSyntax
 
@@ -333,9 +334,16 @@ and fvs_of_smtlib sl =
   | Ands ss ->
     List.concat (List.map fvs_of_smtlib ss)
 
-(* ファイルに結果を出力 *)
+let find_own_res fun_num id pos branch_trace z3res ty_env =
+  let simpleTy = lookup id ty_env in
+  let depth = ref_depth simpleTy in
+  let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
+  lookup s1 z3res
+
+    (* ファイルに結果を出力 *)
 let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
   let (fun_name, constrs) = (List.nth all_cs fun_num) in
+  let ty_env = lookup fun_name !all_tyenv in
   let formatter = formatter_of_out_channel oc in
   let varown_count = List.rev varown_count in
   fprintf formatter "fun_name:%s \nownership\n" fun_name;
@@ -371,30 +379,24 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       asprintf "if exp then {\n  %s} else {\n%s}\n" s1 s2
     | CLetAddPtr (id1, id2,_ , pos) ->
       let s = cons_to_program cons in
-      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id1 pos pp_branch_trace branch_trace 1 in
-      let res1 = lookup s1 z3res in
-      let s2 = asprintf "o_%d_%s_%d%a_%d" fun_num id2 pos pp_branch_trace branch_trace 1 in
-      let res2 = lookup s2 z3res in
+      let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env in
+      let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env in
       asprintf "%s/*  %s:%a  */\n/*  %s:%a  */\n" s id1 pp_value res1 id2 pp_value res2
     | CMkArray (id, _, simplety, pos) ->
       let s = cons_to_program cons in
-      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace 1 in
-      let res1 = lookup s1 z3res in
-      asprintf "%s/*  %s:%a  */\n" s id pp_value res1
+      let res = find_own_res fun_num id pos branch_trace z3res ty_env in
+      asprintf "%s/*  %s:%a  */\n" s id pp_value res
     | CAliasAddPtr (id1, id2, _, pos) ->
       let s = cons_to_program cons in
-      let s1 = asprintf "o_%d_%s_%d%a_%d" fun_num id1 pos pp_branch_trace branch_trace 1 in
-      let res1 = lookup s1 z3res in
-      let s2 = asprintf "o_%d_%s_%d%a_%d" fun_num id2 pos pp_branch_trace branch_trace 1 in
-      let res2 = lookup s2 z3res in
+      let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env in
+      let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env in
       asprintf "%s/*  %s:%a  */\n/*  %s:%a  */\n" s id1 pp_value res1 id2 pp_value res2
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
       let print_arg_own arg = 
         match arg with
         | AId id -> 
-          let s = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace 1 in
-          let res = lookup s z3res in
+          let res = find_own_res fun_num id pos branch_trace z3res ty_env in
           asprintf "/*  %s:%a  */\n" id pp_value res
         | _ -> "" in
       let s1 = String.concat "" (List.map print_arg_own args) in
