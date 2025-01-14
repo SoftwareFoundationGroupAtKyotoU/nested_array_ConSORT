@@ -49,7 +49,7 @@ let rec cons_to_program constr =
   | CApp (id, arg_lis, _) -> 
     let s_arg_lis = String.concat ", " (List.map arg_to_program arg_lis) in
     asprintf "  let _ = %s(%s) in\n" id s_arg_lis
-  | CIf (exp, c_lis1, c_lis2, _) ->
+  | CIf (_, c_lis1, c_lis2, _) ->
     let s1 = String.concat "" (List.map cons_to_program c_lis1) in
     let s2 = String.concat "" (List.map cons_to_program c_lis2) in
     asprintf "  if exp then {\n  %s} else {\n  %s}\n" s1 s2
