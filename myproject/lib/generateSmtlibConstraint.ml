@@ -18,6 +18,9 @@ type var_locations_ty = (id * (tyvar * branch list * simpleTy)) list ref
 (* branch_traceはif文の分岐情報を表す *)
 let var_locations : var_locations_ty = ref []
 
+(* 所有権表現を表す組（上限下限，所有権の値）のリスト *)
+let own_represents : own_represent list ref = ref []
+
 (* 環境からidとbranch_traceに対応する関数内の位置posを返す *)
 (* branch_traceはif文の分岐情報を表す *)
 let rec lookup_pos id branch_trace env =
@@ -52,6 +55,14 @@ let new_id id position branch_trace simpleTy =
   with 
     Unbound -> var_locations := (id, (position, branch_trace, simpleTy)) :: !var_locations
     
+let new_id' id position branch_trace own_represent =
+  try
+    let pos' = lookup_pos id branch_trace !var_locations in
+    if pos' = position then ()
+    else
+      own_represents := own_represent :: !own_represents
+  with 
+    Unbound -> own_represents := own_represent :: !own_represents
 
 (* resは返り値用のリスト，末尾再帰のため？
 var_locations((変数id, (関数内での場所, branch_trace))のリスト)から
@@ -174,7 +185,8 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
     else 
       main_sl @ (make_mkarray_sub (depth - 1)) 
 
-(* 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
+(* let id1 = id2(ref) + sl(int) in ...
+完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
 let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   let rec make_letAppPtr_smtlib_div depth =
     let sl1 = And(Eq(make_bound_exp fvs id1 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "l" fun_num branch_trace depth),
@@ -235,11 +247,9 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
       [Eq(make_pre_own_var id1 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth)]
       @ (not_first_element (depth-1))
   in *)
-  [Eq(make_pre_own_var id1 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id1 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id1 "h" fun_num branch_trace depth, make_bound_exp fvs id1 "h" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "l" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id2 "h" fun_num branch_trace depth)]
+  [Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth);
+  Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
+  Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id1 "h" fun_num branch_trace depth)]
   (* make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 (Id "0") depth *)
 
 let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
@@ -250,8 +260,7 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
     else 
       let sl1 = 
         [
-
-          Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
+        Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id1 "h" fun_num branch_trace depth);
         Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id2_non0 "l" fun_num branch_trace depth);
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id2_non0 "h" fun_num branch_trace depth);
