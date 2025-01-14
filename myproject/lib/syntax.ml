@@ -34,7 +34,13 @@ let rec pp_simpleTy fmt simpleTy =
   | SInt -> Format.fprintf fmt "int"
   | SRef simpleTy' -> 
     Format.fprintf fmt "%a ref" pp_simpleTy simpleTy'
-  | _ -> raise (Error "pp_simpleTy Error")
+  | SBool -> Format.fprintf fmt "bool"
+  | SUnit -> Format.fprintf fmt "unit"
+  | SVar tyvar -> Format.fprintf fmt "'%d" tyvar
+  | SFun (ty_list, ty) -> 
+    let _ = List.map (fun ty -> Format.fprintf fmt "%a -> " pp_simpleTy ty) ty_list in
+    Format.fprintf fmt "%a" pp_simpleTy ty
+  (* | _ -> raise (Error "pp_simpleTy Error") *)
 
 type funcallexp = 
     FunCall of id * (id list)
@@ -101,4 +107,8 @@ type annotation = (ftype_id * ftype) list * (ftype_id * ftype) list * ftype
 type fdef = id * id list * annotation * exp
 type program = fdef list * exp
 
-
+(* 所有範囲と所有権の値をまとめたデータ構造 *)
+type own_represent = 
+  | UnitRange of smtlib * smtlib * smtlib
+  | DivRange of (smtlib * smtlib) * (smtlib) * (smtlib * smtlib)
+  | NestedUnitRange of smtlib * smtlib * smtlib * own_represent
