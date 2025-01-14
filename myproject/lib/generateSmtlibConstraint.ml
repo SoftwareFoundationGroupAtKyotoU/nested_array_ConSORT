@@ -158,10 +158,8 @@ let rec make_if_smtlib id fvs fun_num branch_trace depth =
 
 let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
   let rec make_post_if_smtlib_sub depth =
-    if depth <= 1 then
-      And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
-      And(Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (branch :: branch_trace) depth),
-      Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (branch :: branch_trace) depth)))
+    if depth <= 0 then
+      True
     else
       let sl = make_post_if_smtlib_sub (depth - 1) in
       let sl2 = And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
@@ -643,9 +641,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         (* then式評価後の各変数について 
             条件式がなりたつならば
           　　評価前の所有権が0と等しい　または
-                (評価前の所有権はthen節評価時の所有権以下　かつ
-                評価前の所有範囲の下限はthen節評価時の所有範囲の下限以上　かつ
-                評価前の所有範囲の上限はthen節評価時の所有範囲の上限以下) *)
+                (評価後の所有権はthen節評価時の所有権以下　かつ
+                評価後の所有範囲の下限はthen節評価時の所有範囲の下限以上　かつ
+                評価後の所有範囲の上限はthen節評価時の所有範囲の上限以下) *)
           (fun id -> 
             let depth = ref_depth (lookup id ty_env) in
             make_post_if_smtlib fvs id fun_num branch_trace depth Then
@@ -656,16 +654,18 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         (* else式評価後の各変数について 
             条件式がなりたたないならば
           　　評価前の所有権が0と等しい　または
-                (評価前の所有権はelse節評価時の所有権以下　かつ
-                評価前の所有範囲の下限はelse節評価時の所有範囲の下限以上　かつ
-                評価前の所有範囲の上限はelse節評価時の所有範囲の上限以下) *)
+                (評価後の所有権はelse節評価時の所有権以下　かつ
+                評価後の所有範囲の下限はelse節評価時の所有範囲の下限以上　かつ
+                評価後の所有範囲の上限はelse節評価時の所有範囲の上限以下) *)
         (List.concat (List.map 
           (fun id -> 
             let depth = ref_depth (lookup id ty_env) in
             make_post_if_smtlib fvs id fun_num branch_trace depth Else
           ) ids_post_el)) in
     (* 制約をつなげて返す *)
-    constraints_pre @ constraints1' @ constraints2' @ constraints_post_if @ constraints_post_el
+    constraints_pre @ constraints1' @ constraints2' @ 
+    constraints_post_if @ 
+    constraints_post_el
   (* | CLet (id1,id2,l) -> (* let x = y in ... *) 
     (* x,yに対応するvar_locationsを追加
     ここ下とマージできる *)
@@ -1200,6 +1200,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
           let sl1 = [Eq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "e" depth);
+          (* Eq(make_own_var id fun_num branch_trace depth, Id "1"); *)
           Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll);
           Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)] in
           let sl2 = subst_param_after_eval (RawId id_param, ftype) arg (depth-1) in
@@ -1332,7 +1333,6 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
   (* 関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
   let smtlibs_before_eval = List.concat (List.map ref_id_before_eval_to_smtlibs ref_ids) in
   (* 関数内部の制約をsmtlibの形式に変換 *)
-  (* print_string "4\n"; flush stdout; *)
   let f c = 
     try constr_to_smtlib fvs fun_num funnames_numberings [] ty_env c with
     | Error s -> 
@@ -1356,7 +1356,7 @@ let fun_constrs_to_smtlib funid_constrs fun_num funnames_numberings =
       let depth = ftref_depth (FTRef (ftype', el2, eh2, f2)) in
       (* 評価終了時の引数の所有権は0　または
       　　　　(評価終了時の引数の所有権がその時の所有権以下　かつ
-      　　　　評価終了時の引数の所有範囲の下限がその時の所有範囲の下限以上　かつい
+      　　　　評価終了時の引数の所有範囲の下限がその時の所有範囲の下限以上　かつ
       　　　　評価終了時の引数の所有範囲の上限がその時の所有範囲の上限以下) *)
       [Or(Eq(make_own_var_be id fun_num "e" depth, Id "0."),
        And(Leq(make_own_var_be id fun_num "e" depth, make_own_var id fun_num [] depth),
