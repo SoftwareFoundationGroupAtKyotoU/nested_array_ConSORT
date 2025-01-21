@@ -5,24 +5,27 @@ open SimpleTyping
 open Z3Syntax
 open OwnConstraintSyntax
 
+(* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
+let eq0_list : id list ref = ref []
+
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
 let rec print_declare oc var_locations fvs fun_num =
   let formatter = formatter_of_out_channel oc in
   let rec nested_ref_declare id pos branch_trace depth = 
     if depth < 1 then ()
     else
-    (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(then or else) *)
+    (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       (fprintf formatter "(declare-fun o_%d_%s_%d%a_%d () Real)\n" fun_num id pos pp_branch_trace branch_trace depth;
       (* 下限の係数を宣言 *)
       print_declare_c formatter fvs "l" id pos branch_trace fun_num depth;
       (* 所有権を表す下限の一次式の切片の宣言 
       [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のd
-      d_(関数のシリアル番号)_l_(参照変数名)_(関数内での位置を表す整数)_(if or el) *)
+      d_(関数のシリアル番号)_l_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       fprintf formatter "(declare-fun d_%d_l_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
       (* 上限の係数を宣言 *)
       print_declare_c formatter fvs "h" id pos branch_trace fun_num depth;
       (* 所有権を表す上限の一次式の切片の宣言 
-      d_(関数のシリアル番号)_h_(参照変数名)_(関数内での位置を表す整数)_(if or el) *)
+      d_(関数のシリアル番号)_h_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       fprintf formatter "(declare-fun d_%d_h_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
       nested_ref_declare id pos branch_trace (depth-1)) in
   (List.iter
@@ -407,10 +410,18 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let s1 = String.concat "" (List.map (print_body_own (Then :: branch_trace)) c_lis1 ) in
       let s2 = String.concat "" (List.map (print_body_own (Else :: branch_trace)) c_lis2) in
       asprintf "if exp then {\n  %s} else {\n%s}\n" s1 s2
-    | CLetAddPtr (id1, id2,_ , pos) ->
+    | CLetAddPtr (id1, id2, _ , pos) ->
       let s = cons_to_program cons in
       let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
-      let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
+      let res2 = 
+        if contains_element eq0_list id2 
+          then 
+            let index = String.index (find_own_res fun_num id2 pos branch_trace z3res ty_env fvs) '\n' in
+            let id2_outer = String.sub (find_own_res fun_num id2 pos branch_trace z3res ty_env fvs) 0 index in
+            let id2_eq0 = find_own_res fun_num (id2^"_eq0") pos branch_trace z3res ty_env fvs in
+            let id2_non0 = find_own_res fun_num (id2^"_non0") pos branch_trace z3res ty_env fvs in
+            asprintf "%s\n%s%s" id2_outer id2_eq0 id2_non0
+          else find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s" s res1 res2
     | CMkArray (id, _, _, pos) ->
       let s = cons_to_program cons in
@@ -422,27 +433,34 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s" s res1 res2
     | CAliasDeref (id1, id2, pos) ->
+      remove_element eq0_list id2;
       let s = cons_to_program cons in
       let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s" s res1 res2
     | CAssignRef (id1, id2, pos) ->
+      eq0_list := id1 :: !eq0_list;
       let s = cons_to_program cons in
+      let res1 = find_own_res fun_num (id1) pos branch_trace z3res ty_env fvs in
+      let index = String.index res1 '\n' in
+      let res1_outer = String.sub res1 0 index in
       let res1_eq0 = find_own_res fun_num (id1^"_eq0") pos branch_trace z3res ty_env fvs in
       let res1_non0 = find_own_res fun_num (id1^"_non0") pos branch_trace z3res ty_env fvs in
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
-      asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
+      asprintf "%s%s\n%s%s%s" s res1_outer res1_eq0 res1_non0 res2
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
       let print_arg_own arg = 
         match arg with
         | AId id -> 
+          remove_element eq0_list id;
           let res = find_own_res fun_num id pos branch_trace z3res ty_env fvs in
           asprintf "%s" res
         | _ -> "" in
       let s1 = String.concat "" (List.map print_arg_own args) in
       asprintf "%s%s" s s1
     | CLetDeref (id1, id2, pos) ->
+      eq0_list := id1 :: !eq0_list;
       let s = cons_to_program cons in
       let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
       let res2_eq0 = find_own_res fun_num (id2^"_eq0") pos branch_trace z3res ty_env fvs in
