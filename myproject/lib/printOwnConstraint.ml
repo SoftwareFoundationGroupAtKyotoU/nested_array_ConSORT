@@ -428,13 +428,10 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       asprintf "%s%s%s" s res1 res2
     | CAssignRef (id1, id2, pos) ->
       let s = cons_to_program cons in
-      (* let res1_eq0 = find_own_res fun_num (id1^"eq0") pos branch_trace z3res ty_env fvs in
-      let res1_non0 = find_own_res fun_num (id1^"non0") pos branch_trace z3res ty_env fvs in
+      let res1_eq0 = find_own_res fun_num (id1^"_eq0") pos branch_trace z3res ty_env fvs in
+      let res1_non0 = find_own_res fun_num (id1^"_non0") pos branch_trace z3res ty_env fvs in
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
-      asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2 *)
-      let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
-      let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
-      asprintf "%s%s%s" s res1 res2
+      asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
       let print_arg_own arg = 

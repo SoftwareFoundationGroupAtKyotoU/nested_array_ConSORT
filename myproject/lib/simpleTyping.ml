@@ -75,6 +75,10 @@ let rec infer_simple_ty tyenv exp =
     let t = lookup id !tyenv in
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
+    (match ty1 with
+      | SRef _
+        -> tyenv := (id^"_eq0", ty1) :: !tyenv; tyenv := (id^"_non0", ty1) :: !tyenv;
+      | _ -> ());
     let c3 = unify ((t, SRef (ty1)) :: c1 @ c2) in (c3, ty2)
   | Alias(exp1, exp2, exp3) ->
     let (c1,ty1) = infer_simple_ty tyenv exp1 in
