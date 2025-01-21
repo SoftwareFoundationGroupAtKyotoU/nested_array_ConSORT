@@ -405,6 +405,27 @@ let rec union_list ls1 ls2 =
   | [] -> ls2
   | x :: ls1' -> if List.mem x ls2 then union_list ls1' ls2 else union_list ls1' (x :: ls2)
 
+(* リストの要素を除去 *)
+  let remove_element lst_ref elem =
+    let rec remove_first lst =
+      match lst with
+      | [] -> []
+      | x :: xs ->
+        if x = elem then xs
+        else x :: (remove_first xs)
+    in
+    lst_ref := remove_first !lst_ref
+  
+    (* リストの要素の所属判定 *)
+  let contains_element lst_ref elem =
+    let rec exists lst =
+      match lst with
+      | [] -> false
+      | x :: xs ->
+        if x = elem then true
+        else exists xs
+    in
+    exists !lst_ref
 
 (* st中の変数をsubstに従って別の制約式に置き換える *)
 let rec smtlib_subst subst st = 
@@ -537,3 +558,8 @@ let rec depth_to_simpleTy depth =
     SInt
   else 
     SRef (depth_to_simpleTy (depth-1))
+
+let deref_simpleTy simpleTy =
+  match simpleTy with
+  | SRef simpleTy' -> simpleTy'
+  | _ -> raise (Error "deref_simpleTy error")
