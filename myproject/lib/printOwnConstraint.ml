@@ -410,11 +410,15 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let s1 = String.concat "" (List.map (print_body_own (Then :: branch_trace)) c_lis1 ) in
       let s2 = String.concat "" (List.map (print_body_own (Else :: branch_trace)) c_lis2) in
       asprintf "if exp then {\n  %s} else {\n%s}\n" s1 s2
-    | CLetAddPtr (id1, id2, _ , pos) ->
+    | CLetAddPtr (id1, id2, e, pos) ->
+      let sl = exp_to_smtlib e in
       let s = cons_to_program cons in
       let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
       let res2 = 
-        if contains_element eq0_list id2 
+        if contains_element eq0_list id2 && sl = Id "1" then
+          (remove_element eq0_list id2;
+          find_own_res fun_num id2 pos branch_trace z3res ty_env fvs)
+        else if contains_element eq0_list id2 
           then 
             let index = String.index (find_own_res fun_num id2 pos branch_trace z3res ty_env fvs) '\n' in
             let id2_outer = String.sub (find_own_res fun_num id2 pos branch_trace z3res ty_env fvs) 0 index in
@@ -460,7 +464,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let s1 = String.concat "" (List.map print_arg_own args) in
       asprintf "%s%s" s s1
     | CLetDeref (id1, id2, pos) ->
-      eq0_list := id1 :: !eq0_list;
+      eq0_list := id2 :: !eq0_list;
       let s = cons_to_program cons in
       let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
       let res2_eq0 = find_own_res fun_num (id2^"_eq0") pos branch_trace z3res ty_env fvs in
