@@ -84,6 +84,18 @@ and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num depth =
       fprintf formatter "(declare-fun c_%d_%s_%s_%s_%s_%d () Int)\n" fun_num l_or_h fv id b_or_e depth;
        ) fvs
 
+let print_index oc fun_num all_cs =
+  let (fun_name, _) = (List.nth all_cs fun_num) in
+  let ty_env = lookup fun_name !all_tyenv in
+  let formatter = formatter_of_out_channel oc in
+  let rec print_index_sub id depth =
+    if depth <= 0 then ()
+    else 
+      fprintf formatter "(declare-fun i_%d_%s_%dth () Int)\n" fun_num id depth;
+      print_index_sub id (depth-1) in
+  let _ = List.map (fun x -> print_index_sub (fst x) (ref_depth (snd x))) ty_env in ()
+
+
 (* listから重複を除いたリストを返す *)
 let rec list_to_set li res = 
   match li with

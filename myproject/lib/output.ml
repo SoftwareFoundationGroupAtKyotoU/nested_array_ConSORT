@@ -19,6 +19,7 @@ let rec main_int_declare oc all_cs fun_num iter =
     print_declare oc var_locations fvs fun_num;
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
     print_declare_begin_and_end oc varown_count fvs fun_num;
+    print_index oc fun_num all_cs;
     (* 関数ブロックごとに一行区切る *)
     output_string oc "\n";
     (* 次の関数の所有権をsmtlib形式で宣言 *)
