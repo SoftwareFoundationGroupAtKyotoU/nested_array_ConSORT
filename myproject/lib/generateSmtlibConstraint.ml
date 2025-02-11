@@ -423,34 +423,6 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   common depth @
   List.map (fun x -> Imply(Eq(Id idx1, Id idx2), x)) (make_letDeref_smtlib_same_range fvs1 fvs2 depth) @
   List.map (fun x -> Imply(Eq(Id idx2_non0, Id idx2), x)) (make_letDeref_smtlib_same_range fvs2_non0 fvs2 depth)
-  (* let rec common depth =
-    if depth <= 0 then []
-    else
-      [Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
-      Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id1 "h" fun_num branch_trace depth);
-      Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "l" fun_num branch_trace depth);
-      Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id2 "h" fun_num branch_trace depth)]
-      @ (common (depth-1))
-  in
-  let rec first_element depth =
-    if depth <= 0 then []
-    else
-      [Eq(make_pre_own_var id2 fun_num branch_trace depth, 
-          Add(make_own_var id1 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth))]
-      @ (first_element (depth-1))
-  in 
-  let rec not_first_element depth =
-    if depth <= 0 then []
-    else
-      [Eq(make_pre_own_var id1 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth)]
-      @ (not_first_element (depth-1))
-  in
-  [Eq(make_pre_own_var id2 fun_num branch_trace depth, Add(make_own_var id1 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth));
-  Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id1 "l" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id1 "h" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "l" fun_num branch_trace depth);
-  Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, make_bound_exp fvs id2 "h" fun_num branch_trace depth)] *)
 
 let rec alias_to_alias fvs fun_num branch_trace id1 id2 depth =
   if depth <= 0 then True
