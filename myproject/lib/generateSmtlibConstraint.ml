@@ -1105,7 +1105,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
      Geq(make_bound_exp fvs id "h" fun_num branch_trace 1, Id "0")]
   | CLetDeref (id1, id2, pos) -> 
     (* let id1 = *id2 in ... *)
-    (* Format.printf "unbound %d %a\n" pos pp_branch_trace branch_trace; *)
     eq0_list := id2 :: !eq0_list;
     let id1_simpleTy = lookup id1 ty_env in
     let id2_simpleTy = lookup id2 ty_env in
@@ -1153,29 +1152,37 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       | (RawId id_param, FTRef (ftype,ENull,ENull,_)), AId id ->
         (* 呼び出された関数の通し番号 *)
         let num = lookup fun_name funnames_numberings in
-        (* 呼び出された関数の整数変数名と呼び出した関数の整数自由変数の和集合 *)
-        (* let fvs' = union_list (List.map fst subst) fvs in *)
+        (* 整数型の仮引数名リスト *)
         let fvs' = List.map fst subst in
-        (* 所有範囲の下限を表すデータ構造 *)
-        let sll = make_bound_exp_be fvs' id_param "l"  num "b" depth in
-        (* 所有範囲の上限を表すデータ構造 *)
-        let slh = make_bound_exp_be fvs' id_param "h"  num "b" depth in
         (* 引数xの関数開始時の所有権は0　または
         　　　　(実引数の所有権が関数開始時に必要な所有権以上　かつ
         　　　　実引数の所有範囲の下限が関数開始時に必要な所有範囲の下限以下　かつ
         　　　　実引数の所有範囲の上限が関数開始時に必要な所有範囲の上限以上)　 *)
-        if depth <= 1 then
-         [Or(Eq(Id "0.", make_own_var_be id_param num "b" depth), 
-         And(Geq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "b" depth),
-         And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
-             Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh))))]
-        else
-          [Or(Eq(Id "0.", make_own_var_be id_param num "b" depth), 
-         And(Geq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "b" depth),
-         And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
-         And(Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh),
-            List.hd (subst_param_before_eval (RawId id_param, ftype) arg (depth-1)) ))))]
-         (* x | () ref (left, right, ownership) *)
+        let rec common depth =
+          if depth <= 0 then True
+          else
+            let sl1 = Or(Eq(Id "0.", make_own_var_be id_param num "b" depth), 
+              Geq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "b" depth)) in
+            let sl2 = common (depth - 1) in
+            And(sl1, sl2) in
+        let rec same_range fvs fvs_param depth =
+          (* 所有範囲の下限を表すデータ構造 *)
+          let sll = make_bound_exp_be fvs' id_param "l"  num "b" depth in
+          (* 所有範囲の上限を表すデータ構造 *)
+          let slh = make_bound_exp_be fvs' id_param "h"  num "b" depth in
+          let idx = make_idx_id id depth in
+          let fvs' = idx::fvs in
+          let idx_param = make_idx_id id_param depth in
+          let fvs_param' = idx_param::fvs_param in
+          if depth <= 0 then True
+          else
+            let sl1 = And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
+             Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)) in
+            let sl2 = same_range fvs' fvs_param' (depth-1) in
+            And(sl1, Imply(Eq(Id idx, Id idx_param), sl2)) in
+        [common depth;
+        same_range fvs fvs' depth]
+      (* x | () ref (left, right, ownership)の形式の場合 *)
       | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
         (* 引数の篩型中の整数変数を別の式で置き換え *)
         let scope_low = exp_to_smtlib (exp_subst subst el) in
@@ -1220,21 +1227,38 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       if depth <= 0 then []
       else
         match ftid_ft, arg with
-        | (RawId id_param, FTRef (ftype,ENull,ENull,_)), AId id ->
+        | (RawId id_param, FTRef (_,ENull,ENull,_)), AId id ->
           remove_element eq0_list id;
           let num = lookup fun_name funnames_numberings in
           (* let fvs' = union_list (List.map fst subst) fvs in *)
           let fvs' = List.map fst subst in
-          let sll = make_bound_exp_be fvs' id_param "l"  num "e" depth in
-          let slh = make_bound_exp_be fvs' id_param "h"  num "e" depth in
+          (* 関数評価後は関数の返り値の型の所有表現と等しい *)
+          let rec common depth =
+            if depth <= 0 then True
+            else
+              let sl1 = Eq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "e" depth) in
+              let sl2 = common (depth - 1) in
+              And(sl1, sl2) in
+          let rec same_range fvs fvs_param depth =
+            (* 所有範囲の下限を表すデータ構造 *)
+            let sll = make_bound_exp_be fvs' id_param "l"  num "e" depth in
+            (* 所有範囲の上限を表すデータ構造 *)
+            let slh = make_bound_exp_be fvs' id_param "h"  num "e" depth in
+            let idx = make_idx_id id depth in
+            let fvs' = idx::fvs in
+            let idx_param = make_idx_id id_param depth in
+            let fvs_param' = idx_param::fvs_param in
+            if depth <= 0 then True
+            else
+              let sl1 = And(Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
+                Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)) in
+              let sl2 = same_range fvs' fvs_param' (depth-1) in
+              And(sl1, Imply(Eq(Id idx, Id idx_param), sl2)) in
           (* 引数のvar_locationsを生成 *)
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
-          let sl1 = [Eq(make_own_var id fun_num branch_trace depth, make_own_var_be id_param num "e" depth);
-          Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll);
-          Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)] in
-          let sl2 = subst_param_after_eval (RawId id_param, ftype) arg (depth-1) in
-          sl1 @ sl2
+          [common depth;
+          same_range fvs fvs' depth]
         | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
           remove_element eq0_list id;
           let l_arg_exp = exp_subst subst el in
