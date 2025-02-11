@@ -122,6 +122,8 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
     let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace depth in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace depth)
 
+let make_idx_id id depth = asprintf "%s_%dth" id depth
+
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
 b_or_eはbまたはeでbeginとendの意 *)
 let rec make_bound_exp_be fvs id h_or_l fun_num b_or_e depth = 
@@ -139,7 +141,8 @@ let rec same_own id fvs fun_num branch_trace depth =
     let sl1 = [Eq(make_pre_own_var id fun_num branch_trace depth, make_own_var id fun_num branch_trace depth);
     Eq(make_pre_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num branch_trace depth);
     Eq(make_pre_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num branch_trace depth)] in
-    let sl2 = same_own id fvs fun_num branch_trace (depth-1) in
+    let idx = make_idx_id id depth in
+    let sl2 = same_own id (idx::fvs) fun_num branch_trace (depth-1) in
     sl1 @ sl2
 
 (* 二つの参照の所有範囲の下限と上限を受け取り
@@ -165,23 +168,28 @@ let rec make_if_smtlib id fvs fun_num branch_trace depth =
     Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (Else :: branch_trace) depth);
     Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Then :: branch_trace) depth);
     Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Else :: branch_trace) depth)] in
-    let sl2 = make_if_smtlib id fvs fun_num branch_trace (depth-1) in
+    let idx = make_idx_id id depth in
+    let sl2 = make_if_smtlib id (idx::fvs) fun_num branch_trace (depth-1) in
     sl @ sl2
 
 let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
-  let rec make_post_if_smtlib_sub depth =
+  let rec make_post_if_smtlib_sub fvs depth =
     if depth <= 0 then
       True
     else
-      let sl = make_post_if_smtlib_sub (depth - 1) in
+      let idx = make_idx_id id depth in
+      let fvs' = idx::fvs in
+      let sl = make_post_if_smtlib_sub fvs' (depth - 1) in
       let sl2 = And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
       And(Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (branch :: branch_trace) depth),
       And(Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (branch :: branch_trace) depth), sl))) in
       sl2 in
+  let idx = make_idx_id id depth in
+  let fvs' = idx::fvs in
   [Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
   Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
     make_bound_exp fvs id "h" fun_num branch_trace depth),
-  make_post_if_smtlib_sub depth))]
+  make_post_if_smtlib_sub fvs' depth))]
 
 let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
   let rec make_mkarray_sub depth =
@@ -191,12 +199,9 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
       let sl2 = [Eq(make_own_var id fun_num branch_trace depth, Id "0.")] in
       sl @ sl2 in
   let main_sl = [Eq(make_own_var id fun_num branch_trace depth, Id "1.");
-  Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, Id "0"); 
-  Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, upper_bound)] in
-  if depth <= 1 then
-    main_sl
-  else 
-    main_sl @ (make_mkarray_sub (depth - 1)) 
+    Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, Id "0"); 
+    Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, upper_bound)] in 
+  main_sl @ (make_mkarray_sub (depth - 1)) 
 
 (* let id1 = id2(ref) + sl(int) in ...
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
