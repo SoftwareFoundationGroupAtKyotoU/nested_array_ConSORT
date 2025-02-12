@@ -9,6 +9,21 @@ open GenerateSmtlibConstraint
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
 
+(* 文字列の末尾の一致判定 *)
+let ends_with s suffix =
+  let s_len = String.length s in
+  let suffix_len = String.length suffix in
+  if suffix_len > s_len then false
+  else
+    String.sub s (s_len - suffix_len) suffix_len = suffix
+
+  (* 文字列の末尾の削除 *)
+let remove_suffix s n =
+  let s_len = String.length s in
+  if n > s_len then s
+  else
+    String.sub s 0 (s_len - n)
+
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
 let rec print_declare oc var_locations fvs fun_num =
   let formatter = formatter_of_out_channel oc in
@@ -34,6 +49,12 @@ let rec print_declare oc var_locations fvs fun_num =
   (List.iter
     (fun (id,(pos,branch_trace, simpleTy)) ->
       let depth = ref_depth simpleTy in 
+      let fvs = 
+        if ends_with id "_non0" then 
+          let id' = remove_suffix id (String.length "_non0") in
+          let idx = make_idx_id fun_num id' (depth+1) in
+          (idx::fvs)
+        else fvs in
       nested_ref_declare id pos branch_trace depth fvs) var_locations);
 (* 所有範囲の上限または下限の宣言 *)
 and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
@@ -70,6 +91,12 @@ let rec print_declare_begin_and_end oc varown_count fvs fun_num =
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
        if fun_num' = fun_num then
+        let fvs = 
+          if ends_with id "_non0" then 
+            let id' = remove_suffix id (String.length "_non0") in
+            let idx = make_idx_id fun_num id' (depth+1) in
+            (idx::fvs)
+          else fvs in
         nested_ref_declare_begin_and_end id b_or_e depth fvs
        else 
          ()
@@ -91,10 +118,9 @@ let print_index oc fun_num all_cs =
   let rec print_index_sub id depth =
     if depth <= 0 then ()
     else 
-      fprintf formatter "(declare-fun i_%d_%s_%dth () Int)\n" fun_num id depth;
-      print_index_sub id (depth-1) in
-  let _ = List.map (fun x -> print_index_sub (fst x) (ref_depth (snd x))) ty_env in ()
-
+      (fprintf formatter "(declare-fun i_%d_%s_%dth () Int)\n" fun_num id depth;
+      print_index_sub id (depth-1)) in
+  List.iter (fun x -> print_index_sub (fst x) (ref_depth (snd x))) ty_env
 
 (* listから重複を除いたリストを返す *)
 let rec list_to_set li res = 
