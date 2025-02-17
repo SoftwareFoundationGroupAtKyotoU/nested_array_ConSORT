@@ -641,7 +641,7 @@ and nonalias_to_nonalias fvs fun_num branch_trace id1 id2 depth =
         Leq(make_bound_exp fvs id2 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "h" fun_num branch_trace depth))))
 
 (* alias(id1 = *id2) *)
-let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
+let make_aliasDeref_smtlib fvs fvs_pre fun_num branch_trace id1 id2 depth =
   let id2_0 = id2 ^ "_eq0" in
   let id2_non0 = id2 ^ "_non0" in
   let rec common depth =
@@ -654,9 +654,9 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let rec make_aliasDeref_smtlib_same_range_pre fvs1 fvs2_non0 depth =
     if depth <= 0 then []
     else 
-      let idx1 = make_idx_id fun_num id1 depth in
+      let idx1 = make_pre_idx_id fun_num id1 branch_trace depth in
       let fvs1' = idx1::fvs1 in
-      let idx2_non0 = make_idx_id fun_num id2_non0 depth in
+      let idx2_non0 = make_pre_idx_id fun_num id2_non0 branch_trace depth in
       let fvs2'_non0 = idx2_non0::fvs2_non0 in
       let sl1 = 
         [Eq(make_pre_bound_exp fvs2_non0 id2_non0 "l" fun_num branch_trace depth, make_pre_bound_exp fvs1 id1 "l" fun_num branch_trace depth);
@@ -667,25 +667,30 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let rec make_aliasDeref_smtlib_same_range_post fvs2 fvs2_non0 depth =
     if depth <= 0 then []
     else 
-      let idx2 = make_idx_id fun_num id2 depth in
+      let idx2 = make_idx_id fun_num id2 branch_trace depth in
       let fvs2' = idx2::fvs2 in
-      let idx2_non0 = make_idx_id fun_num id2_non0 depth in
+      let idx2_non0 = make_pre_idx_id fun_num id2_non0 branch_trace depth in
       let fvs2'_non0 = idx2_non0::fvs2_non0 in
       let sl1 = 
         [Eq(make_pre_bound_exp fvs id2_non0 "l" fun_num branch_trace depth, make_bound_exp fvs id2 "l" fun_num branch_trace depth);
         Eq(make_pre_bound_exp fvs id2_non0 "h" fun_num branch_trace depth, make_bound_exp fvs id2 "h" fun_num branch_trace depth);
         ] in
-      let sl2 = make_aliasDeref_smtlib_same_range_pre fvs2' fvs2'_non0 (depth-1) in
+      let sl2 = make_aliasDeref_smtlib_same_range_post fvs2' fvs2'_non0 (depth-1) in
       sl1 @ List.map (fun x -> Imply(Eq(Id idx2, Id idx2_non0), x)) sl2 in
-    let idx1 = make_idx_id fun_num id1 depth in
-    let fvs1 = idx1::fvs in
-    let idx2 = make_idx_id fun_num id2 depth in
+    let idx1 = make_pre_idx_id fun_num id1 branch_trace depth in
+    let fvs1 = idx1::fvs_pre in
+    let idx2 = make_idx_id fun_num id2 branch_trace depth in
     let fvs2 = idx2::fvs in
-    let idx2_non0 = make_idx_id fun_num id2_non0 depth in
-    let fvs2_non0 = idx2_non0::fvs in
-    common depth @
-    List.map (fun x -> Imply(Eq(Id idx1, Id idx2_non0), x)) (make_aliasDeref_smtlib_same_range_pre fvs1 fvs2_non0 depth) @
-    List.map (fun x -> Imply(Eq(Id idx2, Id idx2_non0), x)) (make_aliasDeref_smtlib_same_range_post fvs2 fvs2_non0 depth)
+    let idx2_non0 = make_pre_idx_id fun_num id2_non0 branch_trace depth in
+    let fvs2_non0 = idx2_non0::fvs_pre in
+    let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
+    common depth 
+    @ List.map 
+      (fun x -> Imply(And(Eq(Id idx1, Id idx2_non0), Eq(Id "0", Id idx2_pre)), x)) 
+      (make_aliasDeref_smtlib_same_range_pre fvs1 fvs2_non0 depth) 
+    @ List.map 
+      (fun x -> Imply(And(Eq(Id idx2, Id idx2_non0), Not(Eq(Id "0", Id idx2_pre))), x)) 
+      (make_aliasDeref_smtlib_same_range_post fvs2 fvs2_non0 depth)
     
 
 let p c =
@@ -1320,16 +1325,20 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       let id2_post_own = make_own_var id2 fun_num branch_trace id2_depth in
       let id2_post_scope_low = make_bound_exp fvs id2 "l" fun_num branch_trace id2_depth in
       let id2_post_scope_high = make_bound_exp fvs id2 "h" fun_num branch_trace id2_depth in
+      (* 一番外側の所有範囲の制約 *)
       let sl1 = 
-        [Gt(make_pre_own_var id2 fun_num branch_trace id2_depth, Id "0.");
-        Leq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace id2_depth, Id "0"); 
-        Geq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, Id "0");
+        [Gt(id2_pre_own, Id "0.");
+        Leq(id2_pre_scope_low, Id "0"); 
+        Geq(id2_post_scope_high, Id "0");
         And(Eq(id2_pre_own, id2_post_own),
         And(Eq(id2_pre_scope_low, id2_post_scope_low),
-        Eq(id2_pre_scope_high, id2_post_scope_high) ))] in
-      let sl2 = make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 id1_depth in
+        Eq(id2_pre_scope_high, id2_post_scope_high)))] in
+      let idx2 = make_idx_id fun_num id2 branch_trace id2_depth in
+      let fvs_post = idx2::fvs in
+      let idx2_pre = make_pre_idx_id fun_num id2 branch_trace id2_depth in
+      let fvs_pre = idx2_pre :: fvs in
+      let sl2 = make_aliasDeref_smtlib fvs_post fvs_pre fun_num branch_trace id1 id2 id1_depth in
       sl1 @ sl2
-      (* [] *)
   | _ -> raise ConstrError
   
 (* 関数仮引数のうち#付き整数引数名を返す *)
