@@ -364,13 +364,15 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
     else
       (* id2の所有権を全てid1に渡す
       id1をid1_0とid1_non0に分割しid1全体の所有権を表現する *)
-      [Eq(make_own_var id2 fun_num branch_trace depth, Id "0.")]
+      [Eq(make_own_var id2 fun_num branch_trace depth, Id "0.");
+      Eq(make_pre_own_var id1 fun_num branch_trace depth, 
+        make_own_var id1_non0 fun_num branch_trace depth);]
       @ (common (depth-1))
   in
   let rec first_element fvs1_0 fvs2 depth =
-    let idx1_0 = make_idx_id fun_num id1_0 depth in
+    let idx1_0 = make_idx_id fun_num id1_0 branch_trace depth in
     let fvs1_0' = idx1_0::fvs1_0 in
-    let idx2 = make_idx_id fun_num id2 depth in
+    let idx2 = make_pre_idx_id fun_num id2 branch_trace depth in
     let fvs2' = idx2::fvs2 in
     if depth <= 0 then []
     else
@@ -382,26 +384,26 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
       List.map (fun x -> Imply(Eq(Id idx1_0, Id idx2), x)) (first_element fvs1_0' fvs2' (depth-1))
   in 
   let rec not_first_element fvs1 fvs1_non0 depth =
-    let idx1 = make_idx_id fun_num id1 depth in
+    let idx1 = make_pre_idx_id fun_num id1 branch_trace depth in
     let fvs1' = idx1::fvs1 in
-    let idx1_non0 = make_idx_id fun_num id1_non0 depth in
+    let idx1_non0 = make_idx_id fun_num id1_non0 branch_trace depth in
     let fvs1_non0' = idx1_non0::fvs1_non0 in
     if depth <= 0 then []
     else
-      [Eq(make_pre_own_var id1 fun_num branch_trace depth, 
-          make_own_var id1_non0 fun_num branch_trace depth);
-      Eq(make_pre_bound_exp fvs1 id1 "l" fun_num branch_trace depth, make_bound_exp fvs1_non0 id1_non0 "l" fun_num branch_trace depth);
-      Eq(make_pre_bound_exp fvs1 id1 "h" fun_num branch_trace depth, make_bound_exp fvs1_non0 id1_non0 "h" fun_num branch_trace depth)]
+      [Eq(make_pre_bound_exp fvs1 id1 "l" fun_num branch_trace depth, 
+        make_bound_exp fvs1_non0 id1_non0 "l" fun_num branch_trace depth);
+      Eq(make_pre_bound_exp fvs1 id1 "h" fun_num branch_trace depth, 
+        make_bound_exp fvs1_non0 id1_non0 "h" fun_num branch_trace depth)]
       @ 
       List.map (fun x -> Imply(Eq(Id idx1, Id idx1_non0), x)) (not_first_element fvs1' fvs1_non0' (depth-1))
   in
-  let idx1 = make_idx_id fun_num id1 depth in
+  let idx1 = make_pre_idx_id fun_num id1 branch_trace depth in
   let fvs1 = idx1::fvs in
-  let idx1_0 = make_idx_id fun_num id1_0 depth in
+  let idx1_0 = make_idx_id fun_num id1_0 branch_trace depth in
   let fvs1_0 = idx1_0::fvs in
-  let idx1_non0 = make_idx_id fun_num id1_non0 depth in
+  let idx1_non0 = make_idx_id fun_num id1_non0 branch_trace depth in
   let fvs1_non0 = idx1_non0::fvs in
-  let idx2 = make_idx_id fun_num id2 depth in
+  let idx2 = make_pre_idx_id fun_num id2 branch_trace depth in
   let fvs2 = idx2::fvs in
   common depth 
   @ List.map (fun x -> Imply(Eq(Id idx1_0, Id idx2), x)) (first_element fvs1_0 fvs2 depth) 
