@@ -1325,7 +1325,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       let id2_post_own = make_own_var id2 fun_num branch_trace id2_depth in
       let id2_post_scope_low = make_bound_exp fvs id2 "l" fun_num branch_trace id2_depth in
       let id2_post_scope_high = make_bound_exp fvs id2 "h" fun_num branch_trace id2_depth in
-      (* 一番外側の所有範囲の制約 *)
+      (* 一番外側の所有範囲の制約 
+      id2の先頭は読み出し可能
+      外側の所有権は変化しない　*)
       let sl1 = 
         [Gt(id2_pre_own, Id "0.");
         Leq(id2_pre_scope_low, Id "0"); 
@@ -1333,6 +1335,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         And(Eq(id2_pre_own, id2_post_own),
         And(Eq(id2_pre_scope_low, id2_post_scope_low),
         Eq(id2_pre_scope_high, id2_post_scope_high)))] in
+      (* id2の外側の添え字を自由変数群に追加 *)
       let idx2 = make_idx_id fun_num id2 branch_trace id2_depth in
       let fvs_post = idx2::fvs in
       let idx2_pre = make_pre_idx_id fun_num id2 branch_trace id2_depth in
