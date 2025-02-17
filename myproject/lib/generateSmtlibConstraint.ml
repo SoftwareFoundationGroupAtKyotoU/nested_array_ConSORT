@@ -122,7 +122,9 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
     let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace depth in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace depth)
 
-let make_idx_id fun_num id depth = asprintf "i_%d_%s_%dth" fun_num id depth
+let make_idx_id fun_num id branch_trace depth = 
+  let id_pos = lookup_pos id branch_trace !var_locations in
+  asprintf "i_%d_%s_%d_%dth%a" fun_num id id_pos depth pp_branch_trace branch_trace
 
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
 b_or_eはbまたはeでbeginとendの意 *)
