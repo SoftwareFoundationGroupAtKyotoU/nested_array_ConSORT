@@ -143,7 +143,7 @@ let rec same_own id fvs fun_num branch_trace depth =
     let sl1 = [Eq(make_pre_own_var id fun_num branch_trace depth, make_own_var id fun_num branch_trace depth);
     Eq(make_pre_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num branch_trace depth);
     Eq(make_pre_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num branch_trace depth)] in
-    let idx = make_idx_id fun_num id depth in
+    let idx = make_idx_id fun_num id branch_trace depth in
     let sl2 = same_own id (idx::fvs) fun_num branch_trace (depth-1) in
     sl1 @ sl2
 
@@ -164,14 +164,19 @@ let varown_count = ref []
 let rec make_if_smtlib id fvs fun_num branch_trace depth =
   if depth <= 0 then []
   else
+    (* then節else節に分岐したときに元の所有権を引き継ぐ *)
     let sl = [Eq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (Then :: branch_trace) depth);
     Eq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (Else :: branch_trace) depth);
     Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (Then :: branch_trace) depth);
     Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (Else :: branch_trace) depth);
     Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Then :: branch_trace) depth);
     Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Else :: branch_trace) depth)] in
-    let idx = make_idx_id fun_num id depth in
-    let sl2 = make_if_smtlib id (idx::fvs) fun_num branch_trace (depth-1) in
+    let idx = make_idx_id fun_num id branch_trace depth in
+    let idx_then = make_idx_id fun_num id (Then::branch_trace) depth in
+    let idx_else = make_idx_id fun_num id (Else::branch_trace) depth in
+    (* 添え字のたどり方が等しいならば所有権の値は等しい *)
+    let idx_equality x = Imply(And(Eq(Id idx, Id idx_then), Eq(Id idx, Id idx_else)), x) in 
+    let sl2 = List.map idx_equality (make_if_smtlib id (idx::fvs) fun_num branch_trace (depth-1)) in
     sl @ sl2
 
 let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
@@ -179,14 +184,17 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
     if depth <= 0 then
       True
     else
-      let idx = make_idx_id fun_num id depth in
+      let idx = make_idx_id fun_num id branch_trace depth in
+      let idx_branch = make_idx_id fun_num id (branch :: branch_trace) depth in
       let fvs' = idx::fvs in
+      let idx_equality x = Imply(Eq(Id idx, Id idx_branch), x) in 
       let sl = make_post_if_smtlib_sub fvs' (depth - 1) in
       let sl2 = And(Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (branch :: branch_trace) depth),
       And(Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (branch :: branch_trace) depth),
-      And(Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (branch :: branch_trace) depth), sl))) in
+      And(Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (branch :: branch_trace) depth), 
+        idx_equality sl))) in
       sl2 in
-  let idx = make_idx_id fun_num id depth in
+  let idx = make_idx_id fun_num id branch_trace depth in
   let fvs' = idx::fvs in
   [Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
   Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
