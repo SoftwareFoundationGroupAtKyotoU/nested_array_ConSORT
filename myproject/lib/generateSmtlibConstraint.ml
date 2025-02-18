@@ -968,6 +968,10 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let depth = ref_depth simpleTy in
       (* numをsmtlibの制約の形に変形 *)
     let sl = exp_to_smtlib e in
+    (* 添え字が所有権範囲内にあるという制約 *)
+    let idx_bound id idx fvs depth x = 
+      Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
+      x) in
     (* id1の所有権をid2に集約 *)
     let make_aliasdAddPtr_smtlib_gather depth =
       let rec common depth =
@@ -1004,7 +1008,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             make_pre_bound_exp fvs2 id2 "h" fun_num branch_trace depth)) in
           let sl2 = same_range_pre fvs1' fvs2' (depth - 1) in
           And(sl1, 
-            Imply(Eq(Id idx1, Id idx2), sl2)) in
+           idx_bound id1 idx1 fvs1 depth
+            (idx_bound id2 idx2 fvs2 depth
+             (Imply(Eq(Id idx1, Id idx2), sl2)))) in
       let rec same_range_post fvs2 fvs2_pre depth =
         if depth <= 0 then True
         else
@@ -1019,16 +1025,22 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth,
             make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)) in
           let sl2 = same_range_post fvs2' fvs2'_pre (depth - 1) in
-          And(sl1, Imply(Eq(Id idx2, Id idx2_pre), sl2)) in
-    let idx1_pre = make_idx_id fun_num id1 branch_trace depth in
+          And(sl1, 
+           idx_bound id2 idx2 fvs2 depth
+            (idx_bound id2 idx2_pre fvs2_pre depth
+              (Imply(Eq(Id idx2, Id idx2_pre), sl2)))) in
+    let idx1_pre = make_idx_id fun_num id1 branch_trace (depth+1) in
     let fvs1_pre = idx1_pre::fvs in
-    let idx2 = make_idx_id fun_num id2 branch_trace depth in
+    let idx2 = make_idx_id fun_num id2 branch_trace (depth+1) in
     let fvs2 = idx2::fvs in
-    let idx2_pre = make_idx_id fun_num id2 branch_trace depth in
+    let idx2_pre = make_idx_id fun_num id2 branch_trace (depth+1) in
     let fvs2_pre = idx2_pre::fvs in
     And(common depth,
-       And(Imply(Eq(Id idx1_pre, Id idx2_pre),same_range_pre fvs1_pre fvs2_pre depth), 
-        Imply(Eq(Id idx2_pre, Id id2), same_range_post fvs2 fvs2_pre depth))) in
+      idx_bound id1 idx1_pre fvs (depth+1)
+      (idx_bound id2 idx2 fvs (depth+1)
+      (idx_bound id2 idx2_pre fvs (depth+1)
+       (And(Imply(Eq(Id idx1_pre, Id idx2_pre),same_range_pre fvs1_pre fvs2_pre depth), 
+        Imply(Eq(Id idx2_pre, Id id2), same_range_post fvs2 fvs2_pre depth)))))) in
           (* id1の外側の所有権が0の場合 *)
     let make_aliasdAddPtr_smtlib_no_change depth =
       let rec common depth =
@@ -1055,12 +1067,18 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth,
               make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)) in
           let sl2 = same_range_post fvs2' fvs2'_pre (depth-1) in
-          And(sl1, Imply(Eq(Id idx2, Id idx2_pre), sl2)) in
-        let idx2 = make_idx_id fun_num id2 branch_trace depth in
+          And(sl1, 
+           idx_bound id2 idx2 fvs depth
+           (idx_bound id2 idx2_pre fvs depth
+            (Imply(Eq(Id idx2, Id idx2_pre), sl2)))) in
+        let idx2 = make_idx_id fun_num id2 branch_trace (depth+1) in
         let fvs2 = idx2::fvs in
-        let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
+        let idx2_pre = make_pre_idx_id fun_num id2 branch_trace (depth+1) in
         let fvs2_pre = idx2_pre::fvs in
-        And(common depth, same_range_post fvs2 fvs2_pre depth) in
+        And(common depth, 
+         idx_bound id2 idx2 fvs (depth+1)
+         (idx_bound id2 idx2_pre fvs (depth+1)
+          (Imply(Eq(Id idx2, Id idx2_pre), same_range_post fvs2 fvs2_pre depth)))) in
     if contains_element eq0_list id2 
     then 
       (* id2の内側の要素の所有権が添え字によって変化する場合 *)
