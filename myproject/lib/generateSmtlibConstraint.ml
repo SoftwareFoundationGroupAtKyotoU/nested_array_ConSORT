@@ -168,6 +168,10 @@ let make_idx_bound_smtlib id idx fvs fun_num branch_trace depth =
   And(Leq(Id idx, make_bound_exp fvs id "h" fun_num branch_trace depth), 
     Geq(Id idx, make_bound_exp fvs id "l" fun_num branch_trace depth))
 
+let make_idx_bound_smtlib_be id idx fvs fun_num b_or_e depth =
+  And(Leq(Id idx, make_bound_exp_be fvs id "h" fun_num b_or_e depth), 
+    Geq(Id idx, make_bound_exp_be fvs id "l" fun_num b_or_e depth))
+
 (* smtlibで変数宣言するために必要そう？
 変数のid, b or e, 関数の通し番号の組 *)
 let varown_count = ref []
@@ -1281,14 +1285,17 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let slh = make_bound_exp_be fvs' id_param "h"  num "b" depth in
           let idx = make_idx_id fun_num id branch_trace depth in
           let fvs' = idx::fvs in
-          let idx_param = make_idx_id fun_num id_param branch_trace depth in
+          let idx_param = make_idx_id num id_param branch_trace depth in
           let fvs_param' = idx_param::fvs_param in
           if depth <= 0 then True
           else
             let sl1 = And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
              Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)) in
             let sl2 = same_range fvs' fvs_param' (depth-1) in
-            And(sl1, Imply(Eq(Id idx, Id idx_param), sl2)) in
+            And(sl1, 
+              Imply(And(Eq(Id idx, Id idx_param),
+                And(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth, 
+                  make_idx_bound_smtlib_be id_param idx_param fvs_param num "b" depth)), sl2)) in
         [common depth;
         same_range fvs fvs' depth]
       (* x | () ref (left, right, ownership)の形式の場合 *)
@@ -1355,14 +1362,17 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             let slh = make_bound_exp_be fvs' id_param "h"  num "e" depth in
             let idx = make_idx_id fun_num id branch_trace depth in
             let fvs' = idx::fvs in
-            let idx_param = make_idx_id fun_num id_param branch_trace depth in
+            let idx_param = make_idx_id num id_param branch_trace depth in
             let fvs_param' = idx_param::fvs_param in
             if depth <= 0 then True
             else
               let sl1 = And(Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, smtlib_subst subst sll),
                 Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, smtlib_subst subst slh)) in
               let sl2 = same_range fvs' fvs_param' (depth-1) in
-              And(sl1, Imply(Eq(Id idx, Id idx_param), sl2)) in
+              And(sl1, 
+                Imply(And(Eq(Id idx, Id idx_param),
+                  And(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
+                    make_idx_bound_smtlib_be id_param idx_param fvs_param num "e" depth)), sl2)) in
           (* 引数のvar_locationsを生成 *)
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
@@ -1423,7 +1433,11 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       let idx2_pre = make_pre_idx_id fun_num id2 branch_trace id2_depth in
       let fvs_pre = idx2_pre :: fvs in
       let sl2 = make_aliasDeref_smtlib fvs_post fvs_pre fun_num branch_trace id1 id2 id1_depth in
-      sl1 @ sl2
+      sl1 @ 
+      List.map
+      (fun x -> (Imply (And(make_idx_bound_smtlib id2 idx2 fvs fun_num branch_trace id2_depth,
+        make_idx_bound_smtlib id2 idx2_pre fvs fun_num branch_trace id2_depth), x)))
+      sl2
   | _ -> raise ConstrError
   
 (* 関数仮引数のうち#付き整数引数名を返す *)
