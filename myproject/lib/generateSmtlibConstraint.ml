@@ -192,10 +192,10 @@ let rec make_if_smtlib id fvs fvs_then fvs_else fun_num branch_trace depth =
     (* 添え字のたどり方が等しいならば所有権の値は等しい，の添え字のたどり方が等しいならばの部分 *)
     let idx_equality x = Imply(And(Eq(Id idx, Id idx_then), Eq(Id idx, Id idx_else)), x) in 
     (* 添え字が配列の境界内にあるという制約 *)
-    let idx_bound fvs branch_trace x = Imply(And(make_idx_bound_smtlib id fvs fun_num branch_trace depth, make_idx_bound_smtlib id fvs fun_num branch_trace depth), x) in
+    let idx_bound fvs branch_trace x = Imply(make_idx_bound_smtlib id fvs fun_num branch_trace depth, x) in
     let sl2 = 
       List.map
-        (fun x -> idx_bound fvs'_else (Else :: branch_trace) (idx_bound fvs_then (Then :: branch_trace) (idx_bound fvs branch_trace x)))
+        (fun x -> idx_bound fvs_else (Else :: branch_trace) (idx_bound fvs_then (Then :: branch_trace) (idx_bound fvs branch_trace x)))
         (List.map 
           idx_equality 
           (make_if_smtlib id fvs' fvs'_then fvs'_else fun_num branch_trace (depth-1))) in
@@ -336,6 +336,7 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
       let fvs2' = idx2::fvs2 in
       let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
       let fvs2'_pre = idx2_pre::fvs2_pre in
+      let idx_bound id fvs = make_idx_bound_smtlib id fvs fun_num branch_trace depth in
       let sl1 = 
         (* 添え字のたどり方が同じならば所有範囲は等しい *)
         And(Eq(make_pre_bound_exp fvs2_pre id2 "l" fun_num branch_trace depth,
@@ -348,8 +349,9 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
           make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)))) in
       let sl2 = make_letAppPtr_smtlib_range fvs1' fvs2' fvs2'_pre (depth-1) in
       And(sl1, 
+        Imply(And(idx_bound idx1 fvs1, And(idx_bound idx2 fvs2, idx_bound idx2_pre fvs2_pre)),
         Imply(And(Eq(Id idx1, Id idx2), Eq(Id idx2_pre, Id idx2)),
-          sl2)) in
+          sl2))) in
   (* 最上位の参照の所有範囲の分割の際の制約 *)
   let sl1 = 
       And(Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth),
@@ -371,9 +373,11 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let fvs2 = idx2::fvs in
   let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
   let fvs2_pre = idx2_pre::fvs in
+  let idx_bound id fvs = make_idx_bound_smtlib id fvs fun_num branch_trace depth in
   [And(sl1, sl2);
+  Imply(And(idx_bound idx1 fvs, And(idx_bound idx2 fvs, idx_bound idx2_pre fvs)),
   Imply(And(Eq(Id idx1, Add(Id idx2, Id "1")), Eq(Id idx2_pre, Id idx2)),
-    make_letAppPtr_smtlib_range fvs1 fvs2 fvs2_pre (depth-1))]
+    make_letAppPtr_smtlib_range fvs1 fvs2 fvs2_pre (depth-1)))]
 with | Unbound -> raise ConstrError
 
 (* id1 := id2; ... *)
