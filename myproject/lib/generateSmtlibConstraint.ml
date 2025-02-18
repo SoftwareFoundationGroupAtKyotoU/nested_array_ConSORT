@@ -1191,7 +1191,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
      else
       match param, arg with
       (* x | () ref *)
-      | (RawId id_param, FTRef (ftype,ENull,ENull,_)), AId id ->
+      | (RawId id_param, FTRef (_,ENull,ENull,_)), AId id ->
         (* 呼び出された関数の通し番号 *)
         let num = lookup fun_name funnames_numberings in
         (* 整数型の仮引数名リスト *)
@@ -1212,9 +1212,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let sll = make_bound_exp_be fvs' id_param "l"  num "b" depth in
           (* 所有範囲の上限を表すデータ構造 *)
           let slh = make_bound_exp_be fvs' id_param "h"  num "b" depth in
-          let idx = make_idx_id fun_num id depth in
+          let idx = make_idx_id fun_num id branch_trace depth in
           let fvs' = idx::fvs in
-          let idx_param = make_idx_id fun_num id_param depth in
+          let idx_param = make_idx_id fun_num id_param branch_trace depth in
           let fvs_param' = idx_param::fvs_param in
           if depth <= 0 then True
           else
@@ -1286,9 +1286,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             let sll = make_bound_exp_be fvs' id_param "l"  num "e" depth in
             (* 所有範囲の上限を表すデータ構造 *)
             let slh = make_bound_exp_be fvs' id_param "h"  num "e" depth in
-            let idx = make_idx_id fun_num id depth in
+            let idx = make_idx_id fun_num id branch_trace depth in
             let fvs' = idx::fvs in
-            let idx_param = make_idx_id fun_num id_param depth in
+            let idx_param = make_idx_id fun_num id_param branch_trace depth in
             let fvs_param' = idx_param::fvs_param in
             if depth <= 0 then True
             else
