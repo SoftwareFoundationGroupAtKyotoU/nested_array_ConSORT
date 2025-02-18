@@ -1512,7 +1512,10 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
         Leq(make_own_var_be id fun_num "b" depth, Id "1.")]
        @ 
        List.map 
-       (fun x -> Imply(Eq(Id idx, Id idx_b), x))
+       (fun x -> 
+        Imply(And(Eq(Id idx, Id idx_b),
+          And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
+          make_idx_bound_smtlib_be id idx fvs fun_num "b" depth)), x))
        (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b)
       (* 所有権指定がある場合 *)
     | _ ->
@@ -1561,7 +1564,13 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
            Leq(make_bound_exp_be fvs_e id "h" fun_num "e" depth, make_bound_exp fvs id "h" fun_num [] depth))));
       Geq(make_own_var_be id fun_num "e" depth, Id "0.");
       Leq(make_own_var_be id fun_num "e" depth, Id "1.")]
-      @ ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e
+      @ 
+      List.map 
+      (fun x -> 
+      Imply(And(Eq(Id idx, Id idx_e),
+        And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
+        make_idx_bound_smtlib_be id idx fvs fun_num "e" depth)), x))
+      (ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e)
     | _ ->
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
       　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
