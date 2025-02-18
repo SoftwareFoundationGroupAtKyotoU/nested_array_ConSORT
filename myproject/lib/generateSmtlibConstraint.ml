@@ -464,6 +464,9 @@ let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
       let fvs1' = idx1::fvs1 in
       let idx2 = make_pre_idx_id fun_num id2 branch_trace depth in
       let fvs2' = idx2::fvs2 in
+      let idx_bound id fvs depth x = 
+        Imply(make_idx_bound_smtlib id fvs fun_num branch_trace depth,
+        x) in
       let sl1 = 
         [
         Eq(make_pre_bound_exp fvs2 id2 "l" fun_num branch_trace depth, make_bound_exp fvs1 id1 "l" fun_num branch_trace depth);
@@ -471,7 +474,11 @@ let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
         ] in
       let sl2 = make_letDeref_smtlib_same_range id1 id2 fvs1' fvs2' (depth-1) in
       sl1 @ 
-      List.map (fun x -> Imply(Eq(Id idx1, Id idx2), x)) sl2 in
+      List.map 
+      (fun x -> idx_bound idx1 fvs1 depth (idx_bound idx2 fvs2 depth x))
+      (List.map 
+        (fun x -> Imply(Eq(Id idx1, Id idx2), x)) 
+        sl2) in
   let outer_idx2 = make_pre_idx_id fun_num id2 branch_trace (depth+1) in
   common depth @
   (* 最も外側の添え字が0かそうでないかで場合分け *)
@@ -1201,7 +1208,10 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let idx2 = make_pre_idx_id fun_num id2 branch_trace id2_depth in
     let fvs2 = idx2::fvs in
      let sl2 = make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 id1_depth in
-    sl1 @ sl2
+    sl1 @ 
+    List.map
+      (fun x -> Imply(make_idx_bound_smtlib id2 fvs fun_num branch_trace id2_depth, x))
+      sl2
     (* [] *)
   | CApp (fun_name,args,pos) -> 
     (* f(y1, y2, ..., yn) *)
