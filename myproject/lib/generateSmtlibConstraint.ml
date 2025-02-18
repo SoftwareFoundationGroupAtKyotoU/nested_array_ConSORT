@@ -442,7 +442,7 @@ let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
       let sl2 = make_letDeref_smtlib_same_range id1 id2 fvs1' fvs2' (depth-1) in
       sl1 @ 
       List.map (fun x -> Imply(Eq(Id idx1, Id idx2), x)) sl2 in
-  let outer_idx2 = make_idx_id fun_num id2 branch_trace (depth+1) in
+  let outer_idx2 = make_pre_idx_id fun_num id2 branch_trace (depth+1) in
   common depth @
   (* 最も外側の添え字が0かそうでないかで場合分け *)
   List.map (fun x -> Imply(Eq(Id outer_idx2, Id "0"), x)) (make_letDeref_smtlib_same_range id1 id2 fvs1 fvs2 depth) @
@@ -1165,7 +1165,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
      Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, 
         make_bound_exp fvs id2 "h" fun_num branch_trace id2_depth)] in
     let fvs1 = fvs in
-    let idx2 = make_idx_id fun_num id2 id2_depth in
+    let idx2 = make_pre_idx_id fun_num id2 branch_trace id2_depth in
     let fvs2 = idx2::fvs in
      let sl2 = make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 id1_depth in
     sl1 @ sl2
