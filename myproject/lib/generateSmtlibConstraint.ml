@@ -164,6 +164,11 @@ let make_same_scope_smtlib id1_low id1_high id2_low id2_high =
 let make_adjacent_scope_smtlib id1_high id2_low =
   Eq(Add(id1_high, Id "1"), id2_low)
 
+let make_idx_bound_smtlib id fvs fun_num branch_trace depth =
+  let idx = make_idx_id fun_num id branch_trace depth in
+  And(Leq(Id idx, make_bound_exp fvs id "h" fun_num branch_trace depth), 
+    Geq(Id idx, make_bound_exp fvs id "l" fun_num branch_trace depth))
+
 (* smtlibで変数宣言するために必要そう？
 変数のid, b or e, 関数の通し番号の組 *)
 let varown_count = ref []
