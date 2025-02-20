@@ -4,7 +4,6 @@ open SmtlibSyntax
 open SimpleTyping
 open Z3Syntax
 open OwnConstraintSyntax
-open GenerateSmtlibConstraint
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
@@ -43,18 +42,21 @@ let rec print_declare oc var_locations fvs fun_num =
       (* 所有権を表す上限の一次式の切片の宣言 
       d_(関数のシリアル番号)_h_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       fprintf formatter "(declare-fun d_%d_h_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
-      let idx = make_idx_id fun_num id depth in
+      (* 配列の添え字を表す変数の宣言
+      i_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(depth)th_(then or else) *)
+      fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace;
+      let idx = asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
       let fvs' = idx::fvs in
       nested_ref_declare id pos branch_trace (depth-1) fvs') in
   (List.iter
     (fun (id,(pos,branch_trace, simpleTy)) ->
       let depth = ref_depth simpleTy in 
-      let fvs = 
+      (* let fvs = 
         if ends_with id "_non0" then 
           let id' = remove_suffix id (String.length "_non0") in
-          let idx = make_idx_id fun_num id' (depth+1) in
+          let idx = make_idx_id fun_num id' branch_trace (depth+1) in
           (idx::fvs)
-        else fvs in
+        else fvs in *)
       nested_ref_declare id pos branch_trace depth fvs) var_locations);
 (* 所有範囲の上限または下限の宣言 *)
 and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
@@ -84,19 +86,21 @@ let rec print_declare_begin_and_end oc varown_count fvs fun_num =
        print_declare_b_and_e_c formatter fvs "h" id b_or_e fun_num depth;
        (* 所有権を表す上限の一次式の切片の宣言 *)
        fprintf formatter "(declare-fun d_%d_h_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
-       let idx = make_idx_id fun_num id depth in
+       (* 配列の添え字を表す変数の宣言 *)
+       fprintf formatter "(declare-fun i_%d_%s_%s_%dth () Int)\n" fun_num id b_or_e depth;
+       let idx = asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
        let fvs' = idx::fvs in
        nested_ref_declare_begin_and_end id b_or_e (depth-1) fvs');
      in
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
        if fun_num' = fun_num then
-        let fvs = 
+        (* let fvs = 
           if ends_with id "_non0" then 
             let id' = remove_suffix id (String.length "_non0") in
             let idx = make_idx_id fun_num id' (depth+1) in
             (idx::fvs)
-          else fvs in
+          else fvs in *)
         nested_ref_declare_begin_and_end id b_or_e depth fvs
        else 
          ()
@@ -111,21 +115,10 @@ and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num depth =
       fprintf formatter "(declare-fun c_%d_%s_%s_%s_%s_%d () Int)\n" fun_num l_or_h fv id b_or_e depth;
        ) fvs
 
-let print_index oc fun_num all_cs =
-  let (fun_name, _) = (List.nth all_cs fun_num) in
-  let ty_env = lookup fun_name !all_tyenv in
-  let formatter = formatter_of_out_channel oc in
-  let rec print_index_sub id depth =
-    if depth <= 0 then ()
-    else 
-      (fprintf formatter "(declare-fun i_%d_%s_%dth () Int)\n" fun_num id depth;
-      print_index_sub id (depth-1)) in
-  List.iter (fun x -> print_index_sub (fst x) (ref_depth (snd x))) ty_env
-
 (* listから重複を除いたリストを返す *)
 let rec list_to_set li res = 
   match li with
-  | [] -> res
+  | [] -> res 
   | [x] -> if List.mem x res then res else x :: res
   | x :: li' ->
     let res' = list_to_set li' res in
@@ -411,7 +404,7 @@ let find_own_res fun_num id pos branch_trace z3res ty_env fvs =
     find_own_c "h" depth' !fvs_ref;
     (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
     res := asprintf "%s] -> %a */\n" !res pp_value res1;
-    let idx = make_idx_id fun_num id depth in
+    let idx = asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
     fvs_ref := idx::!fvs_ref
   done;
   !res
@@ -447,7 +440,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
           print_declare_b_and_e_c formatter !fvs_ref "h" id b_or_e fun_num z3res depth';
           (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
           fprintf formatter "] -> %a\n" pp_value res1;
-          let idx = make_idx_id fun_num id depth in
+          let idx = asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
           fvs_ref := idx :: !fvs_ref
         done)
       else 
