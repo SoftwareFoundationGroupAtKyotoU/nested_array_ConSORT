@@ -123,8 +123,13 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace depth)
 
 let make_idx_id fun_num id branch_trace depth = 
-  let id_pos = lookup_pos id branch_trace !var_locations in
-  asprintf "i_%d_%s_%d_%dth%a" fun_num id id_pos depth pp_branch_trace branch_trace
+  try
+    let id_pos = lookup_pos id branch_trace !var_locations in
+    asprintf "i_%d_%s_%d_%dth%a" fun_num id id_pos depth pp_branch_trace branch_trace
+  with 
+  | Unbound ->
+    Format.printf "unbound id:%s branch_trace:%a depth:%d\n" id pp_branch_trace branch_trace depth;
+    raise Unbound
 
 let make_idx_id_be fun_num id b_or_e depth = 
   asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth
@@ -1285,7 +1290,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let slh = make_bound_exp_be fvs' id_param "h"  num "b" depth in
           let idx = make_idx_id fun_num id branch_trace depth in
           let fvs' = idx::fvs in
-          let idx_param = make_idx_id num id_param branch_trace depth in
+          let idx_param = make_idx_id_be num id_param "b" depth in
           let fvs_param' = idx_param::fvs_param in
           if depth <= 0 then True
           else
@@ -1362,7 +1367,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             let slh = make_bound_exp_be fvs' id_param "h"  num "e" depth in
             let idx = make_idx_id fun_num id branch_trace depth in
             let fvs' = idx::fvs in
-            let idx_param = make_idx_id num id_param branch_trace depth in
+            let idx_param = make_idx_id_be num id_param "e" depth in
             let fvs_param' = idx_param::fvs_param in
             if depth <= 0 then True
             else
