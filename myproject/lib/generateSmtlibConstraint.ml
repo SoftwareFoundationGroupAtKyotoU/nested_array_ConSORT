@@ -1044,7 +1044,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       (idx_bound id2 idx2 fvs (depth+1)
       (idx_bound id2 idx2_pre fvs (depth+1)
        (And(Imply(Eq(Id idx1_pre, Id idx2_pre),same_range_pre fvs1_pre fvs2_pre depth), 
-        Imply(Eq(Id idx2_pre, Id id2), same_range_post fvs2 fvs2_pre depth)))))) in
+        Imply(Eq(Id idx2_pre, Id idx2), same_range_post fvs2 fvs2_pre depth)))))) in
           (* id1の外側の所有権が0の場合 *)
     let make_aliasdAddPtr_smtlib_no_change depth =
       let rec common depth =
@@ -1501,7 +1501,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       let idx = make_idx_id fun_num id [] depth in
       let fvs' = idx::fvs in
       let idx_b = make_idx_id_be fun_num id "b" depth in
-      let fvs'_b = idx::fvs in
+      let fvs'_b = idx_b::fvs in
       (* 関数引数の最初の所有権と当初決まっている所有権は等しい
       関数引数の最初の所有範囲の下限と当初決まっている所有範囲の下限は等しい
       関数引数の最初の所有範囲の上限と当初決まっている所有範囲の上限は等しい *)
@@ -1515,7 +1515,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
        (fun x -> 
         Imply(And(Eq(Id idx, Id idx_b),
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-          make_idx_bound_smtlib_be id idx fvs fun_num "b" depth)), x))
+          make_idx_bound_smtlib_be id idx fvs_b fun_num "b" depth)), x))
        (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b)
       (* 所有権指定がある場合 *)
     | _ ->
@@ -1569,7 +1569,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       (fun x -> 
       Imply(And(Eq(Id idx, Id idx_e),
         And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-        make_idx_bound_smtlib_be id idx fvs fun_num "e" depth)), x))
+        make_idx_bound_smtlib_be id idx fvs_e fun_num "e" depth)), x))
       (ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e)
     | _ ->
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
