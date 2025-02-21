@@ -462,12 +462,20 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
       (fun x -> 
         idx_bound id1 idx1 fvs depth 
          (idx_bound id1_non0 idx1_non0 fvs depth 
-          (Imply(Eq(Id idx1, Id idx1_non0), x))))
+          (Imply(And(Eq(Id idx1, Add(Id idx1_non0, Id "1")),
+            Not(Eq(Id id1_0,Id  "0"))), x))))
       (not_first_element fvs1 fvs1_non0 (depth-1))
 
-let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
+let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
+  let idx2 = make_pre_idx_id fun_num id1 branch_trace depth in
+  let fvs2 = idx2::fvs in
   let id2_0 = id2 ^ "_eq0" in
   let id2_non0 = id2 ^ "_non0" in
+  let idx2_non0 = make_idx_id fun_num id2_non0 branch_trace depth in
+  let fvs2_non0 = idx2_non0::fvs in
+  let idx_bound id idx fvs depth x = 
+    Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
+    x) in
   let rec common depth =
     if depth <= 0 then []
     else
@@ -485,9 +493,6 @@ let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
       let fvs1' = idx1::fvs1 in
       let idx2 = make_pre_idx_id fun_num id2 branch_trace depth in
       let fvs2' = idx2::fvs2 in
-      let idx_bound id idx fvs depth x = 
-        Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
-        x) in
       let sl1 = 
         [
         Eq(make_pre_bound_exp fvs2 id2 "l" fun_num branch_trace depth, make_bound_exp fvs1 id1 "l" fun_num branch_trace depth);
@@ -500,11 +505,16 @@ let make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 depth =
       (List.map 
         (fun x -> Imply(Eq(Id idx1, Id idx2), x)) 
         sl2) in
-  let outer_idx2 = make_pre_idx_id fun_num id2 branch_trace (depth+1) in
   common depth @
   (* 最も外側の添え字が0かそうでないかで場合分け *)
-  List.map (fun x -> Imply(Eq(Id outer_idx2, Id "0"), x)) (make_letDeref_smtlib_same_range id1 id2 fvs1 fvs2 depth) @
-  List.map (fun x -> Imply(Not(Eq(Id outer_idx2, Id "0")), x)) (make_letDeref_smtlib_same_range id2_non0 id2 fvs2 fvs2 depth)
+  List.map (fun x -> Imply(Eq(Id idx2, Id "0"), x)) (make_letDeref_smtlib_same_range id1 id2 fvs fvs2 (depth-1)) @
+  List.map 
+  (fun x -> 
+    idx_bound id2 idx2 fvs depth
+     (idx_bound id2_non0 idx2_non0 fvs depth
+       (Imply(And(Not(Eq(Id idx2, Id "0")),
+         Eq(Id idx2, Add(Id idx2_non0, Id "1"))), x)))) 
+         (make_letDeref_smtlib_same_range id2_non0 id2 fvs2_non0 fvs2 (depth-1))
 
 let rec alias_to_alias fvs fun_num branch_trace id1 id2 depth =
   if depth <= 0 then True
@@ -1232,27 +1242,26 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let id2_non0 = id2 ^ "_non0" in
     new_id id1 pos branch_trace id1_simpleTy; 
     new_id id2 pos branch_trace id2_simpleTy;
-    new_id id2_0 pos branch_trace id1_simpleTy;
-    new_id id2_non0 pos branch_trace id1_simpleTy;
+    new_id id2_0 pos branch_trace id2_simpleTy;
+    new_id id2_non0 pos branch_trace id2_simpleTy;
     let id1_depth = ref_depth id1_simpleTy in
     let id2_depth = ref_depth id2_simpleTy in
     assert(id2_depth == id1_depth + 1);
+    (* id2の所有範囲の下限は0と仮定 *)
     let sl1 = [Gt(make_pre_own_var id2 fun_num branch_trace id2_depth, Id "0");
-     Leq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace id2_depth, Id "0"); 
+     Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace id2_depth, Id "0"); 
      Geq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, Id "0");
-     Eq(make_pre_own_var id2 fun_num branch_trace id2_depth, make_own_var id2 fun_num branch_trace id2_depth);
-     Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace id2_depth, 
-        make_bound_exp fvs id2 "l" fun_num branch_trace id2_depth);
-     Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, 
-        make_bound_exp fvs id2 "h" fun_num branch_trace id2_depth)] in
-    let fvs1 = fvs in
-    let idx2 = make_pre_idx_id fun_num id2 branch_trace id2_depth in
-    let fvs2 = idx2::fvs in
-     let sl2 = make_letDeref_smtlib fvs1 fvs2 fun_num branch_trace id1 id2 id1_depth in
-    sl1 @ 
-    List.map
-      (fun x -> Imply(make_idx_bound_smtlib id2 idx2 fvs fun_num branch_trace id2_depth, x))
-      sl2
+     Eq(make_pre_own_var id2 fun_num branch_trace id2_depth, 
+        make_own_var id2_0 fun_num branch_trace id2_depth);
+     Eq(make_pre_own_var id2 fun_num branch_trace id2_depth, 
+        make_own_var id2_non0 fun_num branch_trace id2_depth);
+     Eq(make_bound_exp fvs id2_0 "l" fun_num branch_trace id2_depth, Id "0");
+     Eq(make_bound_exp fvs id2_0 "h" fun_num branch_trace id2_depth, Id "0");
+     Eq(make_bound_exp fvs id2_non0 "l" fun_num branch_trace id2_depth, Id "0");
+     Eq(make_bound_exp fvs id2_non0 "h" fun_num branch_trace id2_depth,
+        Sub(make_pre_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, Id "1"))] in
+     let sl2 = make_letDeref_smtlib fvs fun_num branch_trace id1 id2 id1_depth in
+    sl1 @ sl2
     (* [] *)
   | CApp (fun_name,args,pos) -> 
     (* f(y1, y2, ..., yn) *)
