@@ -42,8 +42,12 @@ exp:
   { Int(-$3) } 
 | FLOAT
   { Float($1) }
+| LPAREN MINUS FLOAT RPAREN
+  { Float(-.$3) } 
 | LPAREN DIV FLOAT FLOAT RPAREN
   { Div($3, $4) }
+| LPAREN MINUS LPAREN DIV FLOAT FLOAT RPAREN RPAREN
+  { Div(-.$5, $6) }
 
 id:
   ID { $1 }
