@@ -492,7 +492,7 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
       (not_first_element fvs1 fvs1_non0 (depth-1))
 
 let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
-  let idx2 = make_pre_idx_id fun_num id1 branch_trace depth in
+  let idx2 = make_pre_idx_id fun_num id2 branch_trace depth in
   let fvs2 = idx2::fvs in
   let id2_0 = id2 ^ "_eq0" in
   let id2_non0 = id2 ^ "_non0" in
