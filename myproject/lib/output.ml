@@ -4,6 +4,7 @@ open CollectOwnConstraint
 open GenerateSmtlibConstraint
 open PrintOwnConstraint
 open Z3Syntax
+open Util
 
 exception Parse_error of Lexing.position * Lexing.position
 
@@ -19,7 +20,6 @@ let rec main_int_declare oc all_cs fun_num iter =
     print_declare oc var_locations fvs fun_num;
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
     print_declare_begin_and_end oc varown_count fvs fun_num;
-    print_index oc fun_num all_cs;
     (* 関数ブロックごとに一行区切る *)
     output_string oc "\n";
     (* 次の関数の所有権をsmtlib形式で宣言 *)
@@ -38,8 +38,14 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter =
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
-    (let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
+    (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     (* 制約をassertとしてファイルに書き出し，bool_idは関数print_smtlibsの分岐 *)
+    (* let fvs' = find_idx_vars_be varown_count fun_num in
+    let fvs'' = find_idx_vars var_locations fun_num in
+    let fvs = fvs@fvs'@fvs'' in *)
+    (* Format.printf "%d\n" fun_num; *)
+    (* let _ = List.map (fun x -> Format.printf "%s\n" x) fvs' in
+    let _ = List.map (fun x -> Format.printf "%s\n" x) fvs'' in  *)
     print_smtlibs oc smtlibs is_unconcrete fvs (-1) iter;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
