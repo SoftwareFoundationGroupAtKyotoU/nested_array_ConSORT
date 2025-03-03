@@ -258,6 +258,12 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
 let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   (* 所有範囲を分割した場合 *)
+  let idx_bound id idx fvs depth x = 
+    Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
+    x) in
+  let idx_pre_bound id idx fvs depth x = 
+    Imply(make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth,
+    x) in
   let rec make_letAppPtr_smtlib_div depth = 
     (* id2の0番目だけ特別扱いしており，ズレる幅が1ではないならばid2の先頭以外の所有権部分を変化 *)
     let id2 = if contains_element eq0_list id2 && sl <> Id "1" then id2^"_non0" else id2 in
@@ -274,7 +280,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
     else
       let sl1 = Eq(make_pre_own_var id2 fun_num branch_trace depth,
       Add(make_own_var id1 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth)) in
-      let sl2 = make_letAppPtr_smtlib_div (depth-1) in
+      let sl2 = make_letAppPtr_smtlib_share (depth-1) in
       And(sl1, sl2)) in
   (* 最上位が分割でも共有でも内側の所有範囲の処理は同じ
   新しくできたid1もid2も元のid2の所有範囲を引き継ぐ *)
@@ -298,7 +304,10 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
           make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)))) in
       let sl2 = make_letAppPtr_smtlib_range fvs1' fvs2' fvs2_pre' (depth-1) in
       And(sl1, 
-        Imply(And(Eq(Id idx1, Id idx2), Eq(Id idx2, Id idx2_pre)), sl2)) in
+        idx_bound id1 idx1 fvs1 depth 
+         (idx_bound id2 idx2 fvs2 depth
+          (idx_pre_bound id2 idx2_pre fvs2_pre depth
+           (Imply(And(Eq(Id idx1, Id idx2), Eq(Id idx2, Id idx2_pre)), sl2))))) in
   (* 最上位の参照の所有範囲の分割の際の制約 *)
   let sl1 = 
       And(Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth),
@@ -492,6 +501,9 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let idx_bound id idx fvs depth x = 
     Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
     x) in
+  let idx_pre_bound id idx fvs depth x = 
+    Imply(make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth,
+    x) in
   let rec common depth =
     if depth <= 0 then []
     else
@@ -517,7 +529,7 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
       let sl2 = make_letDeref_smtlib_same_range id1 id2 fvs1' fvs2' (depth-1) in
       sl1 @ 
       List.map 
-      (fun x -> idx_bound id1 idx1 fvs1 depth (idx_bound id2 idx2 fvs2 depth x))
+      (fun x -> idx_bound id1 idx1 fvs1 depth (idx_pre_bound id2 idx2 fvs2 depth x))
       (List.map 
         (fun x -> Imply(Eq(Id idx1, Id idx2), x)) 
         sl2) in
@@ -526,7 +538,7 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   List.map (fun x -> Imply(Eq(Id idx2, Id "0"), x)) (make_letDeref_smtlib_same_range id1 id2 fvs fvs2 (depth-1)) @
   List.map 
   (fun x -> 
-    idx_bound id2 idx2 fvs depth
+    idx_pre_bound id2 idx2 fvs depth
      (idx_bound id2_non0 idx2_non0 fvs depth
        (Imply(And(Not(Eq(Id idx2, Id "0")),
          Eq(Id idx2, Add(Id idx2_non0, Id "1"))), x)))) 
@@ -735,6 +747,9 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let idx_bound id idx fvs depth x = 
     Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
     x) in
+  let idx_pre_bound id idx fvs depth x = 
+    Imply(make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth,
+    x) in
   let rec common depth =
     if depth <= 0 then []
     else
@@ -762,7 +777,7 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
       sl1 @ 
       List.map
         (fun x -> 
-          idx_bound id1 idx1 fvs1 depth 
+          idx_pre_bound id1 idx1 fvs1 depth 
           (idx_bound id2_non0 idx2_non0 fvs2_non0 depth 
             (Imply(Eq(Id idx1, Id idx2_non0), x)))) 
       sl2 in
