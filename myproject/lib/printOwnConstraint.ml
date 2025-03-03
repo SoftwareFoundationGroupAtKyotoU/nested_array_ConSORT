@@ -51,12 +51,6 @@ let rec print_declare oc var_locations fvs fun_num =
   (List.iter
     (fun (id,(pos,branch_trace, simpleTy)) ->
       let depth = ref_depth simpleTy in 
-      (* let fvs = 
-        if ends_with id "_non0" then 
-          let id' = remove_suffix id (String.length "_non0") in
-          let idx = make_idx_id fun_num id' branch_trace (depth+1) in
-          (idx::fvs)
-        else fvs in *)
       nested_ref_declare id pos branch_trace depth fvs) var_locations);
 (* 所有範囲の上限または下限の宣言 *)
 and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
@@ -95,12 +89,6 @@ let rec print_declare_begin_and_end oc varown_count fvs fun_num =
   (List.iter
     (fun (id,b_or_e,fun_num',depth) ->
        if fun_num' = fun_num then
-        (* let fvs = 
-          if ends_with id "_non0" then 
-            let id' = remove_suffix id (String.length "_non0") in
-            let idx = make_idx_id fun_num id' (depth+1) in
-            (idx::fvs)
-          else fvs in *)
         nested_ref_declare_begin_and_end id b_or_e depth fvs
        else 
          ()
@@ -269,7 +257,7 @@ iter 自由変数を具体化する値の範囲 *)
 let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
   if is_unconcrete then
     List.iter (print_smtlibs_sub oc num) smtlibs
-  else 
+  else
     (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
     let rec range m n =
       if m > n then []
