@@ -1366,7 +1366,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             And(sl1, 
               Imply(And(Eq(Id idx, Id idx_param),
                 And(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth, 
-                  make_idx_bound_smtlib_be id_param idx_param fvs_param num "b" depth)), sl2)) in
+                smtlib_subst subst (make_idx_bound_smtlib_be id_param idx_param fvs_param num "b" depth))), sl2)) in
         [common depth;
         same_range fvs fvs' depth]
       (* x | () ref (left, right, ownership)の形式の場合 *)
@@ -1443,7 +1443,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
               And(sl1, 
                 Imply(And(Eq(Id idx, Id idx_param),
                   And(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
-                    make_idx_bound_smtlib_be id_param idx_param fvs_param num "e" depth)), sl2)) in
+                  smtlib_subst subst (make_idx_bound_smtlib_be id_param idx_param fvs_param num "e" depth))), sl2)) in
           (* 引数のvar_locationsを生成 *)
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
