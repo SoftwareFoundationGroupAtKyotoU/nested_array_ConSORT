@@ -563,3 +563,31 @@ let deref_simpleTy simpleTy =
   match simpleTy with
   | SRef simpleTy' -> simpleTy'
   | _ -> raise (Error "deref_simpleTy error")
+
+let find_idx_vars var_locations fun_num =
+  let rec find_idx_vars_sub id pos branch_trace depth =
+    if depth < 1 then []
+    else
+      let idx = Format.asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
+      idx :: find_idx_vars_sub id pos branch_trace (depth-1)
+  in
+  List.flatten
+    ((List.map
+      (fun (id,(pos,branch_trace, simpleTy)) ->
+        let depth = ref_depth simpleTy in 
+        find_idx_vars_sub id pos branch_trace depth) var_locations ))
+
+let find_idx_vars_be varown_count fun_num =
+  let rec find_idx_vars_be_sub id b_or_e depth =
+    if depth < 1 then []
+    else
+      let idx = Format.asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
+      idx :: find_idx_vars_be_sub id b_or_e (depth-1)
+  in
+  List.flatten
+    ((List.map
+      (fun (id,b_or_e,fun_num',depth) ->
+        if fun_num' = fun_num then
+          find_idx_vars_be_sub id b_or_e depth
+        else
+         []) varown_count ))
