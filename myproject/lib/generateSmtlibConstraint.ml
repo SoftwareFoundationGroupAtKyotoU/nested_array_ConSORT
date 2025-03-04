@@ -267,7 +267,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   let rec make_letAppPtr_smtlib_div depth = 
     (* id2の0番目だけ特別扱いしており，ズレる幅が1ではないならばid2の先頭以外の所有権部分を変化 *)
     let id2 = if contains_element eq0_list id2 && sl <> Id "1" then id2^"_non0" else id2 in
-    if depth <= 0 then Not True
+    if depth <= 0 then True
     else
       let sl1 = And(Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth),
       (Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth))) in
