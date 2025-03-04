@@ -1495,7 +1495,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         Eq(make_bound_exp fvs id2 "h" fun_num branch_trace id2_depth, 
           Add(make_bound_exp fvs id2_non0 "h" fun_num branch_trace id2_depth, Id "1"));
         ] in
-      let sl2 = make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 id1_depth in
+      let sl2 = make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 id2_depth in
       sl1 @ sl2
   | _ -> raise ConstrError
   
