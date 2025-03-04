@@ -267,7 +267,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   let rec make_letAppPtr_smtlib_div depth = 
     (* id2の0番目だけ特別扱いしており，ズレる幅が1ではないならばid2の先頭以外の所有権部分を変化 *)
     let id2 = if contains_element eq0_list id2 && sl <> Id "1" then id2^"_non0" else id2 in
-    if depth <= 0 then True
+    if depth <= 0 then Not True
     else
       let sl1 = And(Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth),
       (Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth))) in
@@ -1015,10 +1015,11 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let id1_non0 = id1 ^ "_non0" in
     eq0_list := id1 :: !eq0_list;
     let id1_simpleTy = lookup id1 ty_env in
+    let id2_simpleTy = lookup id2 ty_env in
     new_id id1 pos branch_trace id1_simpleTy; 
     new_id id1_eq0 pos branch_trace id1_simpleTy; 
     new_id id1_non0 pos branch_trace id1_simpleTy;
-    new_id id1 pos branch_trace id1_simpleTy; 
+    new_id id2 pos branch_trace id2_simpleTy; 
     let id1_depth = ref_depth id1_simpleTy in
     (* 所有権が1であり，代入される側の一番外側の所有権，所有範囲は変化しない *)
     (* id1の所有範囲の下限は0と仮定 *)
