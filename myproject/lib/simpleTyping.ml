@@ -67,7 +67,7 @@ let rec infer_simple_ty tyenv exp =
     tyenv := (id,ty1) :: !tyenv;
     (match exp1, ty1 with
       | Deref id2, SRef sty
-        -> tyenv := (id2^"_eq0", SRef sty) :: !tyenv; tyenv := (id2^"_non0", SRef sty) :: !tyenv;
+        -> tyenv := (id2^"_eq0", SRef (SRef sty)) :: !tyenv; tyenv := (id2^"_non0", SRef (SRef sty)) :: !tyenv;
       | _ -> ());
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
     let c3 = unify ( c1 @ c2) in (c3, ty2)
@@ -77,7 +77,7 @@ let rec infer_simple_ty tyenv exp =
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
     (match ty1 with
       | SRef _
-        -> tyenv := (id^"_eq0", ty1) :: !tyenv; tyenv := (id^"_non0", ty1) :: !tyenv;
+        -> tyenv := (id^"_eq0", SRef ty1) :: !tyenv; tyenv := (id^"_non0", SRef ty1) :: !tyenv;
       | _ -> ());
     let c3 = unify ((t, SRef (ty1)) :: c1 @ c2) in (c3, ty2)
   | Alias(exp1, exp2, exp3) ->
