@@ -1588,7 +1588,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
        (fun x -> 
         Imply(And(Eq(Id idx, Id idx_b),
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-          make_idx_bound_smtlib_be id idx fvs_b fun_num "b" depth)), x))
+          make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x))
        (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b)
       (* 所有権指定がある場合 *)
     | _ ->
@@ -1642,7 +1642,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       (fun x -> 
       Imply(And(Eq(Id idx, Id idx_e),
         And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-        make_idx_bound_smtlib_be id idx fvs_e fun_num "e" depth)), x))
+        make_idx_bound_smtlib_be id idx_e fvs_e fun_num "e" depth)), x))
       (ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e)
     | _ ->
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
