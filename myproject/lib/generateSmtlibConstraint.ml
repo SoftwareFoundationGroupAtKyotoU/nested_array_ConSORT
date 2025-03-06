@@ -1565,7 +1565,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
     varown_count := (id, "b", fun_num, depth) :: !varown_count;
     let rec ref_id_before_eval_to_smtlibs_sub ftype fvs fvs_b =
     match ftype with
-    | FTInt _ -> [True]
+    | FTInt _ -> [True], [True]
     | FTRef (ftype', exp_low, exp_high, own) ->
     match exp_low with
     (* 所有権指定がない場合 *)
@@ -1578,27 +1578,32 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       (* 関数引数の最初の所有権と当初決まっている所有権は等しい
       関数引数の最初の所有範囲の下限と当初決まっている所有範囲の下限は等しい
       関数引数の最初の所有範囲の上限と当初決まっている所有範囲の上限は等しい *)
+      let sl1, sl2 = 
       [Eq(make_own_var id fun_num [] depth, make_own_var_be id fun_num "b" depth);
-       Eq(make_bound_exp fvs id "l" fun_num [] depth, make_bound_exp_be fvs_b id "l" fun_num "b" depth);
+      Geq(make_own_var_be id fun_num "b" depth, Id "0.");
+      Leq(make_own_var_be id fun_num "b" depth, Id "1.")],
+      [Eq(make_bound_exp fvs id "l" fun_num [] depth, make_bound_exp_be fvs_b id "l" fun_num "b" depth);
        Eq(make_bound_exp fvs id "h" fun_num [] depth, make_bound_exp_be fvs_b id "h" fun_num "b" depth);
-       Geq(make_own_var_be id fun_num "b" depth, Id "0.");
-        Leq(make_own_var_be id fun_num "b" depth, Id "1.")]
-       @ 
-       List.map 
-       (fun x -> 
-        Imply(And(Eq(Id idx, Id idx_b),
+      ] in
+      let sl3, sl4 = 
+       (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b) in
+       sl1 @ sl3, 
+       sl2 @
+       (List.map 
+        (fun x -> Imply(And(Eq(Id idx, Id idx_b),
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-          make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x))
-       (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b)
+            make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x)) sl4)
       (* 所有権指定がある場合 *)
     | _ ->
       (* 関数引数の最初の所有権と所有権の指定は等しい
       関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
       関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
-      [Eq(make_own_var id fun_num [] 1, Id (string_of_float own));
-       Eq(make_bound_exp fvs id "l" fun_num [] 1, exp_to_smtlib exp_low);
+      [Eq(make_own_var id fun_num [] 1, Id (string_of_float own))],
+      [Eq(make_bound_exp fvs id "l" fun_num [] 1, exp_to_smtlib exp_low);
        Eq(make_bound_exp fvs id "h" fun_num [] 1, exp_to_smtlib exp_high)]
-  in ref_id_before_eval_to_smtlibs_sub ftype fvs fvs in
+  in 
+  let sl, sl2 = ref_id_before_eval_to_smtlibs_sub ftype fvs fvs in
+  sl @ sl2 in
   (* 関数仮引数のうち#がついていない　かつ　参照型である引数集合の制約を生成 *)
   let smtlibs_before_eval = List.concat (List.map ref_id_before_eval_to_smtlibs ref_ids) in
   (* 関数内部の制約をsmtlibの形式に変換 *)
@@ -1618,7 +1623,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
     varown_count := (id, "e", fun_num,depth) :: !varown_count;
     let rec ref_id_after_eval_to_smtlibs_sub ftype fvs fvs_e =
     match ftype with
-    | FTInt _ -> [True]
+    | FTInt _ -> [True], [True]
     | FTRef (ftype', el2, eh2, f2) ->
     match el2 with
     | ENull ->
@@ -1631,19 +1636,22 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       　　　　(評価終了時の引数の所有権がその時の所有権以下　かつ
       　　　　評価終了時の引数の所有範囲の下限がその時の所有範囲の下限以上　かつ
       　　　　評価終了時の引数の所有範囲の上限がその時の所有範囲の上限以下) *)
+      let sl1, sl2 = 
+      [Geq(make_own_var_be id fun_num "e" depth, Id "0.");
+      Leq(make_own_var_be id fun_num "e" depth, Id "1.")],
       [Or(Eq(make_own_var_be id fun_num "e" depth, Id "0."),
        And(Leq(make_own_var_be id fun_num "e" depth, make_own_var id fun_num [] depth),
        And(Geq(make_bound_exp_be fvs_e id "l" fun_num "e" depth, make_bound_exp fvs id "l" fun_num [] depth),
-           Leq(make_bound_exp_be fvs_e id "h" fun_num "e" depth, make_bound_exp fvs id "h" fun_num [] depth))));
-      Geq(make_own_var_be id fun_num "e" depth, Id "0.");
-      Leq(make_own_var_be id fun_num "e" depth, Id "1.")]
-      @ 
+           Leq(make_bound_exp_be fvs_e id "h" fun_num "e" depth, make_bound_exp fvs id "h" fun_num [] depth))))] 
+      in
+      let sl3, sl4 = ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e in
+      sl1 @ sl2,
+      sl3 @
       List.map 
       (fun x -> 
-      Imply(And(Eq(Id idx, Id idx_e),
-        And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-        make_idx_bound_smtlib_be id idx_e fvs_e fun_num "e" depth)), x))
-      (ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e)
+        Imply(And(Eq(Id idx, Id idx_e),
+          And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
+            make_idx_bound_smtlib_be id idx_e fvs_e fun_num "e" depth)), x)) sl4
     | _ ->
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
       　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
@@ -1652,8 +1660,11 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       [Or(Eq(Id (string_of_float f2), Id "0."),
        And(Leq(Id (string_of_float f2), make_own_var id fun_num [] 1),
        And(Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num [] 1),
-           Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num [] 1))))]
-  in ref_id_after_eval_to_smtlibs_sub ftype fvs fvs in
+           Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num [] 1))))],
+      []
+  in 
+  let sl1, sl2 = ref_id_after_eval_to_smtlibs_sub ftype fvs fvs in
+  sl1 @ sl2 in
   (* 評価後の関数仮引数のうち参照型である引数集合の制約を生成 *)
   let smtlibs_after_eval = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
   (* 任意の変数の任意の位置における所有権が0以上1以下である制約を付加する関数 *)
