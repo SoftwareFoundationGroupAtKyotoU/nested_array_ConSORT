@@ -377,37 +377,42 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
     else
       let sl1 = 
         [
-          Eq(make_own_var id2_non0 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth);
-          Eq(make_own_var id2_0 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth);
+          Eq(make_pre_own_var id2_non0 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth);
+          Eq(make_pre_own_var id2_0 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth);
+          Eq(make_own_var id2_0 fun_num branch_trace depth, Id "0.");
+          Eq(make_own_var id2_non0 fun_num branch_trace depth, Id "0.");
         ] in
       let sl2 = common (depth-1) in
       sl1 @ sl2 in
-  let rec same_range id1 id2 fvs1 fvs2 depth =
+  let rec same_range id2_0 id2 fvs2_0 fvs2 depth =
     if depth <= 0 then True
     else
-      let idx1 = make_idx_id fun_num id1 branch_trace depth in
-      let fvs1' = idx1::fvs1 in
+      let idx2_0 = make_pre_idx_id fun_num id2_0 branch_trace depth in
+      let fvs2'_0 = idx2_0::fvs2_0 in
       let idx2 = make_idx_id fun_num id2 branch_trace depth in
       let fvs2' = idx2::fvs2 in
       let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
+      let idx_pre_bound id idx fvs = make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth in
       let sl1 = 
         (* 添え字のたどり方が同じならば所有範囲は等しい *)
-        And(Eq(make_bound_exp fvs2 id2 "l" fun_num branch_trace depth,
-          make_bound_exp fvs1 id1 "l" fun_num branch_trace depth),
+        (* And(Eq(make_bound_exp fvs2 id2 "l" fun_num branch_trace depth,
+          make_pre_bound_exp fvs2_0 id2_0 "l" fun_num branch_trace depth), *)
         Eq(make_bound_exp fvs2 id2 "h" fun_num branch_trace depth, 
-          make_bound_exp fvs1 id1 "h" fun_num branch_trace depth)) in
-      let sl2 = same_range id1 id2 fvs1' fvs2' (depth-1) in
+          make_pre_bound_exp fvs2_0 id2_0 "h" fun_num branch_trace depth) in
+      let sl2 = same_range id2_0 id2 fvs2'_0 fvs2' (depth-1) in
       And(sl1, 
-        Imply(And(idx_bound id1 idx1 fvs1, 
-          And(idx_bound id2 idx2 fvs2, 
-            Eq(Id idx2, Id idx1))),
-        sl2)) in
+        Imply(idx_pre_bound id2_0 idx2_0 fvs2_0,
+          Imply(idx_bound id2 idx2 fvs2, 
+            Imply(Eq(Id idx2, Id idx2_0),
+        sl2))))
+        (* sl1 *)
+      in
   (* 最上位の参照の所有範囲の分割の制約 *)
   let sl1 = 
       [
         Eq(make_bound_exp fvs id1 "l" fun_num branch_trace depth, Id "0");
         Eq(make_bound_exp fvs id1 "h" fun_num branch_trace depth,
-          make_bound_exp fvs id2_non0 "h" fun_num branch_trace depth);
+          make_pre_bound_exp fvs id2_non0 "h" fun_num branch_trace depth);
         Eq(make_bound_exp fvs id2 "l" fun_num branch_trace depth, Id "0");
         Eq(make_bound_exp fvs id2 "h" fun_num branch_trace depth, Id "0");
       ] in
@@ -418,21 +423,21 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let fvs1 = idx1::fvs in
   let idx2 = make_idx_id fun_num id2 branch_trace depth in
   let fvs2 = idx2::fvs in
-  let idx2_0 = make_idx_id fun_num id2_0 branch_trace depth in
+  let idx2_0 = make_pre_idx_id fun_num id2_0 branch_trace depth in
   let fvs2_0 = idx2_0::fvs in
-  let idx2_non0 = make_idx_id fun_num id2_non0 branch_trace depth in
+  let idx2_non0 = make_pre_idx_id fun_num id2_non0 branch_trace depth in
   let fvs2_non0 = idx2_non0::fvs in
   let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
-  sl1 @ sl2 @
+  (* sl1 @ sl2 
+  @ *)
   [
-    Imply(And(idx_bound id2_0 idx2_0 fvs,
-      And(idx_bound id2 idx2 fvs,
-        Eq(Id idx2_0, Id idx2))),
-    same_range id2_0 id2 fvs2_0 fvs2 (depth-1));
-    Imply(And(idx_bound id2_non0 idx2_non0 fvs,
+    Imply(Eq(Id idx2, Id "0"),
+      Imply(Eq(Id idx2_0, Id "0"),
+    same_range id2_0 id2 fvs2_0 fvs2 (depth-1)));
+    (* Imply(And(idx_bound id2_non0 idx2_non0 fvs,
       And(idx_bound id1 idx1 fvs,
-        Eq(Id idx2_non0, Id idx1))),
-    same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1));
+        Eq(Add(Id idx2_non0, Id "1"), Id idx1))),
+    same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1)); *)
   ]
 with | Unbound -> raise ConstrError
 
@@ -793,6 +798,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       else [] in
     if contains_element eq0_list id2 && sl1 = Id "1" then
       (remove_element eq0_list id2;
+      new_id (id2^"_eq0") pos branch_trace simpleTy;
+      new_id (id2^"_non0") pos branch_trace simpleTy;
       make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth)
     else
       sl2 @ make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl1 depth  
