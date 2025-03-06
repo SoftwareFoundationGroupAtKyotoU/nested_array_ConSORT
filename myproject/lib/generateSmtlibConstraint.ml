@@ -1040,7 +1040,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
      Eq(make_bound_exp fvs id1_eq0 "l" fun_num branch_trace id1_depth, Id "0");
      Eq(make_bound_exp fvs id1_eq0 "h" fun_num branch_trace id1_depth, Id "0");
      Eq(make_bound_exp fvs id1_non0 "l" fun_num branch_trace id1_depth, Id "0");
-     Eq(make_bound_exp fvs id1_non0 "h" fun_num branch_trace id1_depth, Sub(make_pre_bound_exp fvs id1 "h" fun_num branch_trace id1_depth, Id"1"))] in
+     Eq(make_bound_exp fvs id1_non0 "h" fun_num branch_trace id1_depth, 
+      Sub(make_pre_bound_exp fvs id1 "h" fun_num branch_trace id1_depth, Id"1"))] in
     let sl2 = make_assignRef_smtlib fvs fun_num branch_trace id1 id2 id1_depth in
     sl1 @ sl2
   | CAliasAddPtr (id1,id2,e,pos) -> (* alias(id1 = id2 + num); ... *)
@@ -1566,40 +1567,39 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
     match ftype with
     | FTInt _ -> [True], [True]
     | FTRef (ftype', exp_low, exp_high, own) ->
-    match exp_low with
-    (* 所有権指定がない場合 *)
-    | ENull ->
-      let depth = ftref_depth (FTRef (ftype', exp_low, exp_high, own)) in
-      let idx = make_idx_id fun_num id [] depth in
-      let fvs' = idx::fvs in
-      let idx_b = make_idx_id_be fun_num id "b" depth in
-      let fvs'_b = idx_b::fvs in
-      (* 関数引数の最初の所有権と当初決まっている所有権は等しい
-      関数引数の最初の所有範囲の下限と当初決まっている所有範囲の下限は等しい
-      関数引数の最初の所有範囲の上限と当初決まっている所有範囲の上限は等しい *)
-      let sl1, sl2 = 
-      [Eq(make_own_var id fun_num [] depth, make_own_var_be id fun_num "b" depth);
-      Geq(make_own_var_be id fun_num "b" depth, Id "0.");
-      Leq(make_own_var_be id fun_num "b" depth, Id "1.")],
-      [Eq(make_bound_exp fvs id "l" fun_num [] depth, make_bound_exp_be fvs_b id "l" fun_num "b" depth);
-       Eq(make_bound_exp fvs id "h" fun_num [] depth, make_bound_exp_be fvs_b id "h" fun_num "b" depth);
-      ] in
-      let sl3, sl4 = 
-       (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b) in
-       sl1 @ sl3, 
-       sl2 @
-       (List.map 
-        (fun x -> Imply(And(Eq(Id idx, Id idx_b),
-          And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
-            make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x)) sl4)
-      (* 所有権指定がある場合 *)
-    | _ ->
-      (* 関数引数の最初の所有権と所有権の指定は等しい
-      関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
-      関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
-      [Eq(make_own_var id fun_num [] 1, Id (string_of_float own))],
-      [Eq(make_bound_exp fvs id "l" fun_num [] 1, exp_to_smtlib exp_low);
-       Eq(make_bound_exp fvs id "h" fun_num [] 1, exp_to_smtlib exp_high)]
+      match exp_low with
+      (* 所有権指定がない場合 *)
+      | ENull ->
+        let depth = ftref_depth (FTRef (ftype', exp_low, exp_high, own)) in
+        let idx = make_idx_id fun_num id [] depth in
+        let fvs' = idx::fvs in
+        let idx_b = make_idx_id_be fun_num id "b" depth in
+        let fvs'_b = idx_b::fvs in
+        (* 関数引数の最初の所有権と当初決まっている所有権は等しい
+        関数引数の最初の所有範囲の下限と当初決まっている所有範囲の下限は等しい
+        関数引数の最初の所有範囲の上限と当初決まっている所有範囲の上限は等しい *)
+        let sl1, sl2 = 
+        [Eq(make_own_var id fun_num [] depth, make_own_var_be id fun_num "b" depth);
+        Geq(make_own_var_be id fun_num "b" depth, Id "0.");
+        Leq(make_own_var_be id fun_num "b" depth, Id "1.")],
+        [Eq(make_bound_exp fvs id "l" fun_num [] depth, make_bound_exp_be fvs_b id "l" fun_num "b" depth);
+        Eq(make_bound_exp fvs id "h" fun_num [] depth, make_bound_exp_be fvs_b id "h" fun_num "b" depth);
+        ] in
+        let sl3, sl4 = (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b) in
+        sl1 @ sl3, 
+        sl2 @
+        (List.map 
+          (fun x -> Imply(And(Eq(Id idx, Id idx_b),
+            And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
+              make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x)) sl4)
+        (* 所有権指定がある場合 *)
+      | _ ->
+        (* 関数引数の最初の所有権と所有権の指定は等しい
+        関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
+        関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
+        [Eq(make_own_var id fun_num [] 1, Id (string_of_float own))],
+        [Eq(make_bound_exp fvs id "l" fun_num [] 1, exp_to_smtlib exp_low);
+        Eq(make_bound_exp fvs id "h" fun_num [] 1, exp_to_smtlib exp_high)]
   in 
   let sl, sl2 = ref_id_before_eval_to_smtlibs_sub ftype fvs fvs in
   sl @ sl2 in
