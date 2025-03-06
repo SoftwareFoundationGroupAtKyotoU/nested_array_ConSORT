@@ -285,7 +285,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   (* 最上位が分割でも共有でも内側の所有範囲の処理は同じ
   新しくできたid1もid2も元のid2の所有範囲を引き継ぐ *)
   let rec make_letAppPtr_smtlib_range fvs1 fvs2 fvs2_pre depth =
-    if depth <= 0 then True
+    if depth <= 0 then True, True
     else
       let idx1 = make_idx_id fun_num id1 branch_trace depth in
       let fvs1' = idx1::fvs in
@@ -293,21 +293,24 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
       let fvs2' = idx2::fvs in
       let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
       let fvs2_pre' = idx2_pre::fvs in
-      let sl1 = 
-        And(Eq(make_pre_bound_exp fvs2_pre id2 "l" fun_num branch_trace depth,
+      let sl1, sl2 = 
+      And(Eq(make_pre_bound_exp fvs2_pre id2 "l" fun_num branch_trace depth,
           make_bound_exp fvs1 id1 "l" fun_num branch_trace depth),
-        And(Eq(make_pre_bound_exp fvs2_pre id2 "l" fun_num branch_trace depth,
-          make_bound_exp fvs2 id2 "l" fun_num branch_trace depth),
-        And(Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth, 
-          make_bound_exp fvs1 id1 "h" fun_num branch_trace depth),
-        Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth,
-          make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)))) in
-      let sl2 = make_letAppPtr_smtlib_range fvs1' fvs2' fvs2_pre' (depth-1) in
+          Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth, 
+          make_bound_exp fvs1 id1 "h" fun_num branch_trace depth)),
+      And(Eq(make_bound_exp fvs1 id1 "l" fun_num branch_trace depth,
+      make_bound_exp fvs2 id2 "l" fun_num branch_trace depth),
+          Eq(make_bound_exp fvs1 id1 "h" fun_num branch_trace depth,
+            make_bound_exp fvs2 id2 "h" fun_num branch_trace depth))  in
+      let sl3, sl4 = make_letAppPtr_smtlib_range fvs1' fvs2' fvs2_pre' (depth-1) in
       And(sl1, 
-        idx_bound id1 idx1 fvs1 depth 
-         (idx_bound id2 idx2 fvs2 depth
-          (idx_pre_bound id2 idx2_pre fvs2_pre depth
-           (Imply(And(Eq(Id idx1, Id idx2), Eq(Id idx2, Id idx2_pre)), sl2))))) in
+        idx_pre_bound id2 idx2_pre fvs2_pre depth
+          (idx_bound id1 idx1 fvs1 depth 
+            (Imply(Eq(Id idx1, Id idx2_pre), sl3)))),
+      And(sl2, 
+        idx_bound id1 idx1 fvs1 depth
+          (idx_bound id2 idx2 fvs2 depth 
+            (Imply(Eq(Id idx1, Id idx2),sl4)))) in
   (* 最上位の参照の所有範囲の分割の際の制約 *)
   let sl1 = 
       And(Eq(make_pre_own_var id2 fun_num branch_trace depth, make_own_var id1 fun_num branch_trace depth),
@@ -339,10 +342,17 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   let fvs2 = idx2::fvs in
   let idx2_pre = make_pre_idx_id fun_num id2 branch_trace depth in
   let fvs2_pre = idx2_pre::fvs in
-  [Or(And(sl1, make_letAppPtr_smtlib_div (depth-1)),
-    And(sl2, make_letAppPtr_smtlib_share (depth-1)));
-  Imply(And(Eq(Id idx1, Add(Id idx2, sl)), Eq(Id idx2, Id idx2_pre)), 
-    make_letAppPtr_smtlib_range fvs1 fvs2 fvs2_pre (depth-1))]
+  let sl3, sl4 = make_letAppPtr_smtlib_range fvs1 fvs2 fvs2_pre (depth-1) in
+  (* [Or(And(sl1, make_letAppPtr_smtlib_div (depth-1)),
+    And(sl2, make_letAppPtr_smtlib_share (depth-1))); *)
+    [And(sl2, make_letAppPtr_smtlib_share (depth-1));
+  idx_pre_bound id2 idx2_pre fvs depth
+    (idx_bound id1 idx1 fvs depth
+      (Imply(Eq(Id idx1, Add(Id idx2_pre, sl)), sl3)));
+  idx_bound id1 idx1 fvs depth
+    (idx_bound id2 idx2 fvs depth
+      (Imply(Eq(Id idx1, Add(Id idx2, sl)), sl4)));
+  ]
 
 (* let id1 = id2(ref) + 1 in ...
 id2が最初の要素のみ所有権が異なりid1とid2が1だけズレた部分を指す場合 *)
@@ -1056,14 +1066,14 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         else
           (* id1とid2の小さい方の所有権を採用 *)
           let sl1 = 
-            Or(And(Leq(make_pre_own_var id1 fun_num branch_trace depth,
-              make_pre_own_var id2 fun_num branch_trace depth),
-            Eq(make_pre_own_var id1 fun_num branch_trace depth,
-            make_own_var id2 fun_num branch_trace depth)),
-            And(Leq(make_pre_own_var id2 fun_num branch_trace depth,
-              make_pre_own_var id1 fun_num branch_trace depth),
-            Eq(make_pre_own_var id2 fun_num branch_trace depth,
-            make_own_var id2 fun_num branch_trace depth))) in
+              And(Imply(Leq(make_pre_own_var id1 fun_num branch_trace depth,
+                make_pre_own_var id2 fun_num branch_trace depth),
+              Eq(make_pre_own_var id1 fun_num branch_trace depth,
+                make_own_var id2 fun_num branch_trace depth)),
+              Imply(Leq(make_pre_own_var id2 fun_num branch_trace depth,
+                make_pre_own_var id1 fun_num branch_trace depth),
+              Eq(make_pre_own_var id2 fun_num branch_trace depth,
+                make_own_var id2 fun_num branch_trace depth))) in
           (* id1の所有権は0になる *)
           let sl2 = 
             Eq(make_own_var id1 fun_num branch_trace depth, Id "0") in
@@ -1088,24 +1098,24 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
            idx_pre_bound id1 idx1 fvs1 depth
             (idx_pre_bound id2 idx2 fvs2 depth
              (Imply(Eq(Id idx1, Id idx2), sl2)))) in
-      let rec same_range_post fvs2 fvs2_pre depth =
+      let rec same_range_post fvs2 fvs1_pre depth =
         if depth <= 0 then True
         else
           let idx2 = make_idx_id fun_num id2 branch_trace depth in
           let fvs2' = idx2::fvs2 in
-          let idx2_pre = make_idx_id fun_num id2 branch_trace depth in
-          let fvs2'_pre = idx2_pre::fvs2_pre in
+          let idx1_pre = make_pre_idx_id fun_num id1 branch_trace depth in
+          let fvs1'_pre = idx1_pre::fvs1_pre in
           let sl1 =
             (* id2の所有範囲は変化しない *)
-          And(Eq(make_pre_bound_exp fvs2_pre id2 "l" fun_num branch_trace depth,
+          And(Eq(make_pre_bound_exp fvs1_pre id1 "l" fun_num branch_trace depth,
             make_bound_exp fvs2 id2 "l" fun_num branch_trace depth),
-          Eq(make_pre_bound_exp fvs2_pre id2 "h" fun_num branch_trace depth,
+          Eq(make_pre_bound_exp fvs1_pre id1 "h" fun_num branch_trace depth,
             make_bound_exp fvs2 id2 "h" fun_num branch_trace depth)) in
-          let sl2 = same_range_post fvs2' fvs2'_pre (depth - 1) in
+          let sl2 = same_range_post fvs2' fvs1'_pre (depth - 1) in
           And(sl1, 
            idx_bound id2 idx2 fvs2 depth
-            (idx_pre_bound id2 idx2_pre fvs2_pre depth
-              (Imply(Eq(Id idx2, Id idx2_pre), sl2)))) in
+            (idx_pre_bound id1 idx1_pre fvs1_pre depth
+              (Imply(Eq(Id idx2, Id idx1_pre), sl2)))) in
     let idx1_pre = make_pre_idx_id fun_num id1 branch_trace (depth+1) in
     let fvs1_pre = idx1_pre::fvs in
     let idx2 = make_idx_id fun_num id2 branch_trace (depth+1) in
@@ -1113,11 +1123,13 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let idx2_pre = make_pre_idx_id fun_num id2 branch_trace (depth+1) in
     let fvs2_pre = idx2_pre::fvs in
     And(common depth,
-      idx_pre_bound id1 idx1_pre fvs (depth+1)
-      (idx_bound id2 idx2 fvs (depth+1)
+      And(idx_pre_bound id1 idx1_pre fvs (depth+1)
       (idx_pre_bound id2 idx2_pre fvs (depth+1)
-       (And(Imply(Eq(Id idx1_pre, Id idx2_pre),same_range_pre fvs1_pre fvs2_pre depth), 
-        Imply(Eq(Id idx2_pre, Id idx2), same_range_post fvs2 fvs2_pre depth)))))) in
+        (Imply(Eq(Id idx1_pre, Add(Id idx2_pre, sl)),same_range_pre fvs1_pre fvs2_pre depth))),
+      idx_pre_bound id1 idx1_pre fvs (depth+1)
+        (idx_bound id2 idx2 fvs (depth+1)
+          (Imply(Eq(Id idx1_pre, Add(Id idx2, sl)), same_range_post fvs2 fvs1_pre depth)))))
+    in
           (* id1の外側の所有権が0の場合 *)
     let make_aliasdAddPtr_smtlib_no_change depth =
       let rec common depth =
@@ -1269,11 +1281,12 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           make_bound_exp fvs id2 "l" fun_num branch_trace depth),
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
         make_bound_exp fvs id2 "h" fun_num branch_trace depth))) in
-      [Or(And(Not(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0.")),
+      [
+      Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
         And(Or(sl1, sl2),
-        make_aliasdAddPtr_smtlib_gather (depth-1))),
-      And(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
-        And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1))));
+          make_aliasdAddPtr_smtlib_gather (depth-1)));
+      Imply(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
+        And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1)));
       Eq(make_own_var id1 fun_num branch_trace depth, Id "0")]
   | CDeref (id,_) -> 
     (* let num = *y in ...
