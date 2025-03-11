@@ -556,10 +556,10 @@ let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
       let sl2 = make_letDeref_smtlib_same_range id1 id2 fvs1' fvs2' (depth-1) in
       sl1 @ 
       List.map 
-      (fun x -> idx_bound id1 idx1 fvs1 depth (idx_pre_bound id2 idx2 fvs2 depth x))
-      (List.map 
-        (fun x -> Imply(Eq(Id idx1, Id idx2), x)) 
-        sl2) in
+      (fun x -> idx_bound id1 idx1 fvs1 depth 
+        (idx_pre_bound id2 idx2 fvs2 depth 
+          (Imply(Eq(Id idx1, Id idx2), x))))
+      sl2 in
   common depth @
   (* 最も外側の添え字が0かそうでないかで場合分け *)
   List.map (fun x -> Imply(Eq(Id idx2, Id "0"), x)) (make_letDeref_smtlib_same_range id1 id2 fvs fvs2 (depth-1)) @
@@ -586,7 +586,7 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
       [
       Imply(Leq(make_own_var id2_non0 fun_num branch_trace depth, make_pre_own_var id1 fun_num branch_trace depth),
         Eq(make_own_var id2 fun_num branch_trace depth, make_own_var id2_non0 fun_num branch_trace depth));
-      Imply(Leq(make_pre_own_var id1 fun_num branch_trace depth, make_own_var id2_non0 fun_num branch_trace depth),
+      Imply(Lt(make_pre_own_var id1 fun_num branch_trace depth, make_own_var id2_non0 fun_num branch_trace depth),
         Eq(make_own_var id2 fun_num branch_trace depth, make_pre_own_var id1 fun_num branch_trace depth));
       Eq(make_own_var id1 fun_num branch_trace depth, Id "0.");
       ]
@@ -636,13 +636,13 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let idx2_non0 = make_idx_id fun_num id2_non0 branch_trace depth in
   let fvs2_non0 = idx2_non0::fvs in
   common (depth-1) 
-  @ List.map 
+  @ (List.map 
     (fun x -> Imply(Eq(Sub(Id "0", Id "1"), Id idx2_non0), x)) 
-    (make_aliasDeref_smtlib_same_range_pre fvs fvs2_non0 (depth-1)) 
-  @ List.map 
-    (fun x -> Imply(And(Eq(Id idx2, Add(Id idx2_non0, Id "1")),
-      make_idx_bound_smtlib id2 idx2 fvs fun_num branch_trace depth), x)) 
-    (make_aliasDeref_smtlib_same_range_post fvs2 fvs2_non0 (depth-1))
+    (make_aliasDeref_smtlib_same_range_pre fvs fvs2_non0 (depth-1)))
+  @ (List.map 
+    (fun x -> Imply(Eq(Id idx2, Add(Id idx2_non0, Id "1")),
+      Imply(make_idx_bound_smtlib id2 idx2 fvs fun_num branch_trace depth, x))) 
+    (make_aliasDeref_smtlib_same_range_post fvs2 fvs2_non0 (depth-1)))
     
 
 let p c =
