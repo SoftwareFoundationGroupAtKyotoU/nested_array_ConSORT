@@ -44,7 +44,7 @@ let rec print_declare oc var_locations fvs fun_num =
       fprintf formatter "(declare-fun d_%d_h_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
       (* 配列の添え字を表す変数の宣言
       i_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(depth)th_(then or else) *)
-      fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace;
+      (* fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace; *)
       let idx = asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
       let fvs' = idx::fvs in
       nested_ref_declare id pos branch_trace (depth-1) fvs') in
@@ -81,7 +81,7 @@ let rec print_declare_begin_and_end oc varown_count fvs fun_num =
        (* 所有権を表す上限の一次式の切片の宣言 *)
        fprintf formatter "(declare-fun d_%d_h_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
        (* 配列の添え字を表す変数の宣言 *)
-       fprintf formatter "(declare-fun i_%d_%s_%s_%dth () Int)\n" fun_num id b_or_e depth;
+       (* fprintf formatter "(declare-fun i_%d_%s_%s_%dth () Int)\n" fun_num id b_or_e depth; *)
        let idx = asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
        let fvs' = idx::fvs in
        nested_ref_declare_begin_and_end id b_or_e (depth-1) fvs');
@@ -202,7 +202,11 @@ let rec print_smtlib oc sl bool_id map num =
       let n = lookup fv map in
       output_string oc (string_of_int n)
     with Error _ -> output_string oc fv)
-  | Id id -> output_string oc id
+  | Id id -> 
+    (try
+      let n = lookup id map in
+      output_string oc (string_of_int n)
+    with Error _ -> output_string oc id)
   | IntPred (id1,ids) -> 
     (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
      List.iter
@@ -247,6 +251,29 @@ let rec print_smtlib oc sl bool_id map num =
             print_smtlib oc sl bool_id map num) smtlibs;
        output_string oc ")")
 
+let starts_with prefix s =
+  let prefix_len = String.length prefix in
+  String.length s >= prefix_len && String.sub s 0 prefix_len = prefix
+
+let rec idx_of_smtlib sl =
+  match sl with 
+  | Or (s1,s2) | And(s1, s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) 
+  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+    (idx_of_smtlib s1) @ (idx_of_smtlib s2)
+  | Not s -> 
+    idx_of_smtlib s
+  (* | Div (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
+  | Id id -> 
+    if starts_with "i_" id then [id] else []
+  | FV id -> 
+    if starts_with "i_" id then [id] else []
+  | Ands ss ->
+    List.concat (List.map idx_of_smtlib ss)
+  | _ -> 
+    []
+  
+
 (* smtlibの制約をファイルに書き出し
 oc 書き出し先
 smtlibs 制約
@@ -283,14 +310,23 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
       (fun map ->
         (List.iter 
           (fun sl -> 
-            output_string oc "(assert ";
-            (* smtlibの制約部分の記述 
-            slはsmtlibの制約
-            mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
-            numは特定のsmtlibの識別番号
-            *)
-            print_smtlib oc sl false map num; 
-            output_string oc ")\n"
+            let idxs = list_to_set (idx_of_smtlib sl) [] in
+            if idxs = [] then 
+            (* if true then *)
+              (output_string oc "(assert ";
+              (* smtlibの制約部分の記述 
+              slはsmtlibの制約
+              mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
+              numは特定のsmtlibの識別番号
+              *)
+              print_smtlib oc sl false map num; 
+              output_string oc ")\n")
+            else
+              (output_string oc "(assert (forall (";
+              output_string oc (make_args idxs);
+              output_string oc ") ";
+              print_smtlib oc sl false map num; 
+              output_string oc "))\n")
             ) smtlibs;
           output_string oc "\n")) comb
 and print_smtlibs_sub oc num sl = 
