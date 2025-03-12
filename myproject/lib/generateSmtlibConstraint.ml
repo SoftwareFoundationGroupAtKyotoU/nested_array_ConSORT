@@ -385,7 +385,7 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
       let sl2 = common (depth-1) in
       sl1 @ sl2 in
   let rec same_range id2_0 id2 fvs2_0 fvs2 depth =
-    if depth <= 0 then True
+    if depth <= 0 then []
     else
       let idx2_0 = make_pre_idx_id fun_num id2_0 branch_trace depth in
       let fvs2'_0 = idx2_0::fvs2_0 in
@@ -397,14 +397,16 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
         (* 添え字のたどり方が同じならば所有範囲は等しい *)
         (* And(Eq(make_bound_exp fvs2 id2 "l" fun_num branch_trace depth,
           make_pre_bound_exp fvs2_0 id2_0 "l" fun_num branch_trace depth), *)
-        Eq(make_bound_exp fvs2 id2 "h" fun_num branch_trace depth, 
-          make_pre_bound_exp fvs2_0 id2_0 "h" fun_num branch_trace depth) in
+        [Eq(make_bound_exp fvs2 id2 "h" fun_num branch_trace depth, 
+          make_pre_bound_exp fvs2_0 id2_0 "h" fun_num branch_trace depth)] in
       let sl2 = same_range id2_0 id2 fvs2'_0 fvs2' (depth-1) in
-      And(sl1, 
+      sl1 @
+      List.map
+      (fun x -> 
         Imply(idx_pre_bound id2_0 idx2_0 fvs2_0,
           Imply(idx_bound id2 idx2 fvs2, 
             Imply(Eq(Id idx2, Id idx2_0),
-        sl2))))
+        x)))) sl2
         (* sl1 *)
       in
   (* 最上位の参照の所有範囲の分割の制約 *)
@@ -428,17 +430,31 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let idx2_non0 = make_pre_idx_id fun_num id2_non0 branch_trace depth in
   let fvs2_non0 = idx2_non0::fvs in
   let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
-  (* sl1 @ sl2 
-  @ *)
-  [
+  sl1 @ sl2 
+  @
+  List.map
+  (fun x ->
     Imply(Eq(Id idx2, Id "0"),
       Imply(Eq(Id idx2_0, Id "0"),
-    same_range id2_0 id2 fvs2_0 fvs2 (depth-1)));
-    (* Imply(And(idx_bound id2_non0 idx2_non0 fvs,
+        Imply(idx_bound id2 idx2 fvs,
+          Imply (idx_bound id2_0 idx2_0 fvs,
+    x))))
+    )
+  (same_range id2_0 id2 fvs2_0 fvs2 (depth-1))
+  @
+  List.map
+  (fun x ->
+    Imply(idx_bound id2_non0 idx2_non0 fvs,
+      Imply(idx_bound id1 idx1 fvs,
+        Imply(Eq(Add(Id idx2_non0, Id "1"), Id idx1),
+        x))))
+  (same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1))
+  (* [
+    Imply(And(idx_bound id2_non0 idx2_non0 fvs,
       And(idx_bound id1 idx1 fvs,
         Eq(Add(Id idx2_non0, Id "1"), Id idx1))),
-    same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1)); *)
-  ]
+    same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1));
+  ] *)
 with | Unbound -> raise ConstrError
 
 (* id1 := id2; ... *)
@@ -515,7 +531,7 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
         idx_pre_bound id1 idx1 fvs depth 
          (idx_bound id1_non0 idx1_non0 fvs depth 
           (Imply(And(Eq(Id idx1, Add(Id idx1_non0, Id "1")),
-            Not(Eq(Id idx1_0,Id  "0"))), x))))
+            Not(Eq(Id idx1,Id  "0"))), x))))
       (not_first_element fvs1 fvs1_non0 (depth-1))
 
 let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
@@ -1388,7 +1404,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
     varown_count := (id, "b", fun_num, depth) :: !varown_count;
     let rec ref_id_before_eval_to_smtlibs_sub ftype fvs fvs_b =
     match ftype with
-    | FTInt _ -> [True], [True]
+    | FTInt _ -> [], []
     | FTRef (ftype', exp_low, exp_high, own) ->
       match exp_low with
       (* 所有権指定がない場合 *)
@@ -1445,7 +1461,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
     varown_count := (id, "e", fun_num,depth) :: !varown_count;
     let rec ref_id_after_eval_to_smtlibs_sub ftype fvs fvs_e =
     match ftype with
-    | FTInt _ -> [True], [True]
+    | FTInt _ -> [], []
     | FTRef (ftype', el2, eh2, f2) ->
     match el2 with
     | ENull ->
@@ -1493,7 +1509,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
   let make_scope_limit_smtlib (id, (pos,branch_trace, simpleTy)) =
     let depth = ref_depth simpleTy in
     let rec make_scope_limit_smtlib_sub depth =
-      if depth <= 0 then [True]
+      if depth <= 0 then []
       else
         let var_name = asprintf "o_%d_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
         let o_id = Id(var_name) in
