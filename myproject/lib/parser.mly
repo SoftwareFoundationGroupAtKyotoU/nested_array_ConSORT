@@ -81,8 +81,8 @@ ID_Funtype: (* 関数の評価前後の引数名と型 *)
 Ftype: // プログラム内に記述する型
 // | LBRACE NU COLON TINT BAR smtlib RBRACE
 //   { FTInt($6) }
-// | ftype REF LPAREN exp COMMA exp COMMA FLOATV RPAREN
-//   { FTRef($1, $4, $6, $8) }
+| inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA fl=FLOATV RPAREN
+  { FTRef(inner_type, e1, e2, fl) }
 | INT { FTInt(VarPred) }
 | inner_type = Ftype REF { FTRef(inner_type, ENull, ENull, 0.) }
 
