@@ -40,9 +40,9 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter =
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     (* 制約をassertとしてファイルに書き出し，bool_idは関数print_smtlibsの分岐 *)
-    (* let fvs' = find_idx_vars_be varown_count fun_num in
+    let fvs' = find_idx_vars_be varown_count fun_num in
     let fvs'' = find_idx_vars var_locations fun_num in
-    let fvs = fvs@fvs'@fvs'' in *)
+    let fvs = fvs@fvs'@fvs'' in
     (* Format.printf "%d\n" fun_num; *)
     (* let _ = List.map (fun x -> Format.printf "%s\n" x) fvs' in
     let _ = List.map (fun x -> Format.printf "%s\n" x) fvs'' in  *)
@@ -94,6 +94,8 @@ let main_fv file =
   let elaborate_program = elaborate_prog program in
   let all_constrs = collect_program_own_constraints elaborate_program in 
   let oc = open_out "experiment/out_fv.smt2" in
+
+  output_string oc "(set-option :produce-unsat-cores true)\n";
   
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   main_int_declare oc all_constrs n 0;
@@ -108,6 +110,7 @@ let main_fv file =
   (* 充足可能か調べる *)
   output_string oc "(check-sat)\n";
   output_string oc "(get-model)\n";
+  output_string oc "(get-unsat-core)\n";
   close_out oc
 
 let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num = 
@@ -127,7 +130,7 @@ let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num =
 
 let main_sat_ans file =
   let oc_r1 = open_in file  in
-    let oc_r2 = open_in "experiment/result" in
+    let oc_r2 = open_in "experiment/result_int" in
     (* プログラムの読み出し *)
     let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
     (* main_intで得られた所有権関数の係数の候補 *)

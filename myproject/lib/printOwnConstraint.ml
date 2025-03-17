@@ -7,6 +7,7 @@ open OwnConstraintSyntax
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
+let serial_num = ref 0
 
 (* 文字列の末尾の一致判定 *)
 let ends_with s suffix =
@@ -282,69 +283,72 @@ fvs 所有権termが依存できる自由変数
 num 篩型用の数字
 iter 自由変数を具体化する値の範囲 *)
 let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
-  if is_unconcrete then
+  if true then
     List.iter (print_smtlibs_sub oc num) smtlibs
   else
-    (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
+      (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
     let rec range m n =
-      if m > n then []
-      else m :: range (m + 1) n
-    in
-    (* 自由変数fv1, fv2, ... と整数リスト[m, m+1, ... , n]について 
-    [[(fv1, m), (fv1, m+1), ... (fv1, n)], [(fv2, m), (fv2, m+1), ...]]
-    を返す関数 
-    fvの順番逆かも*)
-    let rec generate_combinations fvs int_range =
-      match fvs with
-      | [] -> [[]]
-      | hd :: tl ->
-        let combinations_hd = List.map (fun x -> (hd, x)) int_range in
-        let combinations_tl = generate_combinations tl int_range in
-        List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
-    in
-    (* [(fv1, -iter), (fv1, -iter+1), ... (fv1, iter), (fv2, -iter), (fv2, -iter+1), ...] 
-    自由変数を-iterからiterに代入して所有権の値を計算するための準備*)
-    let comb = generate_combinations fvs (range (-iter) iter) in
-    (* assertにより制約をファイルに書き出す，自由変数に-iterからiterの数値の代入も行う *)
-    List.iter
-      (fun map ->
-        (List.iter 
-          (fun sl -> 
-            let idxs = list_to_set (idx_of_smtlib sl) [] in
-            if idxs = [] then 
-            (* if true then *)
-              (output_string oc "(assert ";
-              (* smtlibの制約部分の記述 
-              slはsmtlibの制約
-              mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
-              numは特定のsmtlibの識別番号
-              *)
-              print_smtlib oc sl false map num; 
-              output_string oc ")\n")
-            else
-              (output_string oc "(assert (forall (";
-              output_string oc (make_args idxs);
-              output_string oc ") ";
-              print_smtlib oc sl false map num; 
-              output_string oc "))\n")
-            ) smtlibs;
-          output_string oc "\n")) comb
+        if m > n then []
+        else m :: range (m + 1) n
+      in
+      (* 自由変数fv1, fv2, ... と整数リスト[m, m+1, ... , n]について 
+      [[(fv1, m), (fv1, m+1), ... (fv1, n)], [(fv2, m), (fv2, m+1), ...]]
+      を返す関数 
+      fvの順番逆かも*)
+      let rec generate_combinations fvs int_range =
+        match fvs with
+        | [] -> [[]]
+        | hd :: tl ->
+          let combinations_hd = List.map (fun x -> (hd, x)) int_range in
+          let combinations_tl = generate_combinations tl int_range in
+          List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
+      in
+      (* [(fv1, -iter), (fv1, -iter+1), ... (fv1, iter), (fv2, -iter), (fv2, -iter+1), ...] 
+      自由変数を-iterからiterに代入して所有権の値を計算するための準備*)
+      let comb = generate_combinations fvs (range (-iter) iter) in
+      (* assertにより制約をファイルに書き出す，自由変数に-iterからiterの数値の代入も行う *)
+      List.iter
+        (fun map ->
+          (List.iter 
+            (fun sl -> 
+              let idxs = list_to_set (idx_of_smtlib sl) [] in
+              if idxs = [] then 
+              (* if true then *)
+                (output_string oc "(assert ";
+                (* smtlibの制約部分の記述 
+                slはsmtlibの制約
+                mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
+                numは特定のsmtlibの識別番号
+                *)
+                print_smtlib oc sl false map num; 
+                output_string oc ")\n")
+              else
+                (output_string oc "(assert (forall (";
+                output_string oc (make_args idxs);
+                output_string oc ") ";
+                print_smtlib oc sl false map num; 
+                output_string oc "))\n")
+              ) smtlibs;
+              output_string oc "\n")) comb
 and print_smtlibs_sub oc num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
-  let fvs = list_to_set (fvs_of_smtlib sl) [] in
+  let idxs = list_to_set (idx_of_smtlib sl) [] in
+  let fvs = list_to_set ((fvs_of_smtlib sl)@idxs) [] in
   if fvs = [] then
-    (output_string oc "(assert ";
+    (output_string oc "(assert (! ";
     (* smtlibの制約部分の記述 *)
       print_smtlib oc sl true [] num; 
-      output_string oc ")\n")
+      output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      serial_num := !serial_num + 1)
   else 
     (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
-    (output_string oc "(assert (forall (";
+    (output_string oc "(assert (! (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
       print_smtlib oc sl true [] num; 
-      output_string oc "))\n")
-and make_args fvs = 
+      output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      serial_num := !serial_num + 1)
+  and make_args fvs = 
   match fvs with
   | [] -> ""
   | fv :: [] -> "(" ^ fv ^ " Int)" 
