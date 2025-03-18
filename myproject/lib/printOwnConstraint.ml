@@ -283,19 +283,19 @@ fvs 所有権termが依存できる自由変数
 num 篩型用の数字
 iter 自由変数を具体化する値の範囲 *)
 let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
-  if true then
+  if is_unconcrete then
     List.iter (print_smtlibs_sub oc num) smtlibs
   else
       (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
-    let rec range m n =
+    (* let rec range m n =
         if m > n then []
         else m :: range (m + 1) n
-      in
+      in *)
       (* 自由変数fv1, fv2, ... と整数リスト[m, m+1, ... , n]について 
       [[(fv1, m), (fv1, m+1), ... (fv1, n)], [(fv2, m), (fv2, m+1), ...]]
       を返す関数 
       fvの順番逆かも*)
-      let rec generate_combinations fvs int_range =
+      (* let rec generate_combinations fvs int_range =
         match fvs with
         | [] -> [[]]
         | hd :: tl ->
@@ -305,9 +305,9 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
       in
       (* [(fv1, -iter), (fv1, -iter+1), ... (fv1, iter), (fv2, -iter), (fv2, -iter+1), ...] 
       自由変数を-iterからiterに代入して所有権の値を計算するための準備*)
-      let comb = generate_combinations fvs (range (-iter) iter) in
+      let comb = generate_combinations fvs (range (-iter) iter) in *)
       (* assertにより制約をファイルに書き出す，自由変数に-iterからiterの数値の代入も行う *)
-      List.iter
+      (* List.iter
         (fun map ->
           (List.iter 
             (fun sl -> 
@@ -329,7 +329,28 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
                 print_smtlib oc sl false map num; 
                 output_string oc "))\n")
               ) smtlibs;
-              output_string oc "\n")) comb
+              output_string oc "\n")) comb *)
+      List.iter
+      (fun sl -> 
+        let idxs = list_to_set (idx_of_smtlib sl) [] in
+        let fvs = list_to_set (fvs_of_smtlib sl @ idxs) [] in
+        if fvs = [] then
+          (output_string oc "(assert ";
+          print_smtlib oc sl false [] num; 
+          output_string oc ")\n")
+        else
+          (output_string oc "(assert (forall (";
+          output_string oc (make_args fvs);
+          output_string oc ") ";
+          List.iter 
+          (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " iter fv fv iter))
+          fvs;
+          print_smtlib oc sl false [] num; 
+          List.iter 
+          (fun _ -> output_string oc (asprintf "))" ))
+          fvs;
+          output_string oc "))\n"))
+      smtlibs
 and print_smtlibs_sub oc num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
   let idxs = list_to_set (idx_of_smtlib sl) [] in
@@ -519,6 +540,10 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let res1_non0 = find_own_res fun_num (id1^"_non0") pos branch_trace z3res ty_env fvs in
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
+    | CAssignInt (id,pos) ->
+      let s = cons_to_program cons in
+      let res = find_own_res fun_num id (pos-1) branch_trace z3res ty_env fvs in
+      asprintf "%s%s" s res
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
       let print_arg_own arg = 
