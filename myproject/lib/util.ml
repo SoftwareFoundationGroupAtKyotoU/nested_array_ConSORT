@@ -392,12 +392,48 @@ let rec exp_to_smtlib exp =
     let s2 = exp_to_smtlib e2 in
     Div(s1, s2) *)
   | ILit i ->
-    if i >= 0 then
-      Id (string_of_int i)
-    else 
-      Id (sprintf "(%d)" (-i))
+    if i >= 0 then Id (sprintf "%d" i) else Id(sprintf "(-%d)" i)
   | Var x -> FV x
   | _ -> raise ElimError
+
+(* 一次式から変数とその係数の組のリストを抽出する関数 *)
+let coeffs exp =
+  let rec expand exp =
+    match exp with
+    | ILit i -> [("", i)]
+    | Var v -> [(v, 1)]
+    | PlusExp (e1, e2) ->
+      let lst1 = expand e1 in
+      let lst2 = expand e2 in
+      lst1 @ lst2
+    | MinusExp (e1,e2) -> 
+      let lst1 = expand e1 in
+      let lst2 = expand e2 in
+      lst1 @ 
+      List.map (fun (v, c) -> (v, -c)) lst2
+    | MultExp (e1, e2) ->
+      (* 乗算の場合、片方が定数でなければ線形式ではないとする *)
+      (match e1, e2 with
+        | ILit i, e' | e', ILit i -> 
+          List.map
+          (fun (v', i') -> (v', i * i'))
+          (expand e')
+        | _ -> raise (Error "coeffs error"))
+    | _ -> raise (Error "coeffs error") in
+  let rec simplify lis1 lis2 =
+    match lis1 with
+    | [] -> lis2
+    | (v, c) :: t -> 
+      try
+        let c' = lookup v lis2 in
+        c' := !c' + c;
+        simplify t lis2
+      with 
+      | _ -> simplify t ((v, ref c) :: lis2) in
+  List.map
+  (fun (v,c) -> 
+    if !c >= 0 then (v, Id (sprintf "%d" !c)) else (v, Id (sprintf "-%d" (-(!c)))))
+  (simplify (expand @@ exp) [])
 
 (* リストls1とls2を重複を除いて結合する *)
 let rec union_list ls1 ls2 = 
