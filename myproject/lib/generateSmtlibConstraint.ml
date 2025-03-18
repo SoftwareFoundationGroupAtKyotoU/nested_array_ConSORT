@@ -1306,12 +1306,29 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           remove_element eq0_list id;
           let l_arg_exp = exp_subst subst el in
           let h_arg_exp = exp_subst subst eh in
+          (* print_exp h_arg_exp; *)
           (* 引数のvar_locationsを生成 *)
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
-          let sl1 = [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));
-          Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, exp_to_smtlib l_arg_exp);
-          Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, exp_to_smtlib h_arg_exp)] in
+          let coeff_map_h = coeffs h_arg_exp in
+          let coeff_map_l = coeffs l_arg_exp in
+          let find_coeff h_or_l coeff_map = 
+            let look_up' var_name fv =
+              try
+                let coeff = lookup fv coeff_map in
+                Eq(Id var_name, coeff)
+              with
+              | _ -> Eq(Id var_name, Id "0")  in
+            let id_pos = lookup_pos id branch_trace !var_locations in
+            let var_name_d = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace depth in
+            (look_up' var_name_d "") ::
+            List.map
+            (fun fv ->
+              let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
+              look_up' var_name fv) fvs in
+          let sl1 = [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));]
+          @ find_coeff "h" coeff_map_h 
+          @ find_coeff "l" coeff_map_l in
           let sl2 = subst_param_after_eval (RawId id_param, ftype) arg (depth-1) in
           sl1 @ sl2
         | _, AExp _ -> []
@@ -1433,16 +1450,33 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
               make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x)) sl4)
         (* 所有権指定がある場合 *)
       | _ ->
+        let coeff_map_h = coeffs exp_high in
+        let coeff_map_l = coeffs exp_low in
+        let find_coeff h_or_l coeff_map =
+          let look_up' var_name fv =
+            try
+              let coeff = lookup fv coeff_map in
+              Eq(Id var_name, coeff)
+            with
+            | _ -> Eq(Id var_name, Id "0")  in
+          let var_name_d = asprintf "d_%d_%s_%s_%s_%d" fun_num h_or_l id "b" depth in
+          (look_up' var_name_d "") ::
+          (List.map
+            (fun fv -> 
+              let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id "b" depth in
+              look_up' var_name fv) fvs_b) in
         (* 関数引数の最初の所有権と所有権の指定は等しい
         関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
         関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
         let sl1, sl2 = 
         [Eq(make_own_var id fun_num [] depth, Id (string_of_float own));
         Eq(make_own_var_be id fun_num "b" depth, Id (string_of_float own));],
-        [Eq(make_bound_exp fvs id "l" fun_num [] depth, exp_to_smtlib exp_low);
-        Eq(make_bound_exp_be fvs_b id "l" fun_num "b" depth, exp_to_smtlib exp_low);
+        [
+        Eq(make_bound_exp fvs id "l" fun_num [] depth, exp_to_smtlib exp_low);
         Eq(make_bound_exp fvs id "h" fun_num [] depth, exp_to_smtlib exp_high);
-        Eq(make_bound_exp_be fvs_b id "h" fun_num "b" depth, exp_to_smtlib exp_high)] in
+        ] 
+        @ find_coeff "h" coeff_map_h 
+        @ find_coeff "l" coeff_map_l in
         let sl3, sl4 = (ref_id_before_eval_to_smtlibs_sub ftype' fvs' fvs'_b) in
         sl1 @ sl3, 
         sl2 @
@@ -1502,6 +1536,21 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
             make_idx_bound_smtlib_be id idx_e fvs_e fun_num "e" depth)), x)) sl4
     | _ ->
+      let coeff_map_h = coeffs eh2 in
+      let coeff_map_l = coeffs el2 in
+      let find_coeff h_or_l coeff_map =
+        let look_up' var_name fv =
+          try
+            let coeff = lookup fv coeff_map in
+            Eq(Id var_name, coeff)
+          with
+          | _ -> Eq(Id var_name, Id "0")  in
+        let var_name_d = asprintf "d_%d_%s_%s_%s_%d" fun_num h_or_l id "e" depth in
+        (look_up' var_name_d "") ::
+        (List.map
+          (fun fv -> 
+            let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id "e" depth in
+            look_up' var_name fv) fvs_e) in
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
       　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
       　　　　評価終了時の引数のプログラマ指定の所有範囲の下限がその時の所有範囲の下限以上　かつい
@@ -1511,9 +1560,12 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
        Leq(Id (string_of_float f2), make_own_var id fun_num [] depth));
        Eq(make_own_var_be id fun_num "e" depth, Id (string_of_float f2));],
       [Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num [] depth);
-      Eq(exp_to_smtlib el2, make_bound_exp_be fvs_e id "l" fun_num "e" depth);
+      (* Eq(exp_to_smtlib el2, make_bound_exp_be fvs_e id "l" fun_num "e" depth); *)
       Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num [] depth);
-      Eq(exp_to_smtlib eh2, make_bound_exp_be fvs_e id "h" fun_num "e" depth)] in
+      (* Eq(exp_to_smtlib eh2, make_bound_exp_be fvs_e id "h" fun_num "e" depth) *)
+      ]
+      @ find_coeff "h" coeff_map_h 
+      @ find_coeff "l" coeff_map_l in
       let sl3, sl4 = ref_id_after_eval_to_smtlibs_sub ftype' fvs' fvs'_e in
       sl1 @ sl2,
       sl3 @
