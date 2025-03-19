@@ -162,6 +162,19 @@ let rec same_bound_pre_pre fvs id1 id2 h_or_l fun_num branch_trace depth =
     let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id2 id2_pos pp_branch_trace branch_trace depth in
     And(Eq(Id var_name1, Id var_name2), same_bound_now_now fvs' id1 id2 h_or_l fun_num branch_trace depth)
 
+let rec same_bound_branch fvs id h_or_l fun_num branch1 branch2 depth = 
+  let pos1 = lookup_pos id branch1 !var_locations in
+  let pos2 = lookup_pos id branch2 !var_locations in
+  match fvs with
+  | [] -> 
+    let var_name1 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id pos1 pp_branch_trace branch1 depth in
+    let var_name2 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id pos2 pp_branch_trace branch2 depth in
+    Eq(Id var_name1, Id var_name2)
+  | fv :: fvs' ->
+    let var_name1 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id pos1 pp_branch_trace branch1 depth in
+    let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id pos2 pp_branch_trace branch2 depth in
+    And(Eq(Id var_name1, Id var_name2), same_bound_branch fvs' id h_or_l fun_num branch1 branch2 depth)
+
 let make_idx_id fun_num id branch_trace depth = 
   try
     let id_pos = lookup_pos id branch_trace !var_locations in
