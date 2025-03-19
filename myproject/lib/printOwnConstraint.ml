@@ -350,6 +350,28 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
           (fun _ -> output_string oc (asprintf "))" ))
           fvs;
           output_string oc "))\n"))
+      (* (fun sl -> 
+        let idxs = list_to_set (idx_of_smtlib sl) [] in
+        let fvs = list_to_set (fvs_of_smtlib sl @ idxs) [] in
+        if fvs = [] then
+          (output_string oc "(assert (! ";
+          (* smtlibの制約部分の記述 *)
+            print_smtlib oc sl true [] num; 
+            output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+            serial_num := !serial_num + 1)
+        else
+          (output_string oc "(assert (! (forall (";
+          output_string oc (make_args fvs);
+          output_string oc ") ";
+          List.iter 
+          (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " (iter+1) fv fv (iter+1)))
+          fvs;
+          print_smtlib oc sl false [] num; 
+          List.iter 
+          (fun _ -> output_string oc (asprintf "))" ))
+          fvs;
+          output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+          serial_num := !serial_num + 1)) *)
       smtlibs
 and print_smtlibs_sub oc num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
