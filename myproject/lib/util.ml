@@ -396,6 +396,37 @@ let rec exp_to_smtlib exp =
   | Var x -> FV x
   | _ -> raise ElimError
 
+  (* 
+  i_n -> i_fun_num_varname_b_or_e_nth *)
+let rec subst_idx_name exp template =
+  match exp with
+  | ILit _ -> exp
+  | Var v -> 
+    let prefix = "i_" in
+    let prefix_len = String.length prefix in
+    if String.length v < prefix_len then exp
+    else if String.sub v 0 prefix_len <> prefix then exp
+    else
+      let number_str = String.sub v prefix_len (String.length v - prefix_len) in
+      let is_digit c = '0' <= c && c <= '9' in
+      if number_str = "" then exp
+      else if String.for_all is_digit number_str then
+        Var (template (int_of_string number_str))
+      else exp
+  | PlusExp (e1, e2) ->
+    let e1' = subst_idx_name e1 template in
+    let e2' = subst_idx_name e2 template in
+    PlusExp (e1', e2')
+  | MinusExp (e1, e2) ->
+    let e1' = subst_idx_name e1 template in
+    let e2' = subst_idx_name e2 template in
+    MinusExp (e1', e2')
+  | MultExp (e1, e2) ->
+    let e1' = subst_idx_name e1 template in
+    let e2' = subst_idx_name e2 template in
+    MultExp (e1', e2')
+  | _ -> raise (Error "subst_idx_name error")
+
 (* 一次式から変数とその係数の組のリストを抽出する関数 *)
 let coeffs exp =
   let rec expand exp =
