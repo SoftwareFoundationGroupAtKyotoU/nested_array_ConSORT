@@ -1225,6 +1225,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       (* x | () ref (left, right, ownership)の形式の場合 *)
       | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
         (* 引数の篩型中の整数変数を別の式で置き換え *)
+        let template = asprintf "i_%d_%s_%s_%dth" fun_num id_param "b" in
+        let el = subst_idx_name el template in
+        let eh = subst_idx_name eh template in
         let scope_low = exp_to_smtlib (exp_subst subst el) in
         let scope_high = exp_to_smtlib (exp_subst subst eh) in
         (* プログラマ指定の所有権が0　または
@@ -1304,6 +1307,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           same_range fvs fvs' depth]
         | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
           remove_element eq0_list id;
+          let template = asprintf "i_%d_%s_%s_%dth" fun_num id_param "e" in
+          let el = subst_idx_name el template in
+          let eh = subst_idx_name eh template in
           let l_arg_exp = exp_subst subst el in
           let h_arg_exp = exp_subst subst eh in
           (* print_exp h_arg_exp; *)
@@ -1450,6 +1456,9 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
               make_idx_bound_smtlib_be id idx_b fvs_b fun_num "b" depth)), x)) sl4)
         (* 所有権指定がある場合 *)
       | _ ->
+        let template = asprintf "i_%d_%s_%s_%dth" fun_num id "b" in
+        let exp_low = subst_idx_name exp_low template in
+        let exp_high = subst_idx_name exp_high template in
         let coeff_map_h = coeffs exp_high in
         let coeff_map_l = coeffs exp_low in
         let find_coeff h_or_l coeff_map =
@@ -1536,6 +1545,9 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
             make_idx_bound_smtlib_be id idx_e fvs_e fun_num "e" depth)), x)) sl4
     | _ ->
+      let template = asprintf "i_%d_%s_%s_%dth" fun_num id "e" in
+      let el2 = subst_idx_name el2 template in
+      let eh2 = subst_idx_name eh2 template in
       let coeff_map_h = coeffs eh2 in
       let coeff_map_l = coeffs el2 in
       let find_coeff h_or_l coeff_map =
