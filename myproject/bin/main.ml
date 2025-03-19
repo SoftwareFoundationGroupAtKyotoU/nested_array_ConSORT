@@ -1,6 +1,7 @@
 open Myproject.Output
 
 let () = 
+  let start_time = Unix.gettimeofday () in
   match Array.to_list Sys.argv with
     [_; file_name] -> 
     (try 
@@ -15,14 +16,19 @@ let () =
         let ic = open_in "experiment/result" in
         (* 最初の行を読み取る *)
         let first_line = input_line ic in
-        (* ファイルを閉じる *)
+                (* ファイルを閉じる *)
         close_in ic;
         (* 比較して結果を出力 *)
         (if first_line = "sat" then 
           (Printf.printf "iter: %d sat\nownership: sat\n" !iter;
+          let end_time = Unix.gettimeofday () in
+          Printf.printf "time: %fs\n" (end_time -. start_time);
           continue := false) 
         else 
-          Printf.printf "iter: %d unsat \n" !iter );
+          Printf.printf "iter: %d unsat " !iter;
+          let end_time = Unix.gettimeofday () in
+          Printf.printf "time: %fs\n" (end_time -. start_time)
+          );
         flush stdout;
         iter := !iter + 1       
       done;
