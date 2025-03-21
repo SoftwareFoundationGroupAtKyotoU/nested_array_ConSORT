@@ -34,7 +34,11 @@ let () =
       done;
       main_sat_ans file_name
       (* read_eval_print initial_env input *)
-    with Sys_error msg -> Printf.eprintf "Error: %s\n" msg)
+    with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
+    | _ -> 
+      Printf.eprintf "Error: %s\n" "unsat";
+      let end_time = Unix.gettimeofday () in
+      Printf.printf "time: %fs\n" (end_time -. start_time))
   | [_; file_name; "print_program"] ->
     print_program file_name
   | [_; file_name; iter] ->
