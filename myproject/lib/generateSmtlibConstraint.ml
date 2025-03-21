@@ -1108,8 +1108,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       [
       (* Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."), *)
         (* And(Or(sl1, sl2), *)
-        And(sl2,
-          make_aliasdAddPtr_smtlib_gather (depth-1));
+        And(sl2, make_aliasdAddPtr_smtlib_gather (depth-1));
       (* Imply(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
         And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1))); *)
       Eq(make_own_var id1 fun_num branch_trace depth, Id "0")]
