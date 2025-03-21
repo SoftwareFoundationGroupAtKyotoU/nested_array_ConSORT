@@ -46,7 +46,7 @@ let rec print_declare oc var_locations fvs fun_num =
       (* 配列の添え字を表す変数の宣言
       i_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(depth)th_(then or else) *)
       (* fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace; *)
-      let idx = asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
+      let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
       let fvs' = idx::fvs in
       nested_ref_declare id pos branch_trace (depth-1) fvs') in
   (List.iter
@@ -83,7 +83,7 @@ let rec print_declare_begin_and_end oc varown_count fvs fun_num =
        fprintf formatter "(declare-fun d_%d_h_%s_%s_%d () Int)\n" fun_num id b_or_e depth;
        (* 配列の添え字を表す変数の宣言 *)
        (* fprintf formatter "(declare-fun i_%d_%s_%s_%dth () Int)\n" fun_num id b_or_e depth; *)
-       let idx = asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
+       let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
        let fvs' = idx::fvs in
        nested_ref_declare_begin_and_end id b_or_e (depth-1) fvs');
      in
@@ -475,7 +475,7 @@ let find_own_res fun_num id pos branch_trace z3res ty_env fvs =
     find_own_c "h" depth' !fvs_ref;
     (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
     res := asprintf "%s] -> %a */\n" !res pp_value res1;
-    let idx = asprintf "i_%d_%s_%d_%dth%a" fun_num id pos depth pp_branch_trace branch_trace in
+    let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
     fvs_ref := idx::!fvs_ref
   done;
   !res
@@ -511,7 +511,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
           print_declare_b_and_e_c formatter !fvs_ref "h" id b_or_e fun_num z3res depth';
           (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
           fprintf formatter "] -> %a\n" pp_value res1;
-          let idx = asprintf "i_%d_%s_%s_%dth" fun_num id b_or_e depth in
+          let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
           fvs_ref := idx :: !fvs_ref
         done)
       else 
