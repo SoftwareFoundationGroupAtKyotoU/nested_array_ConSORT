@@ -213,10 +213,10 @@ let make_if_smtlib id fvs fun_num branch_trace depth =
       let sl_own, sl_then, sl_else = 
       [Eq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (Then :: branch_trace) depth);
         Eq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num (Else :: branch_trace) depth);],
-      [Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (Then :: branch_trace) depth);
-        Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Then :: branch_trace) depth);],
-      [Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num (Else :: branch_trace) depth);
-        Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num (Else :: branch_trace) depth)] in
+      [same_bound_branch fvs id "h" fun_num branch_trace (Then :: branch_trace) depth;
+        same_bound_branch fvs id "l" fun_num branch_trace (Then :: branch_trace) depth;],
+      [same_bound_branch fvs id "h" fun_num branch_trace (Else :: branch_trace) depth;
+        same_bound_branch fvs id "l" fun_num branch_trace (Else :: branch_trace) depth;] in
       let idx = make_idx_id fun_num id depth in
       let fvs' = idx::fvs in
       (* 添え字が配列の境界内にあるという制約 *)
@@ -1026,7 +1026,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         let sl4 = make_aliasdAddPtr_smtlib_gather (depth-1) in
       And(sl1, And(sl2, And(sl3, sl4))) in
             (* id1の外側の所有権が0の場合 *)
-    let rec make_aliasdAddPtr_smtlib_no_change depth =
+    (* let rec make_aliasdAddPtr_smtlib_no_change depth =
       if depth <= 0 then True
       else
         (* 所有権は同じ値 *)
@@ -1041,7 +1041,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           Eq(make_own_var id1 fun_num branch_trace depth, Id "0"))) in
           (* 再帰処理 *)
         let sl3 = make_aliasdAddPtr_smtlib_no_change (depth-1) in
-        And(sl1, And(sl2, sl3)) in
+        And(sl1, And(sl2, sl3)) in *)
         let sl1 =
         (* id1とid2の元の所有範囲が分割されている場合 *)
         And(Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, Id "0"),
@@ -1106,11 +1106,12 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
         make_bound_exp fvs id2 "h" fun_num branch_trace depth))) in
       [
-      Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
-        And(Or(sl1, sl2),
-          make_aliasdAddPtr_smtlib_gather (depth-1)));
-      Imply(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
-        And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1)));
+      (* Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."), *)
+        (* And(Or(sl1, sl2), *)
+        And(sl2,
+          make_aliasdAddPtr_smtlib_gather (depth-1));
+      (* Imply(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
+        And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1))); *)
       Eq(make_own_var id1 fun_num branch_trace depth, Id "0")]
   | CDeref (id,_) -> 
     (* let num = *y in ...
