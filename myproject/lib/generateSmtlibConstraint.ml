@@ -360,8 +360,9 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
   let idx2 = make_idx_id fun_num id2 depth in
   let fvs2 = idx2::fvs in
   let sl3, sl4 = make_letAppPtr_smtlib_range fvs1 fvs2 (depth-1) in
-  [Or(And(sl1, make_letAppPtr_smtlib_div (depth-1)),
-    And(sl2, make_letAppPtr_smtlib_share (depth-1)));
+  [And(sl1, make_letAppPtr_smtlib_div (depth-1));
+    (* Or(And(sl1, make_letAppPtr_smtlib_div (depth-1)),
+    And(sl2, make_letAppPtr_smtlib_share (depth-1))); *)
   idx_pre_bound id2 idx2 fvs depth
     (idx_bound id1 idx1 fvs depth
       (Imply(Eq(Id idx1, Add(Id idx2, sl)), sl3)));
