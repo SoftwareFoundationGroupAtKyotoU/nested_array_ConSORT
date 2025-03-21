@@ -19,16 +19,14 @@ let () =
                 (* ファイルを閉じる *)
         close_in ic;
         (* 比較して結果を出力 *)
-        (if first_line = "sat" then 
-          (Printf.printf "iter: %d sat\nownership: sat\n" !iter;
-          let end_time = Unix.gettimeofday () in
-          Printf.printf "time: %fs\n" (end_time -. start_time);
+        if first_line = "sat" then 
+          (let end_time = Unix.gettimeofday () in
+          Printf.printf "iter: %d sat time: %fs\nownership: sat\n" !iter (end_time -. start_time);
           continue := false) 
         else 
-          Printf.printf "iter: %d unsat " !iter;
+          (Printf.printf "iter: %d unsat " !iter;
           let end_time = Unix.gettimeofday () in
-          Printf.printf "time: %fs\n" (end_time -. start_time)
-          );
+          Printf.printf "time: %fs\n" (end_time -. start_time));
         flush stdout;
         iter := !iter + 1       
       done;
