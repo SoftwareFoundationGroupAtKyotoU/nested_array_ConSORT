@@ -252,6 +252,119 @@ let rec print_smtlib oc sl bool_id map num =
             print_smtlib oc sl bool_id map num) smtlibs;
        output_string oc ")")
 
+
+let rec print_smtlib' oc sl bool_id map num z3_res = 
+match sl with 
+| Or (s1,s2) -> 
+  (output_string oc "(or ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| And (s1,s2) -> 
+  (output_string oc "(and ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Imply (s1,s2) -> 
+  (output_string oc "(=> ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Not s -> 
+  (output_string oc "(not ";
+    print_smtlib' oc s bool_id map num z3_res;
+    output_string oc ")")
+| Eq (s1,s2) -> 
+  (output_string oc "(= ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Lt (s1,s2) -> 
+  (output_string oc "(< ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Gt (s1,s2) -> 
+  (output_string oc "(> ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Leq (s1,s2) -> 
+  (output_string oc "(<= ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Geq (s1,s2) -> 
+  (output_string oc "(>= ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Add (s1,s2) -> 
+  (output_string oc "(+ ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Sub (s1,s2) -> 
+  (output_string oc "(- ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+| Mul (s1,s2) -> 
+  (output_string oc "(* ";
+    print_smtlib' oc s1 bool_id map num z3_res;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num z3_res;
+    output_string oc ")")
+(* | Div (s1,s2) -> 
+  (output_string oc "(div ";
+    print_smtlib' oc s1 bool_id map num;
+    output_string oc " ";
+    print_smtlib' oc s2 bool_id map num;
+    output_string oc ")") *)
+| FV fv -> 
+  (try
+    let n = lookup fv map in
+    output_string oc (string_of_int n)
+  with Error _ -> output_string oc fv)
+| Id id -> 
+    print_z3result_value oc z3_res id
+| IntPred (id1,ids) -> 
+  (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
+    List.iter
+      (fun id -> 
+        output_string oc (" " ^ id)) ids;
+  output_string oc ")")
+| IntVarPred (num',id1,ids) -> 
+  (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id1);
+    List.iter
+      (fun id -> 
+        output_string oc (" " ^ id)) ids;
+  output_string oc ")")
+| True ->
+  output_string oc "true"
+| Ands smtlibs -> 
+  (match smtlibs with
+  | [] -> output_string oc "true"
+  | sl :: [] -> print_smtlib' oc sl bool_id map num z3_res
+  | _ -> 
+    (output_string oc "(and";
+      List.iter 
+        (fun sl ->
+          output_string oc " ";
+          print_smtlib' oc sl bool_id map num z3_res) smtlibs;
+      output_string oc ")"))
+| _ -> ()
+
 let starts_with prefix s =
   let prefix_len = String.length prefix in
   String.length s >= prefix_len && String.sub s 0 prefix_len = prefix
@@ -479,6 +592,46 @@ let find_own_res fun_num id pos branch_trace z3res ty_env fvs =
     fvs_ref := idx::!fvs_ref
   done;
   !res
+
+let rec print_idx oc fun_num all_cs =
+  let (fun_name, _) = (List.nth all_cs fun_num) in
+  let ty_env = lookup fun_name !all_tyenv in
+  let rec print_fvs_sub (id, simpleTy) =
+    let rec print_index id simpleTy =
+      match simpleTy with
+      | Syntax.SRef ty' -> 
+        output_string oc 
+        (sprintf "(declare-fun i_%d_%s_%dth () Int)\n" fun_num id (ref_depth simpleTy));
+        print_index id ty'
+      | _ -> () in
+    match simpleTy with
+    | Syntax.SRef _ -> print_index id simpleTy
+    | Syntax.SInt ->
+      output_string oc 
+      (sprintf "(declare-fun %s () Int)\n" id); 
+    | _ -> ()
+  in
+  List.iter print_fvs_sub ty_env
+
+
+let print_cexample oc smtlibs z3_res =
+  let rec print_cexample_sub smtlibs = 
+  match smtlibs with
+  | [] -> (output_string oc "(not true)";)
+  | sl :: left ->
+    let idxs = list_to_set (idx_of_smtlib sl) [] in
+    let fvs = list_to_set ((fvs_of_smtlib sl)@idxs) [] in
+    if fvs = [] then print_cexample_sub left
+    else
+      (output_string oc "(or (not ";
+      print_smtlib' oc sl false [] (-1) z3_res;
+      output_string oc ")\n";
+      print_cexample_sub left;
+      output_string oc ")")
+  in
+  (output_string oc "(assert\n";
+  print_cexample_sub smtlibs;
+  output_string oc ")")
 
 
     (* ファイルに結果を出力 *)
