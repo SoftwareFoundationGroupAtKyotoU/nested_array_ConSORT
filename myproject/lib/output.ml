@@ -4,7 +4,6 @@ open CollectOwnConstraint
 open GenerateSmtlibConstraint
 open PrintOwnConstraint
 open Z3Syntax
-open Util
 
 exception Parse_error of Lexing.position * Lexing.position
 
@@ -25,6 +24,57 @@ let rec main_int_declare oc all_cs fun_num =
     (* 次の関数の所有権をsmtlib形式で宣言 *)
     main_int_declare oc all_cs (fun_num-1))
 
+let rec main_cexample_declare oc all_cs fun_num z3res= 
+  let rec main_cexample_sub fun_num =
+    if fun_num < 0 then 
+      []
+    else
+      (print_idx oc fun_num all_cs;
+      let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs false fun_num in
+      List.iter (fun x -> output_string oc (Format.asprintf "(declare-fun %s () Int)\n" x)) fvs;
+      let smtlibs' = main_cexample_sub (fun_num-1) in
+      smtlibs @ smtlibs') in
+  let rec main_cexample_range fun_num =
+    if fun_num < 0 then 
+      ()
+    else
+      (
+      let (_, _, fvs, _) = all_cs_to_smtlib all_cs false fun_num in
+      List.iter (fun x -> output_string oc 
+      (Format.asprintf "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" x x)) fvs;
+      ) in
+  let smtlibs = main_cexample_sub fun_num in
+  output_string oc "\n";
+  print_cexample oc smtlibs z3res;
+  output_string oc "\n";
+  main_cexample_range fun_num
+
+let main_cexample file =
+  let oc = open_in file in
+  let oc_r2 = open_in "experiment/result_int" in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  (* main_intで得られた所有権関数の係数の候補 *)
+  let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+  close_in oc; close_in oc_r2;
+  let (fdefs, _) = program in
+  let fun_num = List.length fdefs in 
+  infer_prog_simpleTy program;
+  (* ASTの精緻化 *)
+  let elaborate_program = elaborate_prog program in
+  (* 制約収集 *)
+  let all_constrs = collect_program_own_constraints elaborate_program in 
+
+  let oc1 = open_out "experiment/out_cexample.smt2" in
+  main_cexample_declare oc1 all_constrs fun_num z3res;
+
+  output_string oc1 "\n\n";
+  (* 充足可能か調べる *)
+  output_string oc1 "(check-sat)\n";
+  (* 充足可能な場合に具体的な値を取得 *)
+  output_string oc1 "(get-model)\n";
+  (* output_string oc1 "(get-unsat-core)\n"; *)
+  close_out oc1
+
 (* 所有権の制約のsmtlib形式（assert）での書き出し 
 oc 出力ファイル
 all_cs 制約集合
@@ -38,7 +88,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter =
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
-    (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
+    (let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     (* 制約をassertとしてファイルに書き出し，bool_idは関数print_smtlibsの分岐 *)
     (* let fvs' = find_idx_vars_be varown_count fun_num in
     let fvs'' = find_idx_vars var_locations fun_num in
@@ -67,6 +117,7 @@ let generate_constrs file iter =
   let all_constrs = collect_program_own_constraints elaborate_program in 
 
   let oc1 = open_out "experiment/out_int.smt2" in
+  (* output_string oc1 "(set-option :produce-unsat-cores true)\n"; *)
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
@@ -76,6 +127,7 @@ let generate_constrs file iter =
   output_string oc1 "(check-sat)\n";
   (* 充足可能な場合に具体的な値を取得 *)
   output_string oc1 "(get-model)\n";
+  (* output_string oc1 "(get-unsat-core)\n"; *)
   close_out oc1
 
 (** Second phase of the ownershipip inference:
