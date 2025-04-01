@@ -742,7 +742,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let res1_non0 = find_own_res fun_num (id1^"_non0") pos branch_trace z3res ty_env fvs in
       let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
-    | CAssignInt (id,pos) ->
+    | CAssignInt (_,_) ->
       let s = cons_to_program cons in
       (* let res = find_own_res fun_num id (pos-1) branch_trace z3res ty_env fvs in *)
       asprintf "%s" s
