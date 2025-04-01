@@ -4,6 +4,7 @@ open SmtlibSyntax
 open SimpleTyping
 open Z3Syntax
 open OwnConstraintSyntax
+open Cexample
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
@@ -37,12 +38,16 @@ let rec print_declare oc var_locations fvs fun_num =
       (* 所有権を表す下限の一次式の切片の宣言 
       [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のd
       d_(関数のシリアル番号)_l_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
-      fprintf formatter "(declare-fun d_%d_l_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
+      let intercept_l = asprintf "d_%d_l_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
+      fprintf formatter "(declare-fun %s () Int)\n" intercept_l;
+      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" intercept_l intercept_l;
       (* 上限の係数を宣言 *)
       print_declare_c formatter fvs "h" id pos branch_trace fun_num depth;
       (* 所有権を表す上限の一次式の切片の宣言 
       d_(関数のシリアル番号)_h_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
-      fprintf formatter "(declare-fun d_%d_h_%s_%d%a_%d () Int)\n" fun_num id pos pp_branch_trace branch_trace depth;
+      let intercept_h = asprintf "d_%d_h_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
+      fprintf formatter "(declare-fun %s () Int)\n" intercept_h;
+      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" intercept_h intercept_h;
       (* 配列の添え字を表す変数の宣言
       i_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(depth)th_(then or else) *)
       (* fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace; *)
@@ -60,8 +65,10 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
       (* smtlibに渡す参照の範囲の上限下限を表す一次式のうち，環境の自由変数の係数定数を宣言
       [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のc1やc1'
       c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(関数内での位置を表す整数)_(if or el)_(参照の深さ) *)
-      fprintf formatter "(declare-fun c_%d_%s_%s_%s_%d%a_%d () Int)\n"
-       fun_num l_or_h fv id pos pp_branch_trace branch_trace depth) fvs
+      let coeff = asprintf "c_%d_%s_%s_%s_%d%a_%d"
+       fun_num l_or_h fv id pos pp_branch_trace branch_trace depth in
+      fprintf formatter "(declare-fun %s () Int)\n" coeff;
+      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" coeff coeff) fvs
 
 (* smtlib形式で変数宣言を行う
 関数評価前と評価後の所有権の範囲を表す
@@ -387,6 +394,20 @@ let rec idx_of_smtlib sl =
   | _ -> 
     []
   
+let print_concrete oc fv =
+  try
+    let cexample = lookup fv !cexamples in
+    let rec print_concrete_sub cexample =
+      match cexample with
+      | [] ->
+        output_string oc (asprintf "(= %s %a)" fv pp_value (Int 0));
+      | value :: left ->
+        output_string oc (asprintf "(or (= %s %a) " fv pp_value value);
+        print_concrete_sub left;
+        output_string oc (asprintf ")")
+      in print_concrete_sub !cexample
+  with
+  _ -> output_string oc (asprintf "(= %s %a) " fv pp_value (Int 0))
 
 (* smtlibの制約をファイルに書き出し
 oc 書き出し先
@@ -456,11 +477,17 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
           output_string oc (make_args fvs);
           output_string oc ") ";
           List.iter 
-          (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " iter fv fv iter))
+          (* (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " iter fv fv iter)) *)
+
+          (fun fv -> 
+            output_string oc "(=> ";
+            print_concrete oc fv)
           fvs;
           print_smtlib oc sl false [] num; 
           List.iter 
-          (fun _ -> output_string oc (asprintf "))" ))
+          (* (fun _ -> output_string oc (asprintf "))" )) *)
+
+          (fun _ -> output_string oc (asprintf ")" ))
           fvs;
           output_string oc "))\n"))
       (* (fun sl -> 
@@ -606,9 +633,9 @@ let rec print_idx oc fun_num all_cs =
       | _ -> () in
     match simpleTy with
     | Syntax.SRef _ -> print_index id simpleTy
-    | Syntax.SInt ->
+    (* | Syntax.SInt ->
       output_string oc 
-      (sprintf "(declare-fun %s () Int)\n" id); 
+      (sprintf "(declare-fun %s () Int)\n" id);  *)
     | _ -> ()
   in
   List.iter print_fvs_sub ty_env
@@ -717,8 +744,8 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
     | CAssignInt (id,pos) ->
       let s = cons_to_program cons in
-      let res = find_own_res fun_num id (pos-1) branch_trace z3res ty_env fvs in
-      asprintf "%s%s" s res
+      (* let res = find_own_res fun_num id (pos-1) branch_trace z3res ty_env fvs in *)
+      asprintf "%s" s
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
       let print_arg_own arg = 
