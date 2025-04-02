@@ -658,3 +658,16 @@ let find_idx_vars_be varown_count fun_num =
           find_idx_vars_be_sub id b_or_e depth
         else
          []) varown_count ))
+
+(* 最後に評価される式を条件節で場合わけしてリスト *)
+let rec ret_of_exp cond exp = 
+  match exp with
+  | LetIntExp (_,_,e) | LetDerefExp (_,_,e) | LetAllocExp (_,_,_,e) | Assign (_,_,e) 
+  | AssignInt (_,_,e) | LetAddPtrExp (_,_,_,e) | AssignPtr (_,_,e) | AliasAddPtr (_,_,_,e)
+  | AliasDeref (_,_,e) | Assert (_,e) | Seq (_,e) -> 
+    ret_of_exp cond e
+  | IfExp (e1,e2,e3) ->
+    (* 条件節を場合わけ *)
+    let cond_sl = exp_to_smtlib e1 in
+    ret_of_exp (cond_sl :: cond) e2 @ ret_of_exp (Not(cond_sl) :: cond) e3
+  | _ -> [(cond, exp)]
