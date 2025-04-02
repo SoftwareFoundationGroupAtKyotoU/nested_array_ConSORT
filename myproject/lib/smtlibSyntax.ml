@@ -24,6 +24,7 @@ type smtlib =
   | IntVarPred of int * id * id list
   | PtrPred of id * id * smtlib * id list
   | PtrVarPred of int * id * id * smtlib * id list
+  (* 篩型込みのポインタ，関数番号*変数名*b or e*添え字を表す変数*依存できる変数リスト *)
   | VarPred
   | Ands of smtlib list
   | True
