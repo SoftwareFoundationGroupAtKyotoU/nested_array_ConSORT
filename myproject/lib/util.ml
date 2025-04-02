@@ -671,3 +671,18 @@ let rec ret_of_exp cond exp =
     let cond_sl = exp_to_smtlib e1 in
     ret_of_exp (cond_sl :: cond) e2 @ ret_of_exp (Not(cond_sl) :: cond) e3
   | _ -> [(cond, exp)]
+
+(* expから自由変数を抜き出す関数 *)
+let rec fvs_of_exp exp = 
+  match exp with
+  | EqExp (e1,e2) | LtExp (e1, e2) | GtExp (e1, e2) | LeqExp (e1, e2) 
+  | GeqExp (e1, e2) | AndExp (e1,e2) | OrExp (e1,e2) | PlusExp (e1,e2) 
+  | MinusExp (e1,e2) | MultExp (e1,e2) | NeqExp (e1,e2) ->
+    let fvs1 = fvs_of_exp e1 in
+    let fvs2 = fvs_of_exp e2 in
+    fvs1 @ fvs2
+  | NotExp e ->
+    let fvs = fvs_of_exp e in
+    fvs
+  | Var x -> [x]
+  | _ -> []
