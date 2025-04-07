@@ -1,5 +1,3 @@
-(* open Syntax *)
-
 type id = string
 
 (** Type representing the syntax of the SMT-LIB language *)
