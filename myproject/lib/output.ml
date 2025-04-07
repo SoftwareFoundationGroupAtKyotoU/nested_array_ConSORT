@@ -4,6 +4,10 @@ open CollectOwnConstraint
 open GenerateSmtlibConstraint
 open PrintOwnConstraint
 open Z3Syntax
+open CHCgenerateSmtlibConstraint
+open OwntoCHC
+open CHCcollectConstraint
+open CHCSyntax
 
 exception Parse_error of Lexing.position * Lexing.position
 
@@ -200,6 +204,72 @@ let main_sat_ans file =
     (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
     main_sat_ans_sub oc all_constrs n 0 z3res' n;
     close_out oc
+
+(* refinement検査のための変数の書き出し *)
+let rec main_chc_sub_declare oc all_chcs n = 
+if n < 0 then 
+  ()
+else
+  (
+  (* 
+  id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
+  varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
+  fvs: 自由整数変数(#付きの整数引数)
+  ss: 篩型の制約 *)
+  let (id_count, varpred_count, fvs, _) = all_cs_to_smtlib_chc all_chcs n in
+
+  (* 制約をファイルに書き出し　daclare-fun部分 
+  intpred_env:篩型の環境 *)
+  print_declare_chc_int oc !CHCSyntax.intpred_env n;
+  print_declare_chc oc id_count fvs n;
+  print_declare_varpred oc varpred_count n;
+  output_string oc "\n";
+  main_chc_sub_declare oc all_chcs (n-1))
+
+let rec main_chc_sub oc all_chcs n = 
+  (* 前半はmain_chc_sub_declare *)
+  if n < 0 then 
+    ()
+  else
+    (let oc_r2 = open_in @@ "experiment/result" in
+    let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
+    close_in oc_r2;
+    (* 
+      id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
+      varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
+      fvs: 自由整数変数(#付きの整数引数)
+      ss: 篩型の制約 *)
+    let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
+    let args_own_sls = ownexp_to_ownchc varpred_count n in
+    let own_sls = collect_ownchc z3res n fvs in 
+
+    (* 制約をファイルに書き出し　assert部分 *)
+    print_smtlibs oc sls true fvs n 0; 
+    output_string oc "\n";
+    print_smtlibs oc args_own_sls true fvs n 0; 
+    output_string oc "\n";
+    print_smtlibs oc own_sls true fvs n 0; 
+    output_string oc "\n\n";
+    main_chc_sub oc all_chcs (n-1))
+
+(** Main procedure for the refinement inference *)
+let main_chc file =
+  let oc_r1 = open_in file  in
+  let prog = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+  close_in oc_r1; 
+  let (fdefs, _) = prog in
+  let n = List.length fdefs in 
+  infer_prog_simpleTy prog;
+  (* 関数名，CHCの制約を表すデータ型，最後に評価されうる式の組 *)
+  let all_chcs = chc_collect_prog prog in 
+
+  let oc = open_out "experiment/out_chc.smt2" in
+  output_string oc "(set-logic HORN)\n\n\n";
+  main_chc_sub_declare oc all_chcs n;
+  main_chc_sub oc all_chcs n;
+  output_string oc "(check-sat)\n";
+  output_string oc "(get-model)\n";
+  close_out oc
   
 
 let print_program file = 
