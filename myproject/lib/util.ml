@@ -239,6 +239,8 @@ let rec print_exp exp =
     print_string (x ^ "\"")
   | ENull ->
     print_string "ENull"
+  | ConstRandInt ->
+    print_string "_"
 and print_exps es =
   match es with
   | [] -> ()
