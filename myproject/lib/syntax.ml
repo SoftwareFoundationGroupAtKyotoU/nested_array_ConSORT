@@ -86,6 +86,7 @@ type exp =
   | Nondet
   | Unit
   | ENull
+  | ConstRandInt
 
 (* 篩型と所有権付きの型 *)
 type ftype =
