@@ -10,9 +10,9 @@ let rec elaborate_exp fun_name exp =
       LetIntExp(id, elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
     else 
       (match exp1 with
-       | Var id1 -> LetAddPtrExp(id, id1, ILit 0, elaborate_exp fun_name exp2)
+       | Var id1 -> LetAddPtrExp(id, id1, ILit Z.zero, elaborate_exp fun_name exp2)
        | PlusExp(Var id1, e) -> LetAddPtrExp(id, id1, elaborate_exp fun_name e,  elaborate_exp fun_name exp2) 
-       | MinusExp(Var id1, e) -> LetAddPtrExp(id, id1, elaborate_exp fun_name ( MinusExp(ILit 0 , e) ),  elaborate_exp fun_name exp2) 
+       | MinusExp(Var id1, e) -> LetAddPtrExp(id, id1, elaborate_exp fun_name ( MinusExp(ILit Z.zero , e) ),  elaborate_exp fun_name exp2) 
        | Deref id1 -> LetDerefExp(id, id1,  elaborate_exp fun_name exp2)
        | _ -> err "ElaborateError")
   | Assign (id,exp1,exp2) ->
@@ -26,7 +26,7 @@ let rec elaborate_exp fun_name exp =
     (match exp1 with
     | Var id1 ->
       (match exp2 with
-      | Var id2 -> AliasAddPtr(id1, id2, ILit 0, elaborate_exp fun_name exp3)
+      | Var id2 -> AliasAddPtr(id1, id2, ILit Z.zero, elaborate_exp fun_name exp3)
       | PlusExp (Var id2, exp) -> AliasAddPtr(id1, id2, exp,  elaborate_exp fun_name exp3)
       | MinusExp (Var id2, exp) -> AliasAddPtr(id2, id1, exp,  elaborate_exp fun_name exp3) 
       | Deref id2 -> AliasDeref(id1, id2,  elaborate_exp fun_name exp3)
