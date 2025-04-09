@@ -6,7 +6,7 @@ open SimpleTyping
 let cexamples : (id * (value list) ref) list ref = ref []
 
 (* unknownで反例が得られなかった時のための次の具体化するための数字 *)
-let num = ref 1
+let num = ref Z.one
 
 (* unsatで反例が得られたた時の反例の追加 *)
 let add_cexample id value =
@@ -22,7 +22,7 @@ let add_sample () =
   (List.iter
   (fun (x, _) -> add_cexample x (Int !num))
   !cexamples);
-  num := 1 + !num
+  num := Z.add Z.one !num
 
 (* z3から反例の読み出し *)
 let create_cexapmle () =
@@ -34,7 +34,7 @@ let create_cexapmle () =
     match z3res with
     | [] -> ()
     | (id, _,Int i) :: left ->
-      if i <> 0 then add_cexample id (Int i); create_cexapmle_sub left
+      if not (Z.equal i Z.zero) then add_cexample id (Int i); create_cexapmle_sub left
     | (id,_,Float f) :: left ->
       if f <> 0. then add_cexample id (Float f); create_cexapmle_sub left
     | (id,_,Div (f1,f2))  :: left ->
