@@ -223,8 +223,7 @@ let rec print_exp exp =
   (* | EConstFail ->
     print_string "fail" *)
   | ILit i ->
-    print_string "ILit ";
-    print_int i
+    print_string (sprintf "ILit %s" (Z.to_string i))
   | BLit b ->
     print_string "BLit ";
     if b then print_string "true" else print_string "false"
@@ -394,7 +393,7 @@ let rec exp_to_smtlib exp =
     let s2 = exp_to_smtlib e2 in
     Div(s1, s2) *)
   | ILit i ->
-    if i >= 0 then Id (sprintf "%d" i) else Id(sprintf "(-%d)" i)
+    if Z.geq i Z.zero then Id (sprintf "%s" (Z.to_string i)) else Id(sprintf "(-%s)" (Z.to_string i))
   | Var x -> FV x
   | _ -> raise ElimError
 
@@ -434,7 +433,7 @@ let coeffs exp =
   let rec expand exp =
     match exp with
     | ILit i -> [("", i)]
-    | Var v -> [(v, 1)]
+    | Var v -> [(v, Z.one)]
     | PlusExp (e1, e2) ->
       let lst1 = expand e1 in
       let lst2 = expand e2 in
@@ -443,13 +442,13 @@ let coeffs exp =
       let lst1 = expand e1 in
       let lst2 = expand e2 in
       lst1 @ 
-      List.map (fun (v, c) -> (v, -c)) lst2
+      List.map (fun (v, c) -> (v, Z.neg c)) lst2
     | MultExp (e1, e2) ->
       (* 乗算の場合、片方が定数でなければ線形式ではないとする *)
       (match e1, e2 with
         | ILit i, e' | e', ILit i -> 
           List.map
-          (fun (v', i') -> (v', i * i'))
+          (fun (v', i') -> (v', Z.mul i i'))
           (expand e')
         | _ -> raise (Error "coeffs error"))
     | _ -> raise (Error "coeffs error") in
@@ -459,13 +458,13 @@ let coeffs exp =
     | (v, c) :: t -> 
       try
         let c' = lookup v lis2 in
-        c' := !c' + c;
+        c' := Z.add !c' c;
         simplify t lis2
       with 
       | _ -> simplify t ((v, ref c) :: lis2) in
   List.map
   (fun (v,c) -> 
-    if !c >= 0 then (v, Id (sprintf "%d" !c)) else (v, Id (sprintf "-%d" (-(!c)))))
+    (v, Id (sprintf "%s" (Z.to_string !c))))
   (simplify (expand @@ exp) [])
 
 (* リストls1とls2を重複を除いて結合する *)
