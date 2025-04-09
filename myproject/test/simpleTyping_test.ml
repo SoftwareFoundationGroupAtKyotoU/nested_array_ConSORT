@@ -7,17 +7,17 @@ open Myproject.SimpleTyping
 (* 単純型推論のテスト *)
 let test_empty _ =
   let expected = ([], SInt) in
-  let actual = (infer_simple_ty (ref []) (ILit 1)) in
+  let actual = (infer_simple_ty (ref []) (ILit Z.one)) in
   assert_equal expected actual ~printer:show_infer_simple_ty_res
 
 let test_tyint _ =
   let expected = ([], SInt) in
-  let actual = (infer_simple_ty (ref []) (Let( "m", ILit 1 , ILit 1 )) ) in
+  let actual = (infer_simple_ty (ref []) (Let( "m", ILit Z.one , ILit Z.one )) ) in
   assert_equal expected actual ~printer:show_infer_simple_ty_res
 
 let test_init_10 _ =
   let expected = ([], SUnit) in
-  let actual = (infer_simple_ty (ref [("init", SFun([SInt; SRef SInt], SInt) ); ("verify", SFun([SInt; SRef SInt], SInt) )]) ( LetAllocExp( "p", ILit 10, SRef SInt, Let( "m", ILit 10, Let( "d", AppExp( "init", [Var "m"; Var "p"]), Let( "d2", AppExp( "verify", [Var "m"; Var "p"]), Unit)))) )) in
+  let actual = (infer_simple_ty (ref [("init", SFun([SInt; SRef SInt], SInt) ); ("verify", SFun([SInt; SRef SInt], SInt) )]) ( LetAllocExp( "p", ILit (Z.of_int 10), SRef SInt, Let( "m", ILit (Z.of_int 10), Let( "d", AppExp( "init", [Var "m"; Var "p"]), Let( "d2", AppExp( "verify", [Var "m"; Var "p"]), Unit)))) )) in
   assert_equal expected actual ~printer:show_infer_simple_ty_res
   
   
