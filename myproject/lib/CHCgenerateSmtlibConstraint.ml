@@ -64,8 +64,8 @@ let find_subst ftid_ft e =
 (* string_of_intの改造版
 負の数の場合は括弧をつける *)
 let my_string_of_int i = 
-  if i >= 0 then string_of_int i 
-  else "(" ^ string_of_int i ^ ")"
+  if Z.leq i Z.zero then Z.to_string i 
+  else Format.sprintf "(%s)" (Z.to_string i)
 
 (* 指定のifelと同じ分岐の変数一覧のリストを返す *)
 let rec find_id_count ifel id_count res = 
