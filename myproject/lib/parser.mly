@@ -3,7 +3,7 @@ open Syntax
 %}
 
 // value
-%token <int> INTV
+%token <Z.t> INTV
 %token <float> FLOATV
 %token <Syntax.id> ID_NAME
 %token TRUE FALSE UNITV NONDET
@@ -177,7 +177,7 @@ CompareExpr :
 
 AExpr :
     i=INTV { ILit i }
-  | MINUS e=Expr { MinusExp(ILit 0, e) }
+  | MINUS e=Expr { MinusExp(ILit Z.zero, e) }
   | i=ID   { Var i }
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
