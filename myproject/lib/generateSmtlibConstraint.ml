@@ -295,14 +295,14 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
       let sl2 = make_letAppPtr_smtlib_div (depth-1) in
       And(sl1, sl2) in
       (* 所有範囲が共有されている場合 *)
-  let rec make_letAppPtr_smtlib_share depth =
+  (* let rec make_letAppPtr_smtlib_share depth =
     if contains_element eq0_list id2 && sl <> Id "1" then Not True else 
     (if depth <= 0 then True
     else
       let sl1 = Eq(make_pre_own_var id2 fun_num branch_trace depth,
       Add(make_own_var id1 fun_num branch_trace depth, make_own_var id2 fun_num branch_trace depth)) in
       let sl2 = make_letAppPtr_smtlib_share (depth-1) in
-      And(sl1, sl2)) in
+      And(sl1, sl2)) in *)
   (* 最上位が分割でも共有でも内側の所有範囲の処理は同じ
   新しくできたid1もid2も元のid2の所有範囲を引き継ぐ *)
   let rec make_letAppPtr_smtlib_range fvs1 fvs2 depth =
@@ -342,7 +342,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
       Eq(make_bound_exp fvs id1 "h" fun_num branch_trace depth,
       Sub(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, sl)))))))) in
   (* 最上位の参照の所有範囲の共有の際の制約 *)
-  let sl2 = 
+  (* let sl2 = 
     And(Eq(make_pre_own_var id2 fun_num branch_trace depth, 
       Add(make_own_var id1 fun_num branch_trace depth,
       make_own_var id2 fun_num branch_trace depth)),
@@ -353,7 +353,7 @@ let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
     And(Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth, 
       Add(make_bound_exp fvs id1 "h" fun_num branch_trace depth, sl)),
     Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
-      make_bound_exp fvs id2 "h" fun_num branch_trace depth))))) in
+      make_bound_exp fvs id2 "h" fun_num branch_trace depth))))) in *)
   (* id1とid2のインデックスが入った自由変数の集合をそれぞれ構築 *)
   let idx1 = make_idx_id fun_num id1 depth in
   let fvs1 = idx1::fvs in
@@ -828,7 +828,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
   | CMkArray (id,e, simpleTy,pos) -> 
     let upper_bound =
       match e with
-      | ILit i -> Id (string_of_int (i-1))
+      | ILit i -> Id (Z.to_string (Z.sub i Z.one))
       | Var id -> FV(id)
       | _ -> raise ConstrError in
     (* let x = alloc i in ... *)
@@ -1072,7 +1072,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     else
     (* id2の内側の要素の所有権が添え字によって変化しない場合の制約 *)
     (* id1とid2の元の所有範囲が共有されている場合 *)
-      let sl1 = 
+      (* let sl1 = 
         And(Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth,
           Add(make_pre_bound_exp fvs id1 "l" fun_num branch_trace depth, sl)),
         And(Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
@@ -1082,7 +1082,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         And(Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth,
           make_bound_exp fvs id2 "l" fun_num branch_trace depth),
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
-          make_bound_exp fvs id2 "h" fun_num branch_trace depth))))) in
+          make_bound_exp fvs id2 "h" fun_num branch_trace depth))))) in *)
       (* id1とid2の元の所有範囲が分割されている場合の制約 *)
       let sl2 =
         And(Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth, Id "0"),
@@ -1098,13 +1098,13 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           Add(make_pre_bound_exp fvs id1 "h" fun_num branch_trace depth, Id "1")),
           make_bound_exp fvs id2 "h" fun_num branch_trace depth)))))) in
       (* id1の元の所有権が0の場合の制約 *)
-      let sl3 = 
+      (* let sl3 = 
         And(Eq(make_pre_own_var id2 fun_num branch_trace depth,
           make_own_var id2 fun_num branch_trace depth),
         And(Eq(make_pre_bound_exp fvs id2 "l" fun_num branch_trace depth,
           make_bound_exp fvs id2 "l" fun_num branch_trace depth),
         Eq(make_pre_bound_exp fvs id2 "h" fun_num branch_trace depth,
-        make_bound_exp fvs id2 "h" fun_num branch_trace depth))) in
+        make_bound_exp fvs id2 "h" fun_num branch_trace depth))) in *)
       [
       (* Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."), *)
         (* And(Or(sl1, sl2), *)
