@@ -3,7 +3,7 @@
 %}
 
 // values
-%token <int> INT
+%token <Z.t> INT
 %token <float> FLOAT
 %token <string> ID
 
@@ -39,7 +39,7 @@ exp:
 | INT 
   { Int($1) }
 | LPAREN MINUS INT RPAREN
-  { Int(-$3) } 
+  { Int(Z.neg $3) } 
 | FLOAT
   { Float($1) }
 | LPAREN MINUS FLOAT RPAREN
