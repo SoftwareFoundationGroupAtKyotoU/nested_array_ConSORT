@@ -6,13 +6,13 @@ type z3_type = string
 
 (** Values assigned to variables *)
 type value =
-  | Int of int
+  | Int of Z.t
   | Float of float
   | Div of float * float
 
 let pp_value fmt value =
   match value with
-  | Int i -> Format.fprintf fmt "%d" i
+  | Int i -> Format.fprintf fmt "%s" (Z.to_string i)
   | Float i -> Format.fprintf fmt "%f" i
   | Div (f1,f2) -> Format.fprintf fmt "%f/%f" f1 f2
   
@@ -30,7 +30,7 @@ and print_z3result_sub oc def =
   | (id, _,Int i) ->
     (output_string oc "(assert (! (= " ;
      output_string oc (id ^ " ");
-     output_string oc (string_of_int i);
+     output_string oc (Z.to_string i);
      output_string oc (") :named val" ^ (string_of_int !serial_num) ^ "))\n");
      serial_num := !serial_num + 1)
   | (id,_,Float f) ->
@@ -53,7 +53,7 @@ let rec print_z3result_value oc z3_res id =
   match z3_res with
   | [] -> output_string oc id
   | (id', _,Int i) :: _ when id = id' ->
-    (output_string oc (string_of_int i);)
+    (output_string oc (Z.to_string i);)
   | (id',_,Float f) :: _ when id = id' ->
     (output_string oc (string_of_float f);)
   | (id',_,Div (f1,f2))  :: _ when id = id' ->
