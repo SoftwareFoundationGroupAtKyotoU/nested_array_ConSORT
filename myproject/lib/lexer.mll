@@ -26,7 +26,7 @@
 rule main = parse
   (*改行と空白とタブと改ページは無視*)
   [' ' '\009' '\012' '\n']+   { main lexbuf }(*?*)
-  | "-"? ['0'-'9']+ {Parser.INTV (int_of_string (Lexing.lexeme lexbuf)) }
+  | "-"? ['0'-'9']+ {Parser.INTV (Z.of_string (Lexing.lexeme lexbuf)) }
   | '-'? ['0'-'9']+ '.' ['0' - '9']* {Parser.FLOATV (float_of_string (Lexing.lexeme lexbuf)) }
   | "()" { Parser.UNITV }
   | "(" { Parser.LPAREN }
