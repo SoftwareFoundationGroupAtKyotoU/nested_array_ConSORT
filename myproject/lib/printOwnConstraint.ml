@@ -40,14 +40,12 @@ let rec print_declare oc var_locations fvs fun_num =
       d_(関数のシリアル番号)_l_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       let intercept_l = asprintf "d_%d_l_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
       fprintf formatter "(declare-fun %s () Int)\n" intercept_l;
-      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" intercept_l intercept_l;
       (* 上限の係数を宣言 *)
       print_declare_c formatter fvs "h" id pos branch_trace fun_num depth;
       (* 所有権を表す上限の一次式の切片の宣言 
       d_(関数のシリアル番号)_h_(参照変数名)_(関数内での位置を表す整数)_(then or else)_depth *)
       let intercept_h = asprintf "d_%d_h_%s_%d%a_%d" fun_num id pos pp_branch_trace branch_trace depth in
       fprintf formatter "(declare-fun %s () Int)\n" intercept_h;
-      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" intercept_h intercept_h;
       (* 配列の添え字を表す変数の宣言
       i_(関数のシリアル番号)_(参照変数名)_(関数内での位置を表す整数)_(depth)th_(then or else) *)
       (* fprintf formatter "(declare-fun i_%d_%s_%d_%dth%a () Int)\n" fun_num id pos depth pp_branch_trace branch_trace; *)
@@ -68,7 +66,7 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
       let coeff = asprintf "c_%d_%s_%s_%s_%d%a_%d"
        fun_num l_or_h fv id pos pp_branch_trace branch_trace depth in
       fprintf formatter "(declare-fun %s () Int)\n" coeff;
-      fprintf formatter "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" coeff coeff) fvs
+      ) fvs
 
 (* smtlib形式で変数宣言を行う
 関数評価前と評価後の所有権の範囲を表す
@@ -400,14 +398,14 @@ let print_concrete oc fv =
     let rec print_concrete_sub cexample =
       match cexample with
       | [] ->
-        output_string oc (asprintf "(= %s %a)" fv pp_value (Int 0));
+        output_string oc (asprintf "(= %s %a)" fv pp_value (Int Z.zero));
       | value :: left ->
         output_string oc (asprintf "(or (= %s %a) " fv pp_value value);
         print_concrete_sub left;
         output_string oc (asprintf ")")
       in print_concrete_sub !cexample
   with
-  _ -> output_string oc (asprintf "(= %s %a) " fv pp_value (Int 0))
+  _ -> output_string oc (asprintf "(= %s %a) " fv pp_value (Int Z.zero))
 
 (* smtlibの制約をファイルに書き出し
 oc 書き出し先
