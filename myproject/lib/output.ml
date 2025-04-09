@@ -38,20 +38,10 @@ let rec main_cexample_declare oc all_cs fun_num z3res=
       List.iter (fun x -> output_string oc (Format.asprintf "(declare-fun %s () Int)\n" x)) fvs;
       let smtlibs' = main_cexample_sub (fun_num-1) in
       smtlibs @ smtlibs') in
-  let rec main_cexample_range fun_num =
-    if fun_num < 0 then 
-      ()
-    else
-      (
-      let (_, _, fvs, _) = all_cs_to_smtlib all_cs false fun_num in
-      List.iter (fun x -> output_string oc 
-      (Format.asprintf "(assert (<= -1073741823 %s))\n(assert (<= %s 1073741822 ))\n" x x)) fvs;
-      ) in
   let smtlibs = main_cexample_sub fun_num in
   output_string oc "\n";
   print_cexample oc smtlibs z3res;
-  output_string oc "\n";
-  main_cexample_range fun_num
+  output_string oc "\n"
 
 let main_cexample file =
   let oc = open_in file in
