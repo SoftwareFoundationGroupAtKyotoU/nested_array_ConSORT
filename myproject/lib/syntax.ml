@@ -47,7 +47,7 @@ type funcallexp =
 
 type exp =
     Var of id
-  | ILit of int
+  | ILit of Z.t
   | BLit of bool
   (* | BinOp of binOp * exp * exp *)
   | OrExp of exp * exp
