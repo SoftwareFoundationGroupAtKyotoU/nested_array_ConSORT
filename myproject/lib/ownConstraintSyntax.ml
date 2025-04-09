@@ -61,7 +61,7 @@ and arg_to_program arg =
 and exp_to_program exp =
   match exp with
   | Var id -> id
-  | ILit num -> string_of_int num
+  | ILit num -> Z.to_string num
   | LtExp (e1, e2) ->
     let s1 = exp_to_program e1 in
     let s2 = exp_to_program e2 in
