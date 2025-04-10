@@ -10,7 +10,6 @@ open SimpleTyping
 
 exception Unbound
 exception ConstrError
-(* exception Error of string *)
 
 type var_locations_ty = (id * (tyvar * branch list * simpleTy)) list ref
 (* 変数idとその変数の存在する場所 
@@ -29,24 +28,17 @@ let eq0_list : id list ref = ref []
 let rec lookup_pos id branch_trace env =
   match env with
   | [] -> 
-    (* Format.printf "unbound %s %a\n" id pp_branch_trace branch_trace; *)
     raise Unbound
   | (x, (position, branch_trace', _)) :: left_env -> 
-    (* Format.printf "%s: pos %d bt %a sty %a\n" x position pp_branch_trace branch_trace' pp_simpleTy simpleTy; *)
     if id = x && branch_trace = branch_trace' then position else lookup_pos id branch_trace left_env
 
 (* 環境からidとbranch_traceに対応する関数内の直前の位置posを返す *)
 let rec lookup_pre_pos id branch_trace env = 
-  try
   match env with
-  | [] -> 
-    (* Format.printf "unbound pre %s %a\n" id pp_branch_trace branch_trace; *)
-    raise Unbound
-  | (x, _) :: left_env -> if id = x then lookup_pos id branch_trace left_env else lookup_pre_pos id branch_trace left_env
-  with
-  | Unbound ->
-    (* Format.printf "unbound pre %s %a\n" id pp_branch_trace branch_trace; *)
-    raise Unbound
+  | [] -> raise Unbound
+  | (x, _) :: left_env -> 
+    if id = x then lookup_pos id branch_trace left_env 
+    else lookup_pre_pos id branch_trace left_env
 
 (* var_locationsに新しい変数idを追加または既存のidの情報を更新 *)
 let new_id id position branch_trace simpleTy =
@@ -86,10 +78,9 @@ let make_own_var id fun_num branch_trace depth =
   let var_pos = lookup_pos id branch_trace !var_locations in
   let var_name = asprintf "o_%d_%s_%d%a_%d" fun_num id var_pos pp_branch_trace branch_trace depth in 
   Id(var_name)
-  (* Id("o_" ^ (string_of_int fun_num) ^ "_" ^ id ^ "_" ^ (string_of_int (lookup_pos id branch_trace !var_locations)) ^ (branch_trace_to_str branch_trace)) *)
 
 (* id, fun_num branch_traceを元にsmtlibに渡す所有権の変数を生成 
-      引数が表す場所での変数の直前の所有権の変数を表している*)
+      引数が表す場所での変数の直前の所有権の変数を表している *)
 let make_pre_own_var id fun_num branch_trace depth = 
   let var_pre_pos = lookup_pre_pos id branch_trace !var_locations in
   let var_name = asprintf "o_%d_%s_%d%a_%d" fun_num id var_pre_pos pp_branch_trace branch_trace depth in 
@@ -121,46 +112,6 @@ let rec make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
   | fv :: fvs' ->
     let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace depth in
     Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp fvs' id h_or_l fun_num branch_trace depth)
-
-(* 所有範囲が等しいという制約を所有範囲の型の係数がそれぞれ等しいことで表した制約 *)
-let rec same_bound_now_now fvs id1 id2 h_or_l fun_num branch_trace depth = 
-  let id1_pos = lookup_pos id1 branch_trace !var_locations in
-  let id2_pos = lookup_pos id2 branch_trace !var_locations in
-  match fvs with
-  | [] -> 
-    let var_name1 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id2 id2_pos pp_branch_trace branch_trace depth in
-    Eq(Id var_name1, Id var_name2)
-  | fv :: fvs' ->
-    let var_name1 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id2 id2_pos pp_branch_trace branch_trace depth in
-    And(Eq(Id var_name1, Id var_name2), same_bound_now_now fvs' id1 id2 h_or_l fun_num branch_trace depth)
-
-let rec same_bound_now_pre fvs id1 id2 h_or_l fun_num branch_trace depth = 
-  let id1_pos = lookup_pos id1 branch_trace !var_locations in
-  let id2_pos = lookup_pre_pos id2 branch_trace !var_locations in
-  match fvs with
-  | [] -> 
-    let var_name1 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id2 id2_pos pp_branch_trace branch_trace depth in
-    Eq(Id var_name1, Id var_name2)
-  | fv :: fvs' ->
-    let var_name1 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id2 id2_pos pp_branch_trace branch_trace depth in
-    And(Eq(Id var_name1, Id var_name2), same_bound_now_now fvs' id1 id2 h_or_l fun_num branch_trace depth)
-
-let rec same_bound_pre_pre fvs id1 id2 h_or_l fun_num branch_trace depth = 
-  let id1_pos = lookup_pre_pos id1 branch_trace !var_locations in
-  let id2_pos = lookup_pre_pos id2 branch_trace !var_locations in
-  match fvs with
-  | [] -> 
-    let var_name1 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id2 id2_pos pp_branch_trace branch_trace depth in
-    Eq(Id var_name1, Id var_name2)
-  | fv :: fvs' ->
-    let var_name1 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id1 id1_pos pp_branch_trace branch_trace depth in
-    let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id2 id2_pos pp_branch_trace branch_trace depth in
-    And(Eq(Id var_name1, Id var_name2), same_bound_now_now fvs' id1 id2 h_or_l fun_num branch_trace depth)
 
 let rec same_bound_branch fvs id h_or_l fun_num branch1 branch2 depth = 
   let pos1 = lookup_pos id branch1 !var_locations in
@@ -201,7 +152,7 @@ let make_idx_bound_smtlib_be id idx fvs fun_num b_or_e depth =
   And(Leq(Id idx, make_bound_exp_be fvs id "h" fun_num b_or_e depth), 
     Geq(Id idx, make_bound_exp_be fvs id "l" fun_num b_or_e depth))
 
-(* smtlibで変数宣言するために必要そう？
+(* smtlibで変数宣言するために必要
 変数のid, b or e, 関数の通し番号の組 *)
 let varown_count = ref []
 
@@ -220,18 +171,17 @@ let make_if_smtlib id fvs fun_num branch_trace depth =
       let idx = make_idx_id fun_num id depth in
       let fvs' = idx::fvs in
       (* 添え字が配列の境界内にあるという制約 *)
-      let idx_bound fvs branch_trace x = 
-        let idx = make_idx_id fun_num id depth in
+      let idx_bound branch_trace x = 
         Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth, x) in
       let sl_own', sl_then', sl_else' =
         make_if_smtlib_sub fvs' (depth-1) in
       sl_own @ sl_own',
       sl_then @ List.map 
-                (fun x -> idx_bound fvs branch_trace 
-                  (idx_bound fvs (Then :: branch_trace) x)) sl_then',
+                (fun x -> idx_bound branch_trace 
+                  (idx_bound (Then :: branch_trace) x)) sl_then',
       sl_else @ List.map
-                (fun x -> idx_bound fvs branch_trace 
-                  (idx_bound fvs (Else :: branch_trace) x)) sl_else'
+                (fun x -> idx_bound branch_trace 
+                  (idx_bound (Else :: branch_trace) x)) sl_else'
   in 
   let sl_own, sl_then, sl_else = make_if_smtlib_sub fvs depth in
   sl_own @ sl_then @ sl_else
@@ -245,15 +195,17 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
       let idx = make_idx_id fun_num id depth in
       let fvs' = idx::fvs in
         (* 添え字が配列の境界内にあるという制約 *)
-      let idx_bound fvs branch_trace = 
+      let idx_bound branch_trace = 
         make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
       let sl_own, sl_range = make_post_if_smtlib_sub fvs' (depth - 1) in
       [Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num branch_trace' depth)]
         @ sl_own,
-      [Geq(make_bound_exp fvs id "l" fun_num branch_trace depth, make_bound_exp fvs id "l" fun_num branch_trace' depth);
-      Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, make_bound_exp fvs id "h" fun_num branch_trace' depth);]
+      [Geq(make_bound_exp fvs id "l" fun_num branch_trace depth,
+       make_bound_exp fvs id "l" fun_num branch_trace' depth);
+      Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, 
+        make_bound_exp fvs id "h" fun_num branch_trace' depth);]
         @ (List.map
-      (fun x -> Imply(And(idx_bound fvs branch_trace, idx_bound fvs branch_trace'),
+      (fun x -> Imply(And(idx_bound branch_trace, idx_bound branch_trace'),
         x))  sl_range) in
   let sl_own, sl_range = make_post_if_smtlib_sub fvs depth in
   List.map
@@ -376,6 +328,8 @@ id2が最初の要素のみ所有権が異なりid1とid2が1だけズレた部�
 let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let id2_0 = id2 ^ "_eq0" in
   let id2_non0 = id2 ^ "_non0" in
+  let idx_bound id idx fvs depth = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
+  let idx_pre_bound id idx fvs depth = make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth in
   (* 所有権の値の制約 *)
   let rec common depth = 
     if depth <= 0 then []
@@ -396,8 +350,6 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
       let fvs2'_0 = idx2_0::fvs2_0 in
       let idx2 = make_idx_id fun_num id2 depth in
       let fvs2' = idx2::fvs2 in
-      let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
-      let idx_pre_bound id idx fvs = make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth in
       let sl1 = 
         (* 添え字のたどり方が同じならば所有範囲は等しい *)
         [And(Eq(make_bound_exp fvs2 id2 "l" fun_num branch_trace depth,
@@ -408,11 +360,9 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
       sl1 @
       List.map
       (fun x -> 
-        Imply(idx_pre_bound id2_0 idx2_0 fvs2_0,
-          Imply(idx_bound id2 idx2 fvs2, 
-            Imply(Eq(Id idx2, Id idx2_0),
-        x)))) sl2
-        (* sl1 *)
+        Imply(idx_pre_bound id2_0 idx2_0 fvs2_0 depth,
+          Imply(idx_bound id2 idx2 fvs2 depth, 
+            Imply(Eq(Id idx2, Id idx2_0),x)))) sl2
       in
   (* 最上位の参照の所有範囲の分割の制約 *)
   let sl1 = 
@@ -434,30 +384,18 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let fvs2_0 = idx2_0::fvs in
   let idx2_non0 = make_idx_id fun_num id2_non0 depth in
   let fvs2_non0 = idx2_non0::fvs in
-  let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
-  let idx_pre_bound id idx fvs = make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth in
   sl1 @ sl2 
   @
   List.map
   (fun x ->
-    Imply(Eq(Id idx2, Id "0"),
-      Imply(Eq(Id idx2_0, Id "0"),
-    x)))
+    Imply(Eq(Id idx2, Id "0"), Imply(Eq(Id idx2_0, Id "0"),x)))
   (same_range id2_0 id2 fvs2_0 fvs2 (depth-1))
   @
   List.map
   (fun x ->
-    Imply(idx_pre_bound id2_non0 idx2_non0 fvs,
-      Imply(idx_bound id1 idx1 fvs,
-        Imply(Eq(Id idx2_non0, Id idx1),
-        x))))
+    Imply(idx_pre_bound id2_non0 idx2_non0 fvs depth, Imply(idx_bound id1 idx1 fvs depth,
+      Imply(Eq(Id idx2_non0, Id idx1), x))))
   (same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1))
-  (* [
-    Imply(And(idx_bound id2_non0 idx2_non0 fvs,
-      And(idx_bound id1 idx1 fvs,
-        Eq(Add(Id idx2_non0, Id "1"), Id idx1))),
-    same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1));
-  ] *)
 with | Unbound -> raise ConstrError
 
 (* id1 := id2; ... *)
@@ -495,8 +433,7 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
     let fvs2' = idx2::fvs2 in
     if depth <= 0 then []
     else
-      [
-      Eq(make_pre_bound_exp fvs2 id2 "l" fun_num branch_trace depth, make_bound_exp fvs1_0 id1_0 "l" fun_num branch_trace depth);
+      [Eq(make_pre_bound_exp fvs2 id2 "l" fun_num branch_trace depth, make_bound_exp fvs1_0 id1_0 "l" fun_num branch_trace depth);
       Eq(make_pre_bound_exp fvs2 id2 "h" fun_num branch_trace depth, make_bound_exp fvs1_0 id1_0 "h" fun_num branch_trace depth)]
       @ 
       List.map 
@@ -533,8 +470,7 @@ let make_assignRef_smtlib fvs fun_num branch_trace id1 id2 depth =
       (fun x -> 
         idx_pre_bound id1 idx1 fvs depth 
          (idx_bound id1_non0 idx1_non0 fvs depth 
-          (Imply(And(Eq(Id idx1, Add(Id idx1_non0, Id "1")),
-            Not(Eq(Id idx1,Id  "0"))), x))))
+          (Imply(Eq(Id idx1, Add(Id idx1_non0, Id "1")), x))))
       (not_first_element fvs1 fvs1_non0 (depth-1))
 
 let make_letDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
@@ -725,7 +661,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     let ids_post_el = collect_same_trace_vars (Else :: branch_trace) !var_locations in
     (* then節とelse節評価後の変数のリストを結合 *)
     let ids_post = union_list ids_post_if ids_post_el in
-    (* let _ = (List.map (fun x -> Format.printf "%s:%a\n" (fst x) pp_simpleTy (snd x)) ty_env) in *)
     (* then節とelse節評価後の各変数について，レベルを1増やしてvar_locationsに追加 *)
     List.iter (fun id -> 
       (* Format.printf "5\n"; flush stdout;  *)
@@ -764,33 +699,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     (* 制約をつなげて返す *)
     constraints_pre @ constraints1' @ constraints2' @ 
     constraints_post_if @ constraints_post_el
-  (* | CLet (id1,id2,l) -> (* let x = y in ... *) 
-    (* x,yに対応するvar_locationsを追加
-    ここ下とマージできる *)
-    new_id id1 l branch_trace; new_id id2 l branch_trace;
-    (* 
-    評価直前のyの所有権は評価後のxとyの所有権の和以上　または
-    評価後のxの所有範囲の下限は評価後のyの所有範囲の上限より大きい　または
-    評価後のyの所有範囲の上限は評価後のxの所有範囲の下限より大きい;
-    評価直前のyの所有権は評価後のxの所有権以上;
-    評価直前のyの所有権は評価後のyの所有権以上;
-    評価直前のyの所有範囲の下限は評価後のxの所有範囲の下限以下;
-    評価直前のyの所有範囲の下限は評価後のyの所有範囲の下限以下;
-    評価直前のyの所有範囲の上限は評価後のxの所有範囲の上限以上;
-    評価直前のyの所有範囲の上限は評価後のyの所有範囲の上限以上;
-    評価後のxの添え字の下限は評価後のxの添え字の上限以下;
-    評価後のyの添え字の下限は評価後のyの添え字の上限以下*)
-    [Or(Geq(id2_pre_own, Add(id1_post_own, id2_post_own)),
-     Or(Gt(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace), 
-        Gt(make_bound_exp fvs id2 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace)));
-     Geq(id2_pre_own, id1_post_own);
-     Geq(id2_pre_own, id2_post_own);
-     Leq(id2_pre_scope_low, make_bound_exp fvs id1 fun_num branch_trace);
-     Leq(id2_pre_scope_low, make_bound_exp fvs id2 fun_num branch_trace);
-     Geq(id2_pre_scope_high, make_bound_exp fvs id1 fun_num branch_trace);
-     Geq(id2_pre_scope_high, make_bound_exp fvs id2 fun_num branch_trace);
-     Leq(make_bound_exp fvs id1 fun_num branch_trace, make_bound_exp fvs id1 fun_num branch_trace);
-     Leq(make_bound_exp fvs id2 fun_num branch_trace, make_bound_exp fvs id2 fun_num branch_trace)]  *)
   | CLetAddPtr (id1,id2,e,pos) ->  (* Corresponds to the example on p.15, let x = y + num in ... *)
     (* x,yに対応するvar_locationsを追加 *)
     let simpleTy = lookup id2 ty_env in
@@ -809,27 +717,20 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     評価直前のyの所有範囲の下限は評価後のyの添え字の下限以下;
     評価直前のyの所有範囲の上限は評価後のxの所有範囲の添え字の上限+num以上;
     評価直前のyの所有範囲の上限は評価後のyの添え字の上限以上 *)
-    let sl2 = 
-      if contains_element eq0_list id2 && sl1 <> Id "1" then 
-        (* (new_id (id2^"_eq0") pos branch_trace (SRef SInt);
-        new_id (id2^"_non0") pos branch_trace (SRef SInt);
-        same_own (id2^"_eq0") fvs fun_num branch_trace (depth-1))  *)
-        []
-      else [] in
     if contains_element eq0_list id2 && sl1 = Id "1" then
       (remove_element eq0_list id2;
       new_id (id2^"_eq0") pos branch_trace simpleTy;
       new_id (id2^"_non0") pos branch_trace simpleTy;
       make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth)
     else
-      sl2 @ make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl1 depth  
+      make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl1 depth  
   | CMkArray (id,e, simpleTy,pos) -> 
+    (* let x = alloc e in ... *)
     let upper_bound =
       match e with
       | ILit i -> Id (Z.to_string (Z.sub i Z.one))
       | Var id -> FV(id)
       | _ -> raise ConstrError in
-    (* let x = alloc i in ... *)
     (* xに対応するvar_locationsを追加 *)
     new_id id pos branch_trace simpleTy;
     (* 
@@ -1293,7 +1194,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         | (RawId id_param, FTRef (_,ENull,ENull,_)), AId id ->
           remove_element eq0_list id;
           let num = lookup fun_name funnames_numberings in
-          (* let fvs' = union_list (List.map fst subst) fvs in *)
           let fvs' = List.map fst subst in
           (* 関数評価後は関数の返り値の型の所有表現と等しい *)
           let rec common depth =
@@ -1332,7 +1232,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let eh = subst_idx_name eh template in
           let l_arg_exp = exp_subst subst el in
           let h_arg_exp = exp_subst subst eh in
-          (* print_exp h_arg_exp; *)
           (* 引数のvar_locationsを生成 *)
           let simpleTy = depth_to_simpleTy depth in
           new_id id pos branch_trace simpleTy;
@@ -1429,8 +1328,6 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
   let ty_env = lookup fun_name !all_tyenv in
   (* 関数引数のうち整数変数名を抽出 *)
   let fvs = List.concat (List.map find_intv params_before_eval) in
-  (* let _ = List.map (fun x -> print_string (x ^ " ")) fvs in *)
-  (* print_string "\n";flush stdout; *)
   (* 関数仮引数のうち参照型である引数名を抽出 *)
   let ref_ids = List.concat (List.map find_ref_id params_before_eval) in
   (* 関数引数名をvar_locations(変数id, (変数の位置, branch_trace, 単純型))のリストに代入 *)
@@ -1524,9 +1421,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       p c;
     raise (Error ("generateSmtlibConstraint miss: "^s))  in
   let smtlibs_among_eval = List.concat (List.map (constr_to_smtlib_with_error_output) constrs) in
-  (* let smtlibs_among_eval = List.concat (List.map (constr_to_smtlib fvs fun_num funnames_numberings [] ty_env) constrs) in *)
   (* 関数終了時の制約を生成する関数，id:変数名 *)
-  (* print_string "3\n"; flush stdout; *)
   let ref_id_after_eval_to_smtlibs id = 
     let ftype = find_own_annotation id params_after_eval in 
     (* smtlibに渡すためvarown_countを更新 *)
@@ -1672,13 +1567,11 @@ let all_cs_to_smtlib all_cs flag fun_num =
   (* fun_num番目の関数の制約，var_locations, varown_count, 自由変数の集合 *)
   let (smtlibs, var_locations, varown_count, fvs) = fun_constrs_to_smtlib (List.nth all_cs fun_num) fun_num funnames_numberings in
   let ss' = 
-    (* flag次第でおそらく一つも成り立たない？？？？？ *)
+    (* flag次第で一つも成り立たない *)
     if flag then 
       [Not(Ands smtlibs)]
     else
       smtlibs
   in
-  (* let _ = List.map (fun (id1, (pos, _, _)) -> Format.printf "%s %d | " id1 pos) var_locations in
-  print_string "\n"; *)
   (var_locations, varown_count, fvs, ss')
     
