@@ -435,23 +435,21 @@ let make_letAddPtr_smtlib_heuristic fvs fun_num branch_trace id1 id2 depth =
   let idx2_non0 = make_idx_id fun_num id2_non0 depth in
   let fvs2_non0 = idx2_non0::fvs in
   let idx_bound id idx fvs = make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
+  let idx_pre_bound id idx fvs = make_idx_pre_bound_smtlib id idx fvs fun_num branch_trace depth in
   sl1 @ sl2 
   @
   List.map
   (fun x ->
     Imply(Eq(Id idx2, Id "0"),
       Imply(Eq(Id idx2_0, Id "0"),
-        Imply(idx_bound id2 idx2 fvs,
-          Imply (idx_bound id2_0 idx2_0 fvs,
-    x))))
-    )
+    x)))
   (same_range id2_0 id2 fvs2_0 fvs2 (depth-1))
   @
   List.map
   (fun x ->
-    Imply(idx_bound id2_non0 idx2_non0 fvs,
+    Imply(idx_pre_bound id2_non0 idx2_non0 fvs,
       Imply(idx_bound id1 idx1 fvs,
-        Imply(Eq(Add(Id idx2_non0, Id "1"), Id idx1),
+        Imply(Eq(Id idx2_non0, Id idx1),
         x))))
   (same_range id2_non0 id1 fvs2_non0 fvs1 (depth-1))
   (* [
@@ -954,10 +952,10 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     And(common depth,
       And(idx_pre_bound id1 idx1_pre fvs (depth+1)
       (idx_pre_bound id2 idx2 fvs (depth+1)
-        (Imply(Eq(Id idx1_pre, Add(Id idx2, sl)),same_range_pre fvs1_pre fvs2 depth))),
+        (Imply(Eq(Id idx2, Add(Id idx1_pre, sl)),same_range_pre fvs1_pre fvs2 depth))),
       idx_pre_bound id1 idx1_pre fvs (depth+1)
         (idx_bound id2 idx2 fvs (depth+1)
-          (Imply(Eq(Id idx1_pre, Add(Id idx2, sl)), same_range_post fvs2 fvs1_pre depth)))))
+          (Imply(Eq(Id idx2, Add(Id idx1_pre, sl)), same_range_post fvs2 fvs1_pre depth)))))
     in
           (* id1の外側の所有権が0の場合 *)
     let make_aliasdAddPtr_smtlib_no_change depth =
@@ -1108,7 +1106,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       [
       (* Imply(Gt(make_pre_own_var id1 fun_num branch_trace depth, Id "0."), *)
         (* And(Or(sl1, sl2), *)
-        And(sl2, make_aliasdAddPtr_smtlib_gather (depth-1));
+        sl2;
+        make_aliasdAddPtr_smtlib_gather (depth-1);
       (* Imply(Eq(make_pre_own_var id1 fun_num branch_trace depth, Id "0."),
         And(sl3, make_aliasdAddPtr_smtlib_no_change (depth-1))); *)
       Eq(make_own_var id1 fun_num branch_trace depth, Id "0")]
@@ -1166,7 +1165,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     (* 仮引数名と整数引数に渡された式のリスト *)
     let subst = List.concat (List.map2 find_subst params_before_eval args) in
     (* 関数定義の制約生成 *)
-    let rec subst_param_before_eval param arg depth = 
+    let rec subst_param_before_eval fvs param arg depth = 
      if depth <= 0 then []
      else
       match param, arg with
@@ -1210,7 +1209,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       (* x | () ref (left, right, ownership)の形式の場合 *)
       | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
         (* 引数の篩型中の整数変数を別の式で置き換え *)
-        let template = asprintf "i_%d_%s_%s_%dth" fun_num id_param "b" in
+        let idx = make_idx_id fun_num id depth in
+        let template = asprintf "i_%d_%s_%dth" fun_num id in
         let el = subst_idx_name el template in
         let eh = subst_idx_name eh template in
         let scope_low = exp_to_smtlib (exp_subst subst el) in
@@ -1225,11 +1225,46 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, scope_low),
               Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, scope_high))))]
         else
+          let coeffs_h = coeffs @@ smtlib_to_exp @@ scope_high in
+          let coeffs_l = coeffs @@ smtlib_to_exp @@ scope_low in
+          let rec geq h_or_l fvs =
+            let id_pos = lookup_pos id branch_trace !var_locations in
+              (match fvs with
+              | [] -> 
+                let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace depth in
+                (try
+                  Geq(Id(var_name), lookup "" coeffs_h)
+                with
+                | Error _ -> Geq(Id(var_name), Id "0"))
+              | fv :: fvs_ ->
+                let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
+                let sl = geq h_or_l fvs_ in
+                try
+                  And(Geq(Mul(Id var_name, FV fv), Mul(lookup fv coeffs_h, FV fv)), sl)
+                with
+                | Error _ -> Geq(Mul(Id var_name, FV fv), Id "0")) in
+          let rec leq h_or_l fvs =
+          let id_pos = lookup_pos id branch_trace !var_locations in
+            (match fvs with
+            | [] -> 
+              let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace depth in
+              (try
+                Leq(Id(var_name), lookup "" coeffs_l)
+              with
+              | Error _ -> Leq(Id(var_name), Id "0"))
+            | fv :: fvs_ ->
+              let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
+              let sl = leq h_or_l fvs_ in
+              try
+                And(Leq(Mul(Id var_name, FV fv), Mul(lookup fv coeffs_l, FV fv)), sl)
+              with
+              | Error _ -> Leq(Mul(Id var_name, FV fv), Id "0")) in
           [Or(Eq(Id "0.", Id (string_of_float f)),
           And(Geq(make_own_var id fun_num branch_trace depth, Id (string_of_float f)),
-          And(Leq(make_bound_exp fvs id "l" fun_num branch_trace depth, scope_low),
-          And(Geq(make_bound_exp fvs id "h" fun_num branch_trace depth, scope_high),
-          List.hd (subst_param_before_eval (RawId id_param, ftype) arg (depth-1))))))]
+          And(leq "l" fvs,
+          And(geq "h" fvs,
+          Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
+          List.hd (subst_param_before_eval (idx::fvs) (RawId id_param, ftype) arg (depth-1)))))))]
         (* 整数の時は何もしない *)
       | _, AExp _ -> []
       | _ -> raise ConstrError
@@ -1249,9 +1284,9 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       | a_hd::a_tl, b_hd::b_tl, c_hd::c_tl -> (func a_hd b_hd c_hd) :: (my_map func a_tl b_tl c_tl)
       | _ -> raise (Error "my_map error")
     in
-    let constraints1 = List.concat (my_map subst_param_before_eval params_before_eval args before_depths) in
+    let constraints1 = List.concat (my_map (subst_param_before_eval fvs) params_before_eval args before_depths) in
     (* subst_param_before_evalとほぼ同様,呼び出した関数の評価終了時の制約 *)
-    let rec subst_param_after_eval ftid_ft arg depth = 
+    let rec subst_param_after_eval fvs ftid_ft arg depth = 
       if depth <= 0 then []
       else
         match ftid_ft, arg with
@@ -1292,7 +1327,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           same_range fvs fvs' depth]
         | (RawId id_param, FTRef (ftype,el,eh,f)), AId id -> 
           remove_element eq0_list id;
-          let template = asprintf "i_%d_%s_%s_%dth" fun_num id_param "e" in
+          let template = asprintf "i_%d_%s_%dth" fun_num id in
           let el = subst_idx_name el template in
           let eh = subst_idx_name eh template in
           let l_arg_exp = exp_subst subst el in
@@ -1320,14 +1355,15 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let sl1 = [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));]
           @ find_coeff "h" coeff_map_h 
           @ find_coeff "l" coeff_map_l in
-          let sl2 = subst_param_after_eval (RawId id_param, ftype) arg (depth-1) in
+          let idx = make_idx_id fun_num id depth in
+          let sl2 = subst_param_after_eval (idx ::fvs) (RawId id_param, ftype) arg (depth-1) in
           sl1 @ sl2
         | _, AExp _ -> []
         | _ -> raise (Error (sprintf "subst_param_after_eval error"))
     in
     (* 関数評価後に対するsmtlibの条件式の生成 *)
     let after_depths = List.map (fun x -> find_depth (snd x)) params_after_eval in
-    let constraints2 = List.concat (my_map subst_param_after_eval params_after_eval args after_depths) in
+    let constraints2 = List.concat (my_map (subst_param_after_eval fvs) params_after_eval args after_depths) in
     (* 関数評価前と評価後の条件式を結合 *)
     constraints1 @ constraints2
     (* alias(id1 = *id2); ... *)
@@ -1439,7 +1475,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
               make_idx_bound_smtlib_be id idx fvs fun_num "b" depth), x)) sl4)
         (* 所有権指定がある場合 *)
       | _ ->
-        let template = asprintf "i_%d_%s_%s_%dth" fun_num id "b" in
+        let template = asprintf "i_%d_%s_%dth" fun_num id in
         let exp_low = subst_idx_name exp_low template in
         let exp_high = subst_idx_name exp_high template in
         let coeff_map_h = coeffs exp_high in
@@ -1526,7 +1562,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
             make_idx_bound_smtlib_be id idx fvs fun_num "e" depth), x)) sl4
     | _ ->
-      let template = asprintf "i_%d_%s_%s_%dth" fun_num id "e" in
+      let template = asprintf "i_%d_%s_%dth" fun_num id in
       let el2 = subst_idx_name el2 template in
       let eh2 = subst_idx_name eh2 template in
       let coeff_map_h = coeffs eh2 in
@@ -1544,6 +1580,38 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
           (fun fv -> 
             let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id "e" depth in
             look_up' var_name fv) fvs) in
+      let rec geq h_or_l fvs =
+        let id_pos = lookup_pos id [] !var_locations in
+          (match fvs with
+          | [] -> 
+            let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace [] depth in
+            (try
+              Geq(lookup "" coeff_map_l, Id(var_name))
+            with
+            | Error _ -> Geq(Id "0", Id(var_name)))
+          | fv :: fvs_ ->
+            let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace [] depth in
+            let sl = geq h_or_l fvs_ in
+            try
+              And(Geq(Mul(lookup fv coeff_map_l, FV fv), Mul(Id var_name, FV fv)), sl)
+            with
+            | Error _ -> And(Geq(Id "0", Mul(Id var_name, FV fv)), sl)) in
+      let rec leq h_or_l fvs =
+      let id_pos = lookup_pos id [] !var_locations in
+        (match fvs with
+        | [] -> 
+          let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace [] depth in
+          (try
+            Leq(lookup "" coeff_map_h, Id(var_name))
+          with
+          | Error _ -> Leq(Id "0", Id(var_name)))
+        | fv :: fvs_ ->
+          let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace [] depth in
+          let sl = leq h_or_l fvs_ in
+          try
+            And(Leq(Mul(lookup fv coeff_map_h, FV fv), Mul(Id var_name, FV fv)), sl)
+          with
+          | Error _ -> And(Leq(Id "0", Mul(Id var_name, FV fv)), sl)) in
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
       　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
       　　　　評価終了時の引数のプログラマ指定の所有範囲の下限がその時の所有範囲の下限以上　かつい
@@ -1552,10 +1620,8 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       [Or(Eq(Id (string_of_float f2), Id "0."),
        Leq(Id (string_of_float f2), make_own_var id fun_num [] depth));
        Eq(make_own_var_be id fun_num "e" depth, Id (string_of_float f2));],
-      [Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num [] depth);
-      (* Eq(exp_to_smtlib el2, make_bound_exp_be fvs_e id "l" fun_num "e" depth); *)
-      Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num [] depth);
-      (* Eq(exp_to_smtlib eh2, make_bound_exp_be fvs_e id "h" fun_num "e" depth) *)
+      [geq "l" fvs;
+      leq "h" fvs;
       ]
       @ find_coeff "h" coeff_map_h 
       @ find_coeff "l" coeff_map_l in
