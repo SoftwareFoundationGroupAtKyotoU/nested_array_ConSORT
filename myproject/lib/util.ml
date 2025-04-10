@@ -397,6 +397,55 @@ let rec exp_to_smtlib exp =
   | Var x -> FV x
   | _ -> raise ElimError
 
+(* smtlib制約をプログラム構文木に直す *)
+let rec smtlib_to_exp sl = 
+  match sl with 
+  | Add(s1, s2) ->
+    let e1 = smtlib_to_exp s1 in
+    let e2 = smtlib_to_exp s2 in
+    PlusExp(e1, e2)
+  | Sub(s1, s2) ->
+    let e1 = smtlib_to_exp s1 in
+    let e2 = smtlib_to_exp s2 in
+    MinusExp(e1, e2)
+  | Mul(s1,s2) ->
+    let e1 = smtlib_to_exp s1 in
+    let e2 = smtlib_to_exp s2 in
+    MultExp(e1, e2)
+  | Id id ->
+    (try
+      ILit (Z.of_string id)
+    with
+    | _ -> 
+      let len = String.length id in
+      ILit (Z.of_string @@ String.sub id 1 (len - 2)))
+  | FV x -> Var x
+  | _ -> raise ElimError
+
+(* smtlib中の添え字を別の添え字にする *)
+let rec subst_idx sl subst_idx_lis = 
+  match sl with 
+  | Add(s1, s2) ->
+    let s1' = subst_idx s1 subst_idx_lis in
+    let s2' = subst_idx s2 subst_idx_lis in
+    Add(s1', s2')
+  | Sub(s1, s2) ->
+    let s1' = subst_idx s1 subst_idx_lis in
+    let s2' = subst_idx s2 subst_idx_lis in
+    Sub(s1', s2')
+  | Mul(s1,s2) ->
+    let s1' = subst_idx s1 subst_idx_lis in
+    let s2' = subst_idx s2 subst_idx_lis in
+    Mul(s1', s2')
+  | Id id ->
+    (try
+      Id (lookup id subst_idx_lis)
+    with
+    | _ -> 
+      raise ElimError)
+  | FV fv -> FV fv
+  | _ -> raise ElimError
+
   (* 
   i_n -> i_fun_num_varname_b_or_e_nth *)
 let rec subst_idx_name exp template =
