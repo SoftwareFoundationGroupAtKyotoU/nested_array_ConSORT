@@ -28,12 +28,6 @@ let new_id id l ifel =
     else id_count_chc := (id, (l, ifel)) :: !id_count_chc
   with 
     Unbound -> id_count_chc := (id, (l, ifel)) :: !id_count_chc
-(* 
-(* id_count_chcの表示，使われてなさそう *)
-let rec print_id_count_chc id_count_chc = 
-  match id_count_chc with
-  | [] -> print_newline ()
-  | (id, (l, ifel)) :: id_count_chc' -> print_string ("(" ^ id ^ ", "); print_int l; print_string (ifel_to_str ifel); print_string ") "; print_id_count_chc id_count_chc' *)
 
 (* 指定されたidとifelに対応するプログラムの直前の位置lを返す *)
 let rec lookup_pre_ifel id ifel env = 
