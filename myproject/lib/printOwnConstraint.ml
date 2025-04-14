@@ -257,7 +257,7 @@ let rec print_smtlib oc sl bool_id map num =
             print_smtlib oc sl bool_id map num) smtlibs;
        output_string oc ")")
 
-
+(* 反例出力に使うsmtlibの出力関数 *)
 let rec print_smtlib' oc sl bool_id map num z3_res = 
 match sl with 
 | Or (s1,s2) -> 
@@ -392,6 +392,7 @@ let rec idx_of_smtlib sl =
   | _ -> 
     []
   
+(* 自由変数を具体化するための関数 *)
 let print_concrete oc fv =
   try
     let cexample = lookup fv !cexamples in
@@ -418,50 +419,6 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
   if is_unconcrete then
     List.iter (print_smtlibs_sub oc num) smtlibs
   else
-      (* m :: m+1 :: ... :: n :: [] のリストを作成 *)
-    (* let rec range m n =
-        if m > n then []
-        else m :: range (m + 1) n
-      in *)
-      (* 自由変数fv1, fv2, ... と整数リスト[m, m+1, ... , n]について 
-      [[(fv1, m), (fv1, m+1), ... (fv1, n)], [(fv2, m), (fv2, m+1), ...]]
-      を返す関数 
-      fvの順番逆かも*)
-      (* let rec generate_combinations fvs int_range =
-        match fvs with
-        | [] -> [[]]
-        | hd :: tl ->
-          let combinations_hd = List.map (fun x -> (hd, x)) int_range in
-          let combinations_tl = generate_combinations tl int_range in
-          List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
-      in
-      (* [(fv1, -iter), (fv1, -iter+1), ... (fv1, iter), (fv2, -iter), (fv2, -iter+1), ...] 
-      自由変数を-iterからiterに代入して所有権の値を計算するための準備*)
-      let comb = generate_combinations fvs (range (-iter) iter) in *)
-      (* assertにより制約をファイルに書き出す，自由変数に-iterからiterの数値の代入も行う *)
-      (* List.iter
-        (fun map ->
-          (List.iter 
-            (fun sl -> 
-              let idxs = list_to_set (idx_of_smtlib sl) [] in
-              if idxs = [] then 
-              (* if true then *)
-                (output_string oc "(assert ";
-                (* smtlibの制約部分の記述 
-                slはsmtlibの制約
-                mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
-                numは特定のsmtlibの識別番号
-                *)
-                print_smtlib oc sl false map num; 
-                output_string oc ")\n")
-              else
-                (output_string oc "(assert (forall (";
-                output_string oc (make_args idxs);
-                output_string oc ") ";
-                print_smtlib oc sl false map num; 
-                output_string oc "))\n")
-              ) smtlibs;
-              output_string oc "\n")) comb *)
       List.iter
       (fun sl -> 
         let idxs = list_to_set (idx_of_smtlib sl) [] in
@@ -537,30 +494,11 @@ and print_smtlibs_sub oc num sl =
 (* smtlib形式から自由変数のリストを返す関数 *)
 and fvs_of_smtlib sl =
   match sl with 
-  | Or (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | And (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Imply (s1,s2) -> 
+  | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
+  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
   | Not s -> 
     fvs_of_smtlib s
-  | Eq (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Lt (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Gt (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Leq (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Geq (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Add (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Sub (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
-  | Mul (s1,s2) -> 
-    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
   (* | Div (s1,s2) -> 
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
   | FV fv -> 
@@ -742,7 +680,6 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       asprintf "%s%s%s%s" s res1_eq0 res1_non0 res2
     | CAssignInt (_,_) ->
       let s = cons_to_program cons in
-      (* let res = find_own_res fun_num id (pos-1) branch_trace z3res ty_env fvs in *)
       asprintf "%s" s
     | CApp (_, args, pos) ->
       let s = cons_to_program cons in
