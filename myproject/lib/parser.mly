@@ -93,10 +93,6 @@ Expr :
   | e=AppExpr { e }
   | e=DerefExpr { e }
   | e=ORExpr {e}
-//   | e=IfExpr { e }
-//   | e=LetExpr { e }
-//   | e1=PreSEMIExpr SEMI e2=Expr { PreSEMIExpr(e1, e2) }
-//   | e=AExpr { e }
 
 IfExpr :
     IFNP x=ID THEN t=Expr ELSE e=Expr { IfnpExp (x, t, e) }
@@ -105,10 +101,6 @@ IfExpr :
 LetExpr :
   | LET x=ID EQ e1 = Expr IN e2 = Expr { Let (x, e1, e2) }
   | LET x=ID EQ ALLOC e1=Expr COLON ty=SimpleTyExpr REF IN e2=Expr { LetAllocExp(x, e1, SRef ( ty ), e2) }
-//   | LET x=ID EQ STAR y=ID IN e=Expr { LetDerefExp(x, Var y, e) }
-//   | LET x=ID EQ e1=BinOpExpr IN e2=Expr { LetBinOpExp(x, e1, e2) }
-//   | LET x=ID EQ e1=Expr IN e2=Expr { LetBindExp(x, e1, e2) }
-//   | LET x=ID EQ app=FunCallExpr IN e=Expr { LetFunCall(x, app, e) }
 
 SimpleTyExpr :
     INT { SInt }
@@ -123,23 +115,12 @@ MultExpr :
   | x=MultExpr STAR y=AExpr { MultExp(x, y) }
   | e=AExpr { e }
 
-// FunCallExpr :
-//   | i=ID LPAREN v=VarSeq RPAREN { FunCall(i, v)}
-
-// VarSeq :
-//     i=ID { [i] }
-//   | i=ID COMMA v=VarSeq { i :: v } 
 
 InsertSEMIExpr :
   | x=ID ASSIGN e1=Expr SEMI e2=Expr { Assign(x, e1, e2) }
   | ALIAS LPAREN e1=ID EQ e2=Expr RPAREN SEMI e3=Expr { Alias(Var e1, e2, e3) }
   | ASSERT LPAREN e1=Expr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
   | e1=Expr SEMI e2=Expr { Seq(e1, e2) }
-// PreSEMIExpr :
-//     x=ID ASSIGN y=ID { Assign(x, y) }
-//   | ALIAS LPAREN x=ID EQ y=ID PLUS z=ID RPAREN { AliasAddPtr(x, y, z) }
-//   | ALIAS LPAREN x=ID EQ STAR y=ID RPAREN { AliasDeref(x, y) }
-//   | ASSERT LPAREN p=LTExpr RPAREN { Assert(p) } 
 
 ORExpr :
     e1=ORExpr OR e2=ANDExpr { OrExp(e1, e2) }
@@ -161,19 +142,6 @@ CompareExpr :
   | e1=PlusMinusExpr GEQ e2=PlusMinusExpr { GeqExp(e1, e2) }
   | e1=PlusMinusExpr NEQ e2=PlusMinusExpr { NeqExp(e1, e2) }
   | e=PlusMinusExpr{ e }
-
-// LTExpr :
-//     e1=BaseExpr LT e2=BaseExpr { BinOp(Lt, e1, e2) }
-//   | e=EQExpr { e }
-
-// EQExpr :
-//     e1=BaseExpr EQ e2=BaseExpr { BinOp(Eq, e1, e2) }
-
-// BaseExpr :
-//     i=INTV { ILit (i) }
-//   | i=ID { Var i }
-//   | STAR e=BaseExpr { Deref e }
-//   | LPAREN e=ORExpr RPAREN { e }
 
 AExpr :
     i=INTV { ILit i }
