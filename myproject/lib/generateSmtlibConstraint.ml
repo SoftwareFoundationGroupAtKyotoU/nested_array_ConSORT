@@ -222,10 +222,19 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
       let sl = make_mkarray_sub (depth - 1) in
       let sl2 = [Eq(make_own_var id fun_num branch_trace depth, Id "0.")] in
       sl @ sl2 in
-  let main_sl = [Eq(make_own_var id fun_num branch_trace depth, Id "1.");
-    Eq(make_bound_exp fvs id "l" fun_num branch_trace depth, Id "0"); 
-    Eq(make_bound_exp fvs id "h" fun_num branch_trace depth, upper_bound)] in 
-  main_sl @ (make_mkarray_sub (depth - 1)) 
+  let own_sl = [Eq(make_own_var id fun_num branch_trace depth, Id "1.");] in
+  let id_pos = lookup_pos id branch_trace !var_locations in
+  let coeff_0_sl = List.map 
+  (fun fv -> 
+    let var_name_l = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num "l" fv id id_pos pp_branch_trace branch_trace depth in
+    let var_name_h = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num "h" fv id id_pos pp_branch_trace branch_trace depth in
+    And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, Id "0"))) 
+    fvs in
+  let intercept_sl = 
+    let var_name_l = asprintf "d_%d_%s_%s_%d%a_%d" fun_num "l" id id_pos pp_branch_trace branch_trace depth in
+    let var_name_h = asprintf "d_%d_%s_%s_%d%a_%d" fun_num "h" id id_pos pp_branch_trace branch_trace depth in
+    [And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, upper_bound))] in
+  own_sl @ coeff_0_sl @ intercept_sl @ (make_mkarray_sub (depth - 1)) 
 
 (* let id1 = id2(ref) + sl(int) in ...
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
