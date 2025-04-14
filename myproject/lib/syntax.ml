@@ -2,11 +2,6 @@ open SmtlibSyntax
 exception Error of string
 
 type id = string [@@deriving show]
-(* type binOp = Plus | Minus | Mult | Lt | AND | OR | Eq *)
-
-(** Type representing the syntax of the SMT-LIB language *)
-(* type smtlib = 
-  | VarPred *)
 
 type tyvar = int [@@deriving show]
 
@@ -40,7 +35,6 @@ let rec pp_simpleTy fmt simpleTy =
   | SFun (ty_list, ty) -> 
     let _ = List.map (fun ty -> Format.fprintf fmt "%a -> " pp_simpleTy ty) ty_list in
     Format.fprintf fmt "%a" pp_simpleTy ty
-  (* | _ -> raise (Error "pp_simpleTy Error") *)
 
 type funcallexp = 
     FunCall of id * (id list)
@@ -49,7 +43,6 @@ type exp =
     Var of id
   | ILit of Z.t
   | BLit of bool
-  (* | BinOp of binOp * exp * exp *)
   | OrExp of exp * exp
   | AndExp of exp * exp
   | NotExp of exp
@@ -68,11 +61,7 @@ type exp =
   | LetIntExp of id * exp * exp
   | LetAddPtrExp of id * id * exp * exp
   | LetDerefExp of id * id * exp
-  (* | LetBinOpExp of id * exp * exp *)
-  (* | LetBindExp of id * exp * exp *)
-  (* | LetFunCall of id * funcallexp * exp *)
   | Let of id * exp * exp
-  (* | PreSEMIExpr of exp * exp *)
   | Assign of id * exp * exp
   | AssignInt of id * exp * exp
   | AssignPtr of id * id * exp
