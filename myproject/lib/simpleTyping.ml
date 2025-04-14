@@ -146,11 +146,3 @@ let infer_prog_simpleTy program =
   let _ = infer_simple_ty tyenv exp in
   (* assert(ty = SUnit); *)
   all_tyenv := ("main", !tyenv) :: !all_tyenv
-
-(* let ty_test exp =
-  let (_, ty) = infer_simple_ty exp in
-  ty
-
-let tyenv_test exp =
-  let _ = infer_simple_ty exp in
-  !simple_tyenv *)
