@@ -27,14 +27,13 @@ let () =
           )
         else if first_line = "sat" then
           (Printf.printf "int fin ";
-          (* Printf.printf "%d\n" exit_code; *)
           main_fv file_name;
           let _ = Sys.command "z3 experiment/out_fv.smt2 > experiment/result" in
           Printf.printf "fv fin ";
           let ic = open_in "experiment/result" in
           (* 最初の行を読み取る *)
           let first_line = input_line ic in
-                  (* ファイルを閉じる *)
+          (* ファイルを閉じる *)
           close_in ic;
           (* 比較して結果を出力 *)
           if first_line = "sat" then 
@@ -54,7 +53,6 @@ let () =
         iter := !iter + 1      
       done;
       main_sat_ans file_name
-      (* read_eval_print initial_env input *)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
     | _ -> 
       Printf.eprintf "Error: %s\n" "unsat";
