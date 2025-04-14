@@ -14,20 +14,20 @@ init(n, p)
   }
 }
 
-initMatrix(x, y, p)
-[ <#x: int , y: int, p: int ref ref> ->
-    <#x: int, y: int, p: int ref ref | int> ]
+initMatrix(x, y, pp)
+[ <#x: int , #y: int, pp: int ref ref> ->
+    <#x: int, #y: int, pp: int ref ref | int> ]
 { 
     if x <= 0 then { 
         1 
     } else {
-        let q = *p in
+        let q = *pp in
         let z = init(y, q) in
-        alias(q = *p);
-        let r = p + 1 in
+        alias(q = *pp);
+        let r = pp + 1 in
         let w = x - 1 in
         let s = initMatrix(w, y, r) in
-        alias(r=p+1);
+        alias(r=pp+1);
         0
     }
 }
@@ -35,7 +35,7 @@ initMatrix(x, y, p)
 {
   let p = alloc 10 : int ref ref in
   let x = 10 in
-  let y = 0 in
+  let y = 10 in
   let d = initMatrix(x, y, p) in
   1
 }
