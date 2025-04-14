@@ -111,7 +111,6 @@ let generate_constrs file iter =
   let all_constrs = collect_program_own_constraints elaborate_program in 
 
   let oc1 = open_out "experiment/out_int.smt2" in
-  (* output_string oc1 "(set-option :produce-unsat-cores true)\n"; *)
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
@@ -121,7 +120,6 @@ let generate_constrs file iter =
   output_string oc1 "(check-sat)\n";
   (* 充足可能な場合に具体的な値を取得 *)
   output_string oc1 "(get-model)\n";
-  (* output_string oc1 "(get-unsat-core)\n"; *)
   close_out oc1
 
 (** Second phase of the ownershipip inference:
@@ -147,9 +145,7 @@ let main_fv file =
   main_int_declare oc all_constrs n;
   (* 所有権計算に必要なsmtlibでのassert式の書き出し
   ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
-  (* Printf.eprintf "Error:\n"; *)
   main_int_smtlibs oc all_constrs true false n 0;
-  (* Printf.eprintf "Error:\n"; *)
   (* main_intで得られた所有権の係数をassert形式で表現 *)
   print_z3result oc z3res;
   output_string oc "\n\n";
@@ -165,8 +161,6 @@ let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num =
     ()
   else
     (let (_, varown_count, fvs, _) = all_cs_to_smtlib all_cs false fun_num' in
-    (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
-    (* print_declare oc var_locations fvs fun_num; *)
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
     print_sat_ans oc varown_count fvs fun_num' z3_res all_cs;
     (* 関数ブロックごとに一行区切る *)
