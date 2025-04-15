@@ -215,7 +215,7 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
       make_bound_exp fvs id "h" fun_num branch_trace depth), x)))
   (sl_own @ sl_range)
 
-let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
+let make_mkarray_smtlib fvs id fun_num branch_trace depth exp =
   let rec make_mkarray_sub depth =
     if depth <= 0 then []
     else 
@@ -224,17 +224,27 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound =
       sl @ sl2 in
   let own_sl = [Eq(make_own_var id fun_num branch_trace depth, Id "1.");] in
   let id_pos = lookup_pos id branch_trace !var_locations in
-  let coeff_0_sl = List.map 
+  let upper_bound = MinusExp(exp, ILit Z.one) in
+  let coeff_map_h = coeffs upper_bound in
+  let coeff_sl = List.map 
   (fun fv -> 
     let var_name_l = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num "l" fv id id_pos pp_branch_trace branch_trace depth in
     let var_name_h = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num "h" fv id id_pos pp_branch_trace branch_trace depth in
-    And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, Id "0"))) 
+    try 
+      let coeff = lookup fv coeff_map_h in
+      And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, coeff))
+    with
+    | _ -> And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, Id "0"))) 
     fvs in
   let intercept_sl = 
     let var_name_l = asprintf "d_%d_%s_%s_%d%a_%d" fun_num "l" id id_pos pp_branch_trace branch_trace depth in
     let var_name_h = asprintf "d_%d_%s_%s_%d%a_%d" fun_num "h" id id_pos pp_branch_trace branch_trace depth in
-    [And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, upper_bound))] in
-  own_sl @ coeff_0_sl @ intercept_sl @ (make_mkarray_sub (depth - 1)) 
+    try 
+      let coeff = lookup "" coeff_map_h in
+      [And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, coeff))]
+    with
+    | _ -> [And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, Id "0"))] in
+  own_sl @ coeff_sl @ intercept_sl @ (make_mkarray_sub (depth - 1)) 
 
 (* let id1 = id2(ref) + sl(int) in ...
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
@@ -735,11 +745,6 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
       make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl1 depth  
   | CMkArray (id,e, simpleTy,pos) -> 
     (* let x = alloc e in ... *)
-    let upper_bound =
-      match e with
-      | ILit i -> Id (Z.to_string (Z.sub i Z.one))
-      | Var id -> FV(id)
-      | _ -> raise ConstrError in
     (* xに対応するvar_locationsを追加 *)
     new_id id pos branch_trace simpleTy;
     (* 
@@ -747,7 +752,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     xの所有範囲の下限は0;
     xの所有範囲の上限はe-1 *)
     let depth = ref_depth (lookup id ty_env) in
-    make_mkarray_smtlib fvs id fun_num branch_trace depth upper_bound
+    make_mkarray_smtlib fvs id fun_num branch_trace depth e
   | CAssignInt (id,_) -> 
     (* x := num; ... *)
     (* 
