@@ -3,7 +3,7 @@
 - dune buildでビルド
 - dune exec myproject ファイルのパス でファイル中のプログラムの所有権推論　結果はout_sat_ans.amt2出力
 
-    ` dune exec myproject ./example/init_10.imp `
+    ` dune exec myproject ./example/postive_example/init_10.imp `
 
 - dune exec myproject ファイルのパス 整数 でファイル中のプログラムの推論の第一段階の制約/experiment/out_int.smt2に出力，制約の粒度は整数によって決まる
 
