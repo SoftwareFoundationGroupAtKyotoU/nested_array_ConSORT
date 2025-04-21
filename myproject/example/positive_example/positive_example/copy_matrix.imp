@@ -1,0 +1,46 @@
+copy_array(n, p, q)
+[ <#n: int, p: int ref(0, n- 1, 1.) , q: int ref(0, n- 1, 1.) > -> 
+  <#n: int, p: int ref(0, n- 1, 1.)  , q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copy_array(m, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+copy_matrix(m, pp, qq)
+[ <#m: int,  
+pp: int ref(0, m - 1, 1.) ref(0, m- 1, 1.), qq: int ref(0, m - 1, 1.) ref(0, m- 1, 1.)> -> 
+  <#m: int, 
+pp: int ref(0, m - 1, 1.) ref(0, m- 1, 1.), qq: int ref(0, m - 1, 1.) ref(0, m- 1, 1.)| int> ]
+{
+  if m <= 0 then {
+    1
+  } else {
+    let x = *pp in
+    let y = *qq in
+    let d = copy_array(m, x, y) in
+    alias(x = *pp);
+    alias(y = *qq);
+    let p1 = pp + 1 in
+    let q1 = qq + 1 in
+    let l = m - 1 in
+    let d = copy_matrix(l, p1, q1) in
+    alias(q1 = qq + 1);
+    alias(p1 = pp + 1);
+    1
+  }
+}
+
+{
+  0
+}
