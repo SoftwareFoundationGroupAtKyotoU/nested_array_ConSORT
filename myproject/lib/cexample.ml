@@ -39,7 +39,7 @@ let create_cexapmle () =
       then 
         add_cexample id (Int i); 
         create_cexapmle_sub left;
-        output_string oc_w (Format.sprintf "{%s:%d} " id (Z.to_int i));
+        output_string oc_w (Format.asprintf "{%s:%a} " id Z.pp_print i);
     | (id,_,Float f) :: left ->
       if f <> 0. then add_cexample id (Float f); create_cexapmle_sub left
     | (id,_,Div (f1,f2))  :: left ->
