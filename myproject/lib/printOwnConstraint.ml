@@ -399,14 +399,14 @@ let print_concrete oc fv =
     let rec print_concrete_sub cexample =
       match cexample with
       | [] ->
-        output_string oc (asprintf "(= %s %a)" fv pp_value (Int Z.zero));
+        output_string oc (asprintf "(= %s %a)" fv pp_value (Int Z.one));
       | value :: left ->
         output_string oc (asprintf "(or (= %s %a) " fv pp_value value);
         print_concrete_sub left;
         output_string oc (asprintf ")")
       in print_concrete_sub !cexample
   with
-  _ -> output_string oc (asprintf "(= %s %a) " fv pp_value (Int Z.zero))
+  _ -> output_string oc (asprintf "(= %s %a) " fv pp_value (Int Z.one))
 
 (* smtlibの制約をファイルに書き出し
 oc 書き出し先
