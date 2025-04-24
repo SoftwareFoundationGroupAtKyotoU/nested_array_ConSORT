@@ -90,6 +90,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter =
     (* Format.printf "%d\n" fun_num; *)
     (* let _ = List.map (fun x -> Format.printf "%s\n" x) fvs' in
     let _ = List.map (fun x -> Format.printf "%s\n" x) fvs'' in  *)
+    let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
     print_smtlibs oc smtlibs is_unconcrete fvs (-1) iter;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
@@ -117,7 +118,7 @@ let generate_constrs file iter =
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *)  
   main_int_smtlibs oc1 all_constrs false false fun_num iter;
   (* 充足可能か調べる *)
-  output_string oc1 "(check-sat)\n";
+  output_string oc1 "(check-sat-using psmt)\n";
   (* 充足可能な場合に具体的な値を取得 *)
   output_string oc1 "(get-model)\n";
   close_out oc1
