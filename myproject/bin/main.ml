@@ -8,9 +8,13 @@ let () =
     (try 
       let iter = ref 0 in
       let continue = ref true in
+      let oc = open_out "experiment/result_cex_all" in
+      output_string oc "counter example list\n";
+      flush oc;
+      close_out oc;
       while !continue do
         generate_constrs file_name !iter;
-        let _ = Sys.command "z3 experiment/out_int.smt2 > experiment/result_int" in
+        let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_int.smt2 > experiment/result_int" in
         let ic = open_in "experiment/result_int" in
         let first_line = input_line ic in
         (if first_line = "unknown" then 
@@ -26,7 +30,7 @@ let () =
           continue := false
           )
         else if first_line = "sat" then
-          (Printf.printf "int fin ";
+          (Printf.printf "int fin \n";
           main_fv file_name;
           let _ = Sys.command "z3 experiment/out_fv.smt2 > experiment/result" in
           Printf.printf "fv fin ";
@@ -45,8 +49,11 @@ let () =
             let end_time = Unix.gettimeofday () in
             Printf.printf "time: %fs\n" (end_time -. start_time);
             main_cexample file_name;
+            flush stdout;
             let _ = Sys.command "z3 experiment/out_cexample.smt2 > experiment/result_cexample" in
+            flush stdout;
             create_cexapmle ();
+            flush stdout;
             Printf.printf "cex fin ";
             )));
         flush stdout;
@@ -54,6 +61,7 @@ let () =
       done;
       main_sat_ans file_name
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
+    | End_of_file -> Printf.printf "canceled"
     | _ -> 
       Printf.eprintf "Error: %s\n" "unsat";
       let end_time = Unix.gettimeofday () in
