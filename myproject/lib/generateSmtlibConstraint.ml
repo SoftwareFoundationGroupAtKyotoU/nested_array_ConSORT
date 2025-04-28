@@ -199,14 +199,24 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
         make_idx_bound_smtlib id idx fvs fun_num branch_trace depth in
       let sl_own, sl_range = make_post_if_smtlib_sub fvs' (depth - 1) in
       [Leq(make_own_var id fun_num branch_trace depth, make_own_var id fun_num branch_trace' depth)]
-        @ sl_own,
+        @ 
+       ( List.map
+        (fun x -> 
+          Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
+          Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
+            make_bound_exp fvs id "h" fun_num branch_trace depth), x)))
+          sl_own),
       [Geq(make_bound_exp fvs id "l" fun_num branch_trace depth,
        make_bound_exp fvs id "l" fun_num branch_trace' depth);
       Leq(make_bound_exp fvs id "h" fun_num branch_trace depth, 
         make_bound_exp fvs id "h" fun_num branch_trace' depth);]
         @ (List.map
-      (fun x -> Imply(And(idx_bound branch_trace, idx_bound branch_trace'),
-        x))  sl_range) in
+      (fun x -> 
+        Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
+        Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
+          make_bound_exp fvs id "h" fun_num branch_trace depth),
+        Imply(And(idx_bound branch_trace, idx_bound branch_trace'),
+        x))))  sl_range) in
   let sl_own, sl_range = make_post_if_smtlib_sub fvs depth in
   List.map
   (fun x -> 
@@ -1489,48 +1499,16 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
           (fun fv -> 
             let var_name = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num h_or_l fv id "e" depth in
             look_up' var_name fv) fvs) in
-      let rec geq h_or_l fvs =
-        let id_pos = lookup_pos id [] !var_locations in
-          (match fvs with
-          | [] -> 
-            let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace [] depth in
-            (try
-              Geq(lookup "" coeff_map_l, Id(var_name))
-            with
-            | Error _ -> Geq(Id "0", Id(var_name)))
-          | fv :: fvs_ ->
-            let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace [] depth in
-            let sl = geq h_or_l fvs_ in
-            try
-              And(Geq(Mul(lookup fv coeff_map_l, FV fv), Mul(Id var_name, FV fv)), sl)
-            with
-            | Error _ -> And(Geq(Id "0", Mul(Id var_name, FV fv)), sl)) in
-      let rec leq h_or_l fvs =
-      let id_pos = lookup_pos id [] !var_locations in
-        (match fvs with
-        | [] -> 
-          let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace [] depth in
-          (try
-            Leq(lookup "" coeff_map_h, Id(var_name))
-          with
-          | Error _ -> Leq(Id "0", Id(var_name)))
-        | fv :: fvs_ ->
-          let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace [] depth in
-          let sl = leq h_or_l fvs_ in
-          try
-            And(Leq(Mul(lookup fv coeff_map_h, FV fv), Mul(Id var_name, FV fv)), sl)
-          with
-          | Error _ -> And(Leq(Id "0", Mul(Id var_name, FV fv)), sl)) in
       (* 評価終了時の引数のプログラマ指定の所有権は0　または
       　　　　(評価終了時の引数のプログラマ指定の所有権がその時の所有権以下　かつ
       　　　　評価終了時の引数のプログラマ指定の所有範囲の下限がその時の所有範囲の下限以上　かつい
       　　　　評価終了時の引数のプログラマ指定の所有範囲の上限がその時の所有範囲の上限以下) *)
       let sl1, sl2 = 
       [Or(Eq(Id (string_of_float f2), Id "0."),
-       Leq(Id (string_of_float f2), make_own_var id fun_num [] depth));
-       Eq(make_own_var_be id fun_num "e" depth, Id (string_of_float f2));],
-      [geq "l" fvs;
-      leq "h" fvs;
+        Leq(Id (string_of_float f2), make_own_var id fun_num [] depth));
+        Eq(make_own_var_be id fun_num "e" depth, Id (string_of_float f2));],
+      [Geq(exp_to_smtlib el2, make_bound_exp fvs id "l" fun_num [] depth);
+      Leq(exp_to_smtlib eh2, make_bound_exp fvs id "h" fun_num [] depth);
       ]
       @ find_coeff "h" coeff_map_h 
       @ find_coeff "l" coeff_map_l in
