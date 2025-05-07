@@ -28,24 +28,24 @@ let rec print_z3result oc z3res =
 and print_z3result_sub oc def = 
   match def with
   | (id, _,Int i) ->
-    (output_string oc "(assert (! (= " ;
+    (output_string oc "(assert (= " ;
      output_string oc (id ^ " ");
      output_string oc (Z.to_string i);
-     output_string oc (") :named val" ^ (string_of_int !serial_num) ^ "))\n");
+     output_string oc ("))\n");
      serial_num := !serial_num + 1)
   | (id,_,Float f) ->
-    (output_string oc "(assert (! (= ";
+    (output_string oc "(assert (= ";
      output_string oc (id ^ " ");
      output_string oc (string_of_float f);
-     output_string oc (") :named val" ^ (string_of_int !serial_num) ^ "))\n");
+     output_string oc ("))\n");
      serial_num := !serial_num + 1)
   | (id,_,Div (f1,f2)) ->
-    (output_string oc "(assert (! (= ";
+    (output_string oc "(assert (= ";
      output_string oc (id ^ " (/ ");
      output_string oc (string_of_float f1);
      output_string oc " ";
      output_string oc (string_of_float f2);
-     output_string oc (")) :named val" ^ (string_of_int !serial_num) ^ "))\n");
+     output_string oc (")))\n");
      serial_num := !serial_num + 1)
 
 (* z3の結果から該当idのものを探して答えを出力する関数 *)

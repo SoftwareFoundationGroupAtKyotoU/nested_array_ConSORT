@@ -140,7 +140,7 @@ let main_fv file =
   let all_constrs = collect_program_own_constraints elaborate_program in 
   let oc = open_out "experiment/out_fv.smt2" in
 
-  output_string oc "(set-option :produce-unsat-cores true)\n";
+  (* output_string oc "(set-option :produce-unsat-cores true)\n"; *)
   
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   main_int_declare oc all_constrs n;
@@ -153,7 +153,7 @@ let main_fv file =
   (* 充足可能か調べる *)
   output_string oc "(check-sat)\n";
   output_string oc "(get-model)\n";
-  output_string oc "(get-unsat-core)\n";
+  (* output_string oc "(get-unsat-core)\n"; *)
   close_out oc
 
 let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num = 

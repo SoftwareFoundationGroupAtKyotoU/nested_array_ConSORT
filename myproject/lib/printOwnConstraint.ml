@@ -473,18 +473,18 @@ and print_smtlibs_sub oc num sl =
   let idxs = list_to_set (idx_of_smtlib sl) [] in
   let fvs = list_to_set ((fvs_of_smtlib sl)@idxs) [] in
   if fvs = [] then
-    (output_string oc "(assert (! ";
+    (output_string oc "(assert ";
     (* smtlibの制約部分の記述 *)
       print_smtlib oc sl true [] num; 
-      output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      output_string oc (")\n");
       serial_num := !serial_num + 1)
   else 
     (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
-    (output_string oc "(assert (! (forall (";
+    (output_string oc "(assert (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
       print_smtlib oc sl true [] num; 
-      output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      output_string oc ("))\n");
       serial_num := !serial_num + 1)
   and make_args fvs = 
   match fvs with
