@@ -1,5 +1,6 @@
 %{
 open Syntax
+open SmtlibSyntax
 %}
 
 // value
@@ -79,12 +80,49 @@ ID_Funtype: (* 関数の評価前後の引数名と型 *)
 | HASH x = ID COLON idtype = Ftype { (HashId(x), idtype) }
 
 Ftype: // プログラム内に記述する型
-// | LBRACE NU COLON TINT BAR smtlib RBRACE
-//   { FTInt($6) }
+| LBRACE NU COLON INT BAR sl=Smtlib RBRACE
+  { FTInt(sl) } 
 | inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA fl=FLOATV RPAREN
   { FTRef(inner_type, e1, e2, fl) }
 | INT { FTInt(VarPred) }
 | inner_type = Ftype REF { FTRef(inner_type, ENull, ENull, 0.) }
+
+Smtlib:
+| LPAREN sl1=Smtlib TOR sl2=Smtlib RPAREN
+  { Or(sl1, sl2) }
+| LPAREN sl1=Smtlib TAND sl2=Smtlib RPAREN
+  { And(sl1, sl2) } 
+| LPAREN TIMPLY sl1=Smtlib sl2=Smtlib RPAREN
+  { Imply(sl1, sl2) } 
+| LPAREN TNOT sl=Smtlib RPAREN
+  { Not(sl) } 
+| LPAREN sl1=Smtlib EQ sl2=Smtlib RPAREN
+  { Eq(sl1, sl2) } 
+| LPAREN sl1=Smtlib LT sl2=Smtlib RPAREN
+  { Lt(sl1, sl2) }  
+| LPAREN sl1=Smtlib GT sl2=Smtlib RPAREN
+  { Gt(sl1, sl2) } 
+| LPAREN sl1=Smtlib LEQ sl2=Smtlib RPAREN
+  { Leq(sl1, sl2) } 
+| LPAREN sl1=Smtlib GEQ sl2=Smtlib RPAREN
+  { Geq(sl1, sl2) } 
+| LPAREN sl1=Smtlib PLUS sl2=Smtlib RPAREN
+  { Add(sl1, sl2) } 
+| LPAREN sl1=Smtlib MINUS sl2=Smtlib RPAREN
+  { Sub(sl1, sl2) } 
+| LPAREN sl1=Smtlib STAR sl2=Smtlib RPAREN
+  { Mul(sl1, sl2) } 
+// | LPAREN DIV smtlib smtlib RPAREN
+//   { Div($3, $4) } 
+| TOP
+  { Id("true") }
+| NU
+  { Id("v") }
+| id=ID
+  { FV(id) }
+| i=INTV
+  { Id(Z.to_string i) }
+;
 
 Expr :
   | e=LetExpr{ e }
