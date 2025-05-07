@@ -202,9 +202,9 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
         @ 
        ( List.map
         (fun x -> 
-          Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
-          Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
-            make_bound_exp fvs id "h" fun_num branch_trace depth), x)))
+          Or(Eq(make_own_var id fun_num branch_trace (depth - 1), Id "0."), 
+          Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace (depth - 1),
+            make_bound_exp fvs id "h" fun_num branch_trace (depth - 1)), x)))
           sl_own),
       [Geq(make_bound_exp fvs id "l" fun_num branch_trace depth,
        make_bound_exp fvs id "l" fun_num branch_trace' depth);
@@ -212,9 +212,9 @@ let make_post_if_smtlib fvs id fun_num branch_trace depth branch =
         make_bound_exp fvs id "h" fun_num branch_trace' depth);]
         @ (List.map
       (fun x -> 
-        Or(Eq(make_own_var id fun_num branch_trace depth, Id "0."), 
-        Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace depth,
-          make_bound_exp fvs id "h" fun_num branch_trace depth),
+        Or(Eq(make_own_var id fun_num branch_trace (depth - 1), Id "0."), 
+        Or(Gt(make_bound_exp fvs id "l" fun_num branch_trace (depth - 1),
+          make_bound_exp fvs id "h" fun_num branch_trace (depth - 1)),
         Imply(And(idx_bound branch_trace, idx_bound branch_trace'),
         x))))  sl_range) in
   let sl_own, sl_range = make_post_if_smtlib_sub fvs depth in
@@ -1520,9 +1520,9 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
         Imply(
           And(make_idx_bound_smtlib id idx fvs fun_num [] depth,
             And(Geq(Id idx, exp_to_smtlib el2), Leq(Id idx, exp_to_smtlib eh2))), x)) sl4
-  in 
-  let sl1, sl2 = ref_id_after_eval_to_smtlibs_sub ftype fvs in
-  sl1 @ sl2 in
+    in 
+    let sl1, sl2 = ref_id_after_eval_to_smtlibs_sub ftype fvs in
+    sl1 @ sl2 in
   (* 評価後の関数仮引数のうち参照型である引数集合の制約を生成 *)
   let smtlibs_after_eval = List.concat (List.map ref_id_after_eval_to_smtlibs ref_ids) in
   (* 任意の変数の任意の位置における所有権が0以上1以下である制約を付加する関数 *)
