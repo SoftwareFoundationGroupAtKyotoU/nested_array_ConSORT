@@ -15,6 +15,7 @@ let () =
       while !continue do
         generate_constrs file_name !iter;
         let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_int.smt2 > experiment/result_int" in
+        (* let _ = Sys.command "/usr/bin/time -v z3 experiment/out_int.smt2 > experiment/result_int" in *)
         let ic = open_in "experiment/result_int" in
         let first_line = input_line ic in
         (if first_line = "unknown" then 
@@ -59,7 +60,14 @@ let () =
         flush stdout;
         iter := !iter + 1      
       done;
-      main_sat_ans file_name
+      (main_sat_ans file_name;
+      main_chc file_name;
+      let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
+      let ic = open_in "experiment/chc_result" in
+      (* 最初の行を読み取る *)
+      let first_line = input_line ic in
+      Printf.printf "refinement: %s\n" first_line;
+      flush stdout;)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
     | End_of_file -> Printf.printf "canceled"
     | _ -> 
