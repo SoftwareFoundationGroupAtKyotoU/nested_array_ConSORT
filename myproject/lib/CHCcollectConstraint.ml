@@ -66,7 +66,7 @@ let chc_collect_fdef fdef =
   let (id, _, ann, e) = fdef in
   (* 評価前型，評価後型，返り値型 *)
   let (ftid_fts1, ftid_fts2, ft) = ann in 
-  (* 最後に評価されうる式のリスト *)
+  (* 最後に評価されうる式とその式に至る条件のリスト *)
   let return_exp = ret_of_exp [] e in
   (* 関数型環境の更新 *)
   fn_env_chc := (id, (ftid_fts1, ftid_fts2, ft)) :: !fn_env_chc;
