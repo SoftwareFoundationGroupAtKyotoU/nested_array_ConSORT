@@ -72,7 +72,6 @@ type exp =
   | Assert of exp * exp
   | Deref of id
   | AppExp of id * exp list
-  | Nondet
   | Unit
   | ENull
   | ConstRandInt

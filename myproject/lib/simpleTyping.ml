@@ -25,7 +25,7 @@ let rec unify lis =
 let rec infer_simple_ty tyenv exp =
   match exp with
     Var x -> ([], lookup x !tyenv)
-  | ILit _ | Nondet -> ([], SInt)
+  | ILit _ | ConstRandInt -> ([], SInt)
   | BLit _ -> ([], SBool)
   | OrExp (exp1, exp2) | AndExp(exp1, exp2) -> 
     let (c1, ty1) = infer_simple_ty tyenv exp1 in

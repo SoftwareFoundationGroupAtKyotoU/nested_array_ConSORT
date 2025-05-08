@@ -7,7 +7,7 @@ open SmtlibSyntax
 %token <Z.t> INTV
 %token <float> FLOATV
 %token <Syntax.id> ID_NAME
-%token TRUE FALSE UNITV NONDET
+%token TRUE FALSE UNITV ConstRandInt
 
 // conditional
 %token IFNP IF THEN ELSE
@@ -188,7 +188,7 @@ AExpr :
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
   | FALSE { BLit false }
-  | NONDET { Nondet }
+  | ConstRandInt { ConstRandInt }
   | UNITV { Unit }
 
 AppExpr :

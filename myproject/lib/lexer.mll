@@ -49,7 +49,7 @@ rule main = parse
   | ":=" { Parser.ASSIGN }
   | "||" { Parser.OR }
   | "&&" { Parser.AND }
-  | "_" { Parser.NONDET }
+  | "_" { Parser.ConstRandInt }
   | "!" { Parser.NOT }
   | "->" { Parser.RARROW }
   | "=>" { Parser.TIMPLY }

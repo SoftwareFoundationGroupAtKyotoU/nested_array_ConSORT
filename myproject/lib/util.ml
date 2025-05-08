@@ -227,8 +227,8 @@ let rec print_exp exp =
   | BLit b ->
     print_string "BLit ";
     if b then print_string "true" else print_string "false"
-  | Nondet ->
-    print_string "Nondet"
+  | ConstRandInt ->
+    print_string "ConstRandInt"
   (* | EConstTrue ->
     print_string "true"
   | EConstFalse ->
@@ -238,8 +238,6 @@ let rec print_exp exp =
     print_string (x ^ "\"")
   | ENull ->
     print_string "ENull"
-  | ConstRandInt ->
-    print_string "_"
 and print_exps es =
   match es with
   | [] -> ()
@@ -393,9 +391,14 @@ let rec exp_to_smtlib exp =
     let s2 = exp_to_smtlib e2 in
     Div(s1, s2) *)
   | ILit i ->
-    if Z.geq i Z.zero then Id (sprintf "%s" (Z.to_string i)) else Id(sprintf "(-%s)" (Z.to_string i))
+    if Z.geq i Z.zero then 
+      Id (sprintf "%s" (Z.to_string i)) 
+    else 
+      Id(sprintf "(- %s)" (Z.to_string @@ Z.neg @@ i))
   | Var x -> FV x
-  | _ -> raise ElimError
+  | _ -> 
+    print_exp exp;
+    raise (Error "exp_to_smtlib error")
 
 (* smtlib制約をプログラム構文木に直す *)
 let rec smtlib_to_exp sl = 
@@ -420,7 +423,7 @@ let rec smtlib_to_exp sl =
       let len = String.length id in
       ILit (Z.of_string @@ String.sub id 1 (len - 2)))
   | FV x -> Var x
-  | _ -> raise ElimError
+  | _ -> raise (Error "smtlib_to_exp error")
 
 (* smtlib中の添え字を別の添え字にする *)
 let rec subst_idx sl subst_idx_lis = 
@@ -442,9 +445,9 @@ let rec subst_idx sl subst_idx_lis =
       Id (lookup id subst_idx_lis)
     with
     | _ -> 
-      raise ElimError)
+      raise (Error "subst_idx error"))
   | FV fv -> FV fv
-  | _ -> raise ElimError
+  | _ -> raise (Error "subst_idx error")
 
   (* 
   i_n -> i_fun_num_varname_b_or_e_nth *)
