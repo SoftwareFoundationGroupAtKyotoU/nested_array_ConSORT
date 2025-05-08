@@ -246,7 +246,7 @@ let main_chc file =
   let n = List.length fdefs in 
   infer_prog_simpleTy prog;
   (* 関数名，CHCの制約を表すデータ型，最後に評価されうる式の組 *)
-  let all_chcs = chc_collect_prog prog in 
+  let all_chcs = chc_collect_prog (elaborate_prog prog) in 
 
   let oc = open_out "experiment/out_chc.smt2" in
   output_string oc "(set-logic HORN)\n\n\n";
