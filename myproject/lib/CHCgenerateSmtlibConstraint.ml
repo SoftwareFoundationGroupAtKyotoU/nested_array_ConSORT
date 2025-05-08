@@ -563,7 +563,7 @@ let ics_to_smtlib ics fun_num =
         (* 条件節の条件を全て満たす　ならば　(最後に評価される参照の篩型　ならば　指定の返り値の篩型)  *)
         [Imply(cond_sl, Imply(Eq(FV "v", Id i), sl))] 
       | _ -> raise ConstrError)
-    with ElimError -> []
+    with Error _ -> []
   in
   (* 返り値に関する篩型の制約 *)
   let s3 = List.concat (List.map (g3 ft_r) e_rets) in
