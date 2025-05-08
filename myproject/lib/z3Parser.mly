@@ -18,7 +18,8 @@
 %%
 
 result:
-  SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN RPAREN { [] }
 ;
 
 defines:
