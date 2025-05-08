@@ -11,7 +11,7 @@
 %token TINT TREAL
 
 // structure
-%token SAT MODEL DEF LPAREN RPAREN EOF
+%token SAT DEF LPAREN RPAREN
 %token MINUS DIV UNDER
 %token O C D L H I
 
@@ -20,7 +20,8 @@
 %%
 
 result:
-  SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN RPAREN { [] }
 ;
 
 defines:
