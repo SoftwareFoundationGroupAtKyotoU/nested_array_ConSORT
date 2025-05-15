@@ -76,6 +76,14 @@ let () =
       Printf.printf "time: %fs\n" (end_time -. start_time))
   | [_; file_name; "print_program"] ->
     print_program file_name
+  | [_; file_name; "refinement"] ->
+    main_chc file_name;
+    let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
+    let ic = open_in "experiment/chc_result" in
+    (* 最初の行を読み取る *)
+    let first_line = input_line ic in
+    Printf.printf "refinement: %s\n" first_line;
+    flush stdout;
   | [_; file_name; iter] ->
     generate_constrs file_name (int_of_string iter)
   | _ -> Printf.eprintf "予期せぬエラーが発生しました"
