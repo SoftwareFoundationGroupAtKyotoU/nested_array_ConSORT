@@ -217,7 +217,7 @@ let rec main_chc_sub oc all_chcs n =
     ()
   else
     (let oc_r2 = open_in @@ "experiment/result" in
-    let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
+    (* let _ = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in *)
     close_in oc_r2;
     (* 
       id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
@@ -226,14 +226,14 @@ let rec main_chc_sub oc all_chcs n =
       ss: 篩型の制約 *)
     let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
     let args_own_sls = ownexp_to_ownchc varpred_count n in
-    let own_sls = collect_ownchc z3res n fvs in 
+    (* let own_sls = collect_ownchc z3res n fvs in  *)
 
     (* 制約をファイルに書き出し　assert部分 *)
     print_smtlibs oc sls true fvs n 0; 
     output_string oc "\n";
     print_smtlibs oc args_own_sls true fvs n 0; 
     output_string oc "\n";
-    print_smtlibs oc own_sls true fvs n 0; 
+    (* print_smtlibs oc own_sls true fvs n 0;  *)
     output_string oc "\n\n";
     main_chc_sub oc all_chcs (n-1))
 

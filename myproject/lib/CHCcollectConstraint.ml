@@ -27,10 +27,10 @@ let rec chc_collect_exp pos exp =
     let c1 = chc_collect_exp pos e1 in
     let c2 = chc_collect_exp (pos+1) e2 in
     CHCLetAddPtr(id1, id2, e1, pos) :: c1 @ c2
-  | LetAllocExp (id,e1,_,e2) ->
+  | LetAllocExp (id,e1,ty,e2) ->
     let c1 = chc_collect_exp pos e1 in
     let c2 = chc_collect_exp (pos+1) e2 in
-    CHCAlloc(id, e1, pos) :: c1 @ c2
+    CHCAlloc(id, e1, ty, pos) :: c1 @ c2
   | AssignInt (id,e1,e2) ->
     let c2 = chc_collect_exp (pos+1) e2 in
     CHCAssignInt(id, e1, pos) :: c2

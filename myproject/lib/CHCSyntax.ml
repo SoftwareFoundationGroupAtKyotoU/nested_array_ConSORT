@@ -8,18 +8,17 @@ let rec ifel_to_str ifel =
   | s :: ifel' -> "_" ^ s ^ ifel_to_str ifel'
 
 (* 篩型の環境
-変数名と古い型内で依存できる変数集合 *)
+変数名と篩型内で依存できる変数集合 *)
 let intpred_env : (id * id list) list ref = ref []
 
 (** AST with position information used for refienment inference *)
 type chc = 
   | CHCIf of exp * chc list * chc list * pos
   | CHCLetInt of id * exp * pos
-  | CHCLet of id * id * pos
+  (* | CHCLet of id * id * pos *)
   | CHCLetDeref of id * id * pos
   | CHCLetAddPtr of id * id * exp * pos
-  | CHCLetSubPtr of id * id * exp * pos
-  | CHCAlloc of id * exp * pos
+  | CHCAlloc of id * exp * simpleTy * pos
   | CHCAssignInt of id * exp * pos
   | CHCAssignRef of id * id * pos
   | CHCAlias of id * id * pos
@@ -42,15 +41,17 @@ List.iter
 (* id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト *)
 let print_declare_chc oc id_count fvs num =
 List.iter
-  (fun (id,(i,ifel)) ->
+  (fun (id,(pos,ifel,depth)) ->
      try 
        let fvs' = List.assoc id !intpred_env in
-       output_string oc (Format.sprintf "(declare-fun P%d_%s ( Int " num id);
+       output_string oc (Format.sprintf "(declare-fun P%d_%s ( " num id);
+       for _ = 1 to depth do output_string oc "Int " done;
        List.iter (fun _ -> output_string oc "Int ") fvs';
        output_string oc (") Bool)\n")
      with Not_found -> 
        output_string oc (Format.sprintf 
-       "(declare-fun P%d_%s_%d%s ( Int Int " num id i (ifel_to_str ifel ));
+       "(declare-fun P%d_%s_%d%s ( Int " num id pos (ifel_to_str ifel ));
+       for _ = 1 to depth do output_string oc "Int " done;
        List.iter (fun _ -> output_string oc "Int ") fvs;
        output_string oc ") Bool)\n"
      ) id_count
@@ -67,9 +68,10 @@ let print_declare_varpred oc varpred_count num =
           List.iter (fun _ -> output_string oc "Int ") fvs;
           output_string oc (") Bool)\n"))
         else ()
-      | PtrVarPred(num',id,be,_,fvs) -> 
+      | PtrVarPred(num',id,be,idx_list,fvs) -> 
         if num' = num then 
-          (output_string oc (Format.sprintf "(declare-fun P%d_%s_%s ( Int Int " num id be);
+          (output_string oc (Format.sprintf "(declare-fun P%d_%s_%s ( Int " num id be);
+        List.iter (fun _ -> output_string oc "Int ") idx_list;
         List.iter (fun _ -> output_string oc "Int ") fvs;
         output_string oc (") Bool)\n"))
         else ()
