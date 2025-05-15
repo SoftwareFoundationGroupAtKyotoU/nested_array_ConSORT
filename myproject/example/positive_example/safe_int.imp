@@ -1,5 +1,6 @@
 {
   let pp = alloc 10 : int ref in
+  pp := 0;
   let n = *pp in
   assert(n = 0);
   ()
