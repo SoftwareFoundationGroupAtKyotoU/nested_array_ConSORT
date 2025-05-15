@@ -1,0 +1,59 @@
+init(n, p) 
+[ <#n: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 3;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+
+
+easyMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d = easyMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+verify(s, q)
+[ <#s: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
+    <#s: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
+{
+  if s >= 1 then { 
+    let qq = *q in
+    let qqq = *qq in
+    assert(qqq - 2 > 0);
+    alias(qq = *q);
+    1
+  } else {
+    0
+  }
+}
+
+
+{
+  let kp = alloc 10 : int ref ref in
+  let ten = 10 in
+  let d = easyMatrix(ten, ten, kp) in
+  let d2 = verify(ten, kp) in
+  ()
+}
