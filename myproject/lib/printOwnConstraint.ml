@@ -227,15 +227,15 @@ let rec print_smtlib oc sl bool_id map num =
     output_string oc ")")
   | PtrPred (id,l,i_sl,ids) -> 
     (output_string oc ("(P" ^ (string_of_int num) ^ "_" ^ id ^ "_" ^ l ^ " ");
-     print_smtlib oc i_sl bool_id map num;
-     output_string oc " v";
+     List.iter (fun i -> print_smtlib oc i bool_id map num; output_string oc " ") i_sl;
+     output_string oc "v";
      List.iter
        (fun id -> 
           output_string oc (" " ^ id)) ids;
      output_string oc ")")
   | PtrVarPred (num',id,be,i_sl,ids) -> 
     (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id ^ "_" ^ be ^ " ");
-     print_smtlib oc i_sl bool_id map num;
+     List.iter (fun i -> print_smtlib oc i bool_id map num; output_string oc " ") i_sl;
      output_string oc " v";
      List.iter
        (fun id -> 
@@ -509,10 +509,8 @@ and fvs_of_smtlib sl =
     ids
   | IntVarPred (_,_,ids) ->
     ids
-  | PtrPred (_,_,s1,fvs) ->
-    "v" :: (fvs_of_smtlib s1) @ fvs 
-  | PtrVarPred (_,_,_,s1,fvs) ->
-    "v" :: (fvs_of_smtlib s1) @ fvs 
+  | PtrPred (_,_,s1,fvs) | PtrVarPred (_,_,_,s1,fvs) ->
+    "v" :: (List.concat @@ List.map fvs_of_smtlib s1) @ fvs 
   | VarPred ->
     []
   | True ->
