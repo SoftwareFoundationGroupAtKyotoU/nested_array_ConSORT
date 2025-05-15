@@ -1,0 +1,67 @@
+/*verify(o, s, q)
+[ <#o: int, #s: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
+    <#o: int, #s: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
+{
+  if s > 0 && o > 0 && o < s then { 
+    let qq = q + o in
+    let qqin = *qq in
+    let rr = qqin + o in
+    let rrin = *rr in
+    assert(rrin = 1);
+    alias(rr = qqin + o);
+    alias(qqin = *qq);
+    alias(qq = q + o);
+    1 
+  } else {
+    0
+  }
+}*/
+
+init(n, p) 
+[ <#n: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 0;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+
+
+easyMatrix(k, pp)
+[ <#k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#k: int, pp: int ref(0 , k- i_2 - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 then { 
+    let r = alloc k : int ref in
+    let d = init(k, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d = easyMatrix(m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+
+{
+  /*let p = alloc 10 : int ref ref in*/
+  /*let pp = alloc 10 : int ref in
+  let d = init(10, pp) in*/
+  /*let d = easyMatrix(10, p) in*/
+  let pp = alloc 10 : int ref in
+  /*pp := 1;
+  let v = *pp in
+  assert(1 = 0);*/
+  ()
+}
