@@ -20,8 +20,8 @@ type smtlib =
   (* 以下篩型用 *)
   | IntPred of id * id list (* 変数名，引数リスト *)
   | IntVarPred of int * id * id list (* 関数番号，変数名，引数リスト *)
-  | PtrPred of id * id * int * id list (* 変数名，分岐の文字列，配列の深さ，引数リスト *)
-  | PtrVarPred of int * id * id * int * id list (* 関数番号，変数名，分岐の文字列，配列の深さ，引数リスト *)
+  | PtrPred of id * id * smtlib list * id list (* 変数名，分岐の文字列，添え字リスト，引数リスト *)
+  | PtrVarPred of int * id * id * smtlib list * id list (* 関数番号，変数名，分岐の文字列，添え字リスト，引数リスト *)
   (* 篩型込みのポインタ，関数番号*変数名*b or e*添え字を表す変数*依存できる変数リスト *)
   | VarPred
   | Ands of smtlib list
