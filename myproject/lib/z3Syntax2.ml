@@ -7,7 +7,7 @@ type id = string
 type pos = string
 
 type value =
-  | Int   of int
+  | Int   of Z.t
   | Float of float
 
 (** Type to represent the ownership fumction of the form \[c_l * x + d_l, c_h * y +d_h \] |-> o *)

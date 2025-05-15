@@ -3,7 +3,7 @@
 %}
 
 // values
-%token <int> INT
+%token <Z.t> INT
 %token <float> FLOAT
 %token <string> ID
 
@@ -33,20 +33,20 @@ defines:
 
 define:
 | LPAREN DEF O i1=int UNDER id=id UNDER pos=pos UNDER i2=int LPAREN RPAREN TREAL v=value RPAREN 
-  { Own(i1, id, pos, i2, v) }
+  { Own(Z.to_int i1, id, pos, Z.to_int i2, v) }
 | LPAREN DEF C i1=int UNDER H id1=id UNDER id2=id UNDER pos=pos UNDER i2=int LPAREN RPAREN TINT v=value RPAREN 
-  { CHigh(i1, id1, id2, pos, i2, v) }
+  { CHigh(Z.to_int i1, id1, id2, pos,Z.to_int i2, v) }
 | LPAREN DEF C i1=int UNDER L id1=id UNDER id2=id UNDER pos=pos UNDER i2=int LPAREN RPAREN TINT v=value RPAREN 
-  { CLow(i1, id1, id2, pos, i2, v) }
+  { CLow(Z.to_int i1, id1, id2, pos,Z.to_int i2, v) }
 | LPAREN DEF D i1=int UNDER H id=id UNDER pos=pos UNDER i2=int LPAREN RPAREN TINT v=value RPAREN 
-  { DHigh(i1, id, pos, i2, v) }
+  { DHigh(Z.to_int i1, id, pos,Z.to_int i2, v) }
 | LPAREN DEF D i1=int UNDER L id=id UNDER pos=pos UNDER i2=int LPAREN RPAREN TINT v=value RPAREN 
-  { DLow(i1, id, pos, i2, v) }
+  { DLow(Z.to_int i1, id, pos, Z.to_int i2, v) }
 ;
 
 pos:
 | int 
-  { string_of_int $1 }
+  { Z.to_string $1 }
 | id
   { $1 }
 | pos UNDER id
@@ -57,7 +57,7 @@ value:
 | INT 
   { Int($1) }
 | LPAREN MINUS INT RPAREN
-  { Int(-$3) } 
+  { Int(Z.neg $3) } 
 | FLOAT
   { Float($1) }
 | LPAREN DIV FLOAT FLOAT RPAREN
