@@ -1,40 +1,74 @@
-copy_array(n, p, q)
-[ <#n: int, p: int ref(0, n- 1, 1.) , q: int ref(0, n- 1, 1.) > -> 
-  <#n: int, p: int ref(0, n- 1, 1.)  , q: int ref(0, n - 1, 1.) | int> ]
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
 {
-  if n <= 0 then {
+  if pin <= 0 then {
     1
   } else {
-    let x = *p in
-    q := x;
-    let p1 = p + 1 in
-    let q1 = q + 1 in
-    let m = n - 1 in
-    let d = copy_array(m, p1, q1) in
-    alias(q1 = q + 1);
-    alias(p1 = p + 1);
+    p := 0;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    alias(q=p+1);
     1
   }
 }
 
-copy_matrix(m, pp, qq)
-[ <#m: int,  
-pp: int ref(0, m - 1, 1.) ref(0, m- 1, 1.), qq: int ref(0, m - 1, 1.) ref(0, m- 1, 1.)> -> 
-  <#m: int, 
-pp: int ref(0, m - 1, 1.) ref(0, m- 1, 1.), qq: int ref(0, m - 1, 1.) ref(0, m- 1, 1.)| int> ]
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d = initMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+copy_array(n, ph, q)
+[ <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) > -> 
+  <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
 {
-  if m <= 0 then {
+  if n <= 0 then {
+    1
+  } else {
+    let x = *ph in
+    q := x;
+    let p1 = ph + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copy_array(m, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = ph + 1);
+    1
+  }
+}
+
+copy_matrix(n1, n2, pp, qq)
+[ <#n1: int, #n2: int,  
+pp: int ref(0, n1 - 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, 
+pp: int ref(0, n1 - 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+{
+  if n2 <= 0 then {
     1
   } else {
     let x = *pp in
-    let y = *qq in
-    let d = copy_array(m, x, y) in
+    let y = alloc n1 : int ref in
+    let d = copy_array(n1, x, y) in
     alias(x = *pp);
-    alias(y = *qq);
+    qq := y;
     let p1 = pp + 1 in
     let q1 = qq + 1 in
-    let l = m - 1 in
-    let d = copy_matrix(l, p1, q1) in
+    let l = n2 - 1 in
+    let d = copy_matrix(n1, l, p1, q1) in
     alias(q1 = qq + 1);
     alias(p1 = pp + 1);
     1
@@ -42,5 +76,14 @@ pp: int ref(0, m - 1, 1.) ref(0, m- 1, 1.), qq: int ref(0, m - 1, 1.) ref(0, m- 
 }
 
 {
-  0
+  let mat1 = alloc 10 : int ref ref in
+  let mat2 = alloc 10 : int ref ref in
+  let ten = 10 in
+  let d1 = initMatrix(ten, ten, mat1) in
+  let d2 = copy_matrix(ten, ten, mat1, mat2) in
+  let h = *mat2 in
+  let hin = *h in
+  assert(hin = ten);
+  alias(h = *mat2);
+  1
 }

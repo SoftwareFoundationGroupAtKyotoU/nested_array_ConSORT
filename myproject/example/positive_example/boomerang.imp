@@ -1,14 +1,14 @@
-init(n, p) 
-[ <#n: int, p: int ref (0, n - 1, 1.) > -> 
-  <#n: int, p: int ref (0, n - 1, 1.) | int> ]
+init(n, x, p) 
+[ <#n: int, x: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, x: int, p: int ref (0, n - 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
   } else {
-    p := 0;
+    p := x;
     let q = p + 1 in
     let m = n - 1 in
-    let d = init(m, q) in
+    let d = init(m, x, q) in
     alias(q=p+1);
     1
   }
@@ -22,7 +22,8 @@ easyMatrix(l, k, pp)
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
-    let d = init(l, r) in
+    let zero = 0 in
+    let d = init(l, zero, r) in
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
@@ -30,6 +31,21 @@ easyMatrix(l, k, pp)
     alias(q=pp+1);
     0
   } else {
+    0
+  }
+}
+
+boomerang(b1, b2, r)
+[ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b1 - 1, 1.)> ->
+    <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b1 - 1, 1.) | int> ]
+{
+  if b2 <= 0 || b1 <= 0 then {
+    0
+  } else {
+    let t = *r in
+    alias(t = *r);
+    let b3 = b2 - 1 in
+    let b4 = boomerang(b1, b3, r) in
     0
   }
 }
@@ -57,5 +73,7 @@ verify(s, s2, q)
   let ten = 10 in
   let d = easyMatrix(ten, ten, kp) in
   let d2 = verify(ten, ten, kp) in
+  let d3 = boomerang(ten, ten,  kp) in
+  let d4 = verify(ten, ten, kp) in
   ()
 }

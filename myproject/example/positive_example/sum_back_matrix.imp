@@ -32,22 +32,38 @@ initMatrix(l, k, pp)
   }
 }
 
+sum(plen, p) 
+[ <#plen: int, p: int ref(0, plen - 1, 1.)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 1.) | int> ]
+{
+  if plen <= 0 then {
+    0
+  } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    alias(q = p + 1);
+    y
+  }
+}
 
-trace(n1, n2, q)
-[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)> -> 
-  <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) | int> ]
 {
   if n1 > 0 && n2 > 0 then {
-    let qin = *q in
-    let m = n1 - n2 in
-    let qinShift = qin + m in
-    let s = *qinShift in
-    alias(qinShift = qin + m);
-    alias(qin = *q);
-    let q2 = q + 1 in
-    let m2 = n2 - 1 in
-    let y = trace(n1, m2, q2) in
-    alias(q2 = q + 1);
+    let m = n2 - 1 in
+    let q2 = q + m in
+    let q2in = *q2 in
+    let s = sum(n1, q2in) in
+    alias(q2in = *q2);
+    alias(q2 = q + m);
+    let q3 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q3) in
+    alias(q3 = q + 1);
     let z = s + y in
     z
   } else {
@@ -59,7 +75,7 @@ trace(n1, n2, q)
   let mat1 = alloc 10 : int ref ref in
   let ten = 10 in
   let d1 = initMatrix(ten, ten, mat1) in
-  let d2 = trace(ten, ten, mat1) in
+  let d2 = sumMatrix(ten, ten, mat1) in
   assert(d2 = 0);
   1
 }
