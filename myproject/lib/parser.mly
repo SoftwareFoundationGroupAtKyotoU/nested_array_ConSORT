@@ -190,6 +190,7 @@ AExpr :
   | FALSE { BLit false }
   | ConstRandInt { ConstRandInt }
   | UNITV { Unit }
+  | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }
 
 AppExpr :
   | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }
