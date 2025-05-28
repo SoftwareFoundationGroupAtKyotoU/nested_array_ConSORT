@@ -402,7 +402,10 @@ let rec emit_chc fvs fun_num ifel c =
     new_id id l ifel depth;
       (* 真　ならば　新たに定義された参照の述語
        どんな述語も許容？ *)
-    [Imply(Id "true", ptrpred id (make_idx_list depth) fvs ifel)]
+    if depth > 1 then
+      [Imply(Id "true", ptrpred id (make_idx_list depth) fvs ifel)]
+    else
+      [Imply(Eq(Id("v"), Id "0"),ptrpred id (make_idx_list depth) fvs ifel)]
   | CHCAssignInt (id,e,l) -> (*　let y := x; ... *)
     new_id id l ifel 1;
     (match e with
@@ -497,14 +500,44 @@ let rec emit_chc fvs fun_num ifel c =
       ]   
   | CHCAssert (e,_) -> (*　assert( e ); ... *)
     (* e中の自由変数 *)
-    let fvs = fvs_of_exp e in
-    if fvs = [] then
-      (* assert中の論理式eに自由変数が含まれていないならばeをそのまま制約に *)
-      [exp_to_smtlib e]
-    else
-      (* 
-      自由変数の篩型の述語　ならば　assert中の論理式e *)
-      [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs), exp_to_smtlib e)]
+    let fvs_e = fvs_of_exp e in
+    (try
+      if fvs_e = [] then
+        (* assert中の論理式eに自由変数が含まれていないならばeをそのまま制約に *)
+        [exp_to_smtlib e]
+      else
+        (* 
+        自由変数の篩型の述語　ならば　assert中の論理式e *)
+        [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs_e), exp_to_smtlib e)]
+    with 
+    | Error _ ->
+      match e with
+      | EqExp(AppExp(f, ids), ex) -> 
+        let rec subst ids depth =
+          (match ids with
+          | [] -> [] 
+          | hd :: tl -> 
+            match hd with
+            | Var x -> 
+              let vars = lookup x !intpred_env in
+              (IntPred(x, (Format.sprintf "i%n" depth) :: vars))
+            :: (subst tl (depth-1))
+            | _ -> 
+              (Eq(FV (Format.sprintf "i%n" depth), exp_to_smtlib hd))
+            :: (subst tl (depth-1))) in
+        (match ex with
+        | Var x -> 
+          let vars = lookup x !intpred_env in
+          [Imply(Ands(
+          (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
+         :: (subst ids (List.length ids))),
+          Eq(Id "v", IntPred(x, "v" :: vars)))]
+        | _ ->
+        [Imply(Ands(
+          (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
+         :: (subst ids (List.length ids))),
+          Eq(Id "v", exp_to_smtlib ex))])
+      | _ -> raise (Error "assert error"))
   | _ -> raise ConstrError
   (*追加分，あとで消す*)
 
