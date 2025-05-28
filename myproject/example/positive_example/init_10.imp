@@ -1,6 +1,6 @@
 init(n, p) 
-[ <#n: int, p: int ref> -> 
-  <#n: int, p: int ref | int> ]
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
@@ -14,18 +14,18 @@ init(n, p)
   }
 }
 
-verify(n, p)
-[ <#n: int, p: int ref> -> 
-  <#n: int, p: int ref | int> ]
+verify(m, p)
+[ <#m: int, p: int ref(0, m- 1, 1.)> -> 
+  <#m: int, p: int ref(0, m- 1, 1.) | int> ]
 {
-  if n <= 0 then {
+  if m <= 0 then {
     1
   } else {
     let y = *p in
     assert(y = 0);
     let q = p + 1 in
-    let m = n - 1 in
-    let d = verify(m, q) in
+    let l = m - 1 in
+    let d = verify(l, q) in
     alias(q=p+1);
     1
   }
