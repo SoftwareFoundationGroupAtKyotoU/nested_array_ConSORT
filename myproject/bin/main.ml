@@ -27,7 +27,7 @@ let () =
         else if first_line = "unsat" then
           (Printf.printf "iter: %d unsat " !iter;
           let end_time = Unix.gettimeofday () in
-          Printf.printf "time: %fs\nprogram error" (end_time -. start_time);
+          Printf.printf "time: %fs\nprogram error " (end_time -. start_time);
           continue := false
           )
         else if first_line = "sat" then
@@ -66,14 +66,15 @@ let () =
       let ic = open_in "experiment/chc_result" in
       (* 最初の行を読み取る *)
       let first_line = input_line ic in
-      Printf.printf "refinement: %s\n" first_line;
+      Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
       flush stdout;)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
     | End_of_file -> Printf.printf "canceled"
-    | _ -> 
+    (* | _ -> 
       Printf.eprintf "Error: %s\n" "unsat";
       let end_time = Unix.gettimeofday () in
-      Printf.printf "time: %fs\n" (end_time -. start_time))
+      Printf.printf "time: %fs\n" (end_time -. start_time) *)
+      )
   | [_; file_name; "print_program"] ->
     print_program file_name
   | [_; file_name; "refinement"] ->
