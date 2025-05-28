@@ -397,7 +397,6 @@ let rec exp_to_smtlib exp =
       Id(sprintf "(- %s)" (Z.to_string @@ Z.neg @@ i))
   | Var x -> FV x
   | _ -> 
-    print_exp exp;
     raise (Error "exp_to_smtlib error")
 
 (* smtlib制約をプログラム構文木に直す *)
@@ -462,8 +461,13 @@ let rec subst_idx_name exp template =
     else
       let number_str = String.sub v prefix_len (String.length v - prefix_len) in
       let is_digit c = '0' <= c && c <= '9' in
+      let string_for_all f s =
+        let rec aux i =
+          i >= String.length s || (f s.[i] && aux (i + 1))
+        in
+        aux 0 in
       if number_str = "" then exp
-      else if String.for_all is_digit number_str then
+      else if string_for_all is_digit number_str then
         Var (template (int_of_string number_str))
       else exp
   | PlusExp (e1, e2) ->
