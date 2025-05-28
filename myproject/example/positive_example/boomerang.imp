@@ -36,16 +36,20 @@ easyMatrix(l, k, pp)
 }
 
 boomerang(b1, b2, r)
-[ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b1 - 1, 1.)> ->
-    <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b1 - 1, 1.) | int> ]
+[ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.)> ->
+    <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
 {
-  if b2 <= 0 || b1 <= 0 then {
-    0
-  } else {
+  if b2 > 0 && b1 > 0 then {
     let t = *r in
+    let uu = 1 in
+    let f = init(b1, uu, t) in
     alias(t = *r);
     let b3 = b2 - 1 in
-    let b4 = boomerang(b1, b3, r) in
+    let t2 = r+ 1 in
+    let b4 = boomerang(b1, b3, t2) in
+    alias(t2 = r+ 1);
+    0
+  } else {
     0
   }
 }
@@ -54,13 +58,8 @@ verify(s, s2, q)
 [ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
     <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
 {
-  if s >= 1 && s2 >= 1 && s2 < s then { 
-    let qa = q + s2 in
-    let qq = *qa in
-    let qqq = *qq in
-    assert(qqq = 0);
-    alias(qq = *qa);
-    alias(qa = q + s2);
+  if s >= 0 && s2 >= 0 && s2 < s then { 
+    assert(q(s2, 0) = 0);
     1
   } else {
     0
@@ -71,9 +70,11 @@ verify(s, s2, q)
 {
   let kp = alloc 10 : int ref ref in
   let ten = 10 in
+  let zero = 0 in
+  let one = 1 in
   let d = easyMatrix(ten, ten, kp) in
-  let d2 = verify(ten, ten, kp) in
+  let d2 = verify(ten, zero, kp) in
   let d3 = boomerang(ten, ten,  kp) in
-  let d4 = verify(ten, ten, kp) in
+  let d4 = verify(ten, zero, kp) in
   ()
 }
