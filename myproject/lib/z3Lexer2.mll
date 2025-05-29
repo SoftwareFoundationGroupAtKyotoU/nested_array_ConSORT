@@ -16,12 +16,12 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline { next_line lexbuf; read lexbuf }
-  | int { let i = Z.of_string @@ Lexing.lexeme lexbuf in  INT i }
-  | float { let f = float_of_string @@ Lexing.lexeme lexbuf in FLOAT f }
   | "sat" { SAT }
   | "define-fun" { DEF }
   | "Real" { TREAL }
   | "Int" { TINT }
+  | "eq0" { EQ0 }
+  | "non0" { NON0 }
   | "o_" { O }
   | "c_" { C }
   | "d_" { D }
@@ -33,6 +33,8 @@ rule read =
   | '-' { MINUS }
   | '/' { DIV }
   | '_' { UNDER }
+  | int { let i = Z.of_string @@ Lexing.lexeme lexbuf in  INT i }
+  | float { let f = float_of_string @@ Lexing.lexeme lexbuf in FLOAT f }
   | id { ID (Lexing.lexeme lexbuf) }
   (* | eof { EOF } *)
   | _ { failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }
