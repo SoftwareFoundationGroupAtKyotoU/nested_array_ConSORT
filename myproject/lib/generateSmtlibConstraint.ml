@@ -1358,7 +1358,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
   var_locations := 
   List.map (fun id -> 
     let simple_ty = lookup id ty_env in
-    (id, (0, [], simple_ty))) ref_ids;
+    (id, (1, [], simple_ty))) ref_ids;
   (* smtlibで関数宣言するために必要な情報を初期化 *)
   varown_count := [];
   (* 関数開始時の制約を生成する関数，id:変数名 *)
