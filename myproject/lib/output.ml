@@ -195,13 +195,19 @@ let rec main_chc_sub_declare oc all_chcs n =
 if n < 0 then 
   ()
 else
-  (
+  (let oc_r2 = open_in "experiment/result" in
+  let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
+  close_in oc_r2;
   (* 
   id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
   varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
   fvs: 自由整数変数(#付きの整数引数)
   ss: 篩型の制約 *)
   let (id_count, varpred_count, fvs, _) = all_cs_to_smtlib_chc all_chcs n in
+  (* 所有権の基本的な制約，所有範囲の範囲内で篩型が満たされるという制約 *)
+  let args_own_sls = ownexp_to_ownchc varpred_count n in
+  (*  *)
+  let own_sls = collect_ownchc z3res n fvs in 
 
   (* 制約をファイルに書き出し　daclare-fun部分 
   intpred_env:篩型の環境 *)
@@ -217,7 +223,7 @@ let rec main_chc_sub oc all_chcs n =
     ()
   else
     (let oc_r2 = open_in @@ "experiment/result" in
-    (* let _ = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in *)
+    let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
     close_in oc_r2;
     (* 
       id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
@@ -226,14 +232,14 @@ let rec main_chc_sub oc all_chcs n =
       ss: 篩型の制約 *)
     let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
     let args_own_sls = ownexp_to_ownchc varpred_count n in
-    (* let own_sls = collect_ownchc z3res n fvs in  *)
+    let own_sls = collect_ownchc z3res n fvs in 
 
     (* 制約をファイルに書き出し　assert部分 *)
     print_smtlibs oc sls true fvs n 0; 
     output_string oc "\n";
     print_smtlibs oc args_own_sls true fvs n 0; 
     output_string oc "\n";
-    (* print_smtlibs oc own_sls true fvs n 0;  *)
+    print_smtlibs oc own_sls true fvs n 0; 
     output_string oc "\n\n";
     main_chc_sub oc all_chcs (n-1))
 
