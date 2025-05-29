@@ -105,27 +105,27 @@ let rec emit_chc fvs fun_num ifel c =
     (* if評価前の変数名リスト *)
     let ids_pre = find_id_count ifel !id_count_chc in 
     (* ifの分岐を考慮しながらid_count_chcの更新 *)
-    List.iter (fun (id, depth) -> new_id id pos ("if" :: ifel) depth; new_id id pos ("el" :: ifel) depth) ids_pre;
+    List.iter (fun (id, depth) -> new_id id pos ("then" :: ifel) depth; new_id id pos ("else" :: ifel) depth) ids_pre;
     (* if節前ならばthen節，if節前ならばelse節という所有権状態の制約？ *)
     let ss_pre = 
       List.concat (List.map 
         (fun (id, depth) -> 
           let idx_list = make_idx_list depth in
-          [Imply(ptrpred id idx_list fvs ifel, ptrpred id idx_list fvs ("if" :: ifel));
-           Imply(ptrpred id idx_list fvs ifel, ptrpred id idx_list fvs ("el" :: ifel))]
+          [Imply(ptrpred id idx_list fvs ifel, ptrpred id idx_list fvs ("then" :: ifel));
+           Imply(ptrpred id idx_list fvs ifel, ptrpred id idx_list fvs ("else" :: ifel))]
         ) ids_pre) in
     (* then節側の制約をsmtlibが読める制約の形に直す *)
-    let ss1 = List.concat (List.map (emit_chc fvs fun_num ("if" :: ifel)) cs1) in
+    let ss1 = List.concat (List.map (emit_chc fvs fun_num ("then" :: ifel)) cs1) in
     (* 条件式が成り立つならばthen節の制約が成り立つ，という形に変更 *)
     let ss1' = List.map (fun s -> Imply(exp_to_smtlib e, s)) ss1 in
     (* else節側の制約をsmtlibが読める制約の形に直す *)
-    let ss2 = List.concat (List.map (emit_chc fvs fun_num ("el" :: ifel)) cs2) in
+    let ss2 = List.concat (List.map (emit_chc fvs fun_num ("else" :: ifel)) cs2) in
     (* 条件式が成り立たないならばelse節の制約が成り立つ，という形に変更 *)
     let ss2' = List.map (fun s -> Imply(Not(exp_to_smtlib e), s)) ss2 in
     (* then評価後の参照変数リスト *)
-    let ids_post_if = find_id_count ("if" :: ifel) !id_count_chc in
+    let ids_post_if = find_id_count ("then" :: ifel) !id_count_chc in
     (* else評価後の参照変数リスト *)
-    let ids_post_el = find_id_count ("el" :: ifel) !id_count_chc in
+    let ids_post_el = find_id_count ("else" :: ifel) !id_count_chc in
     (* then節，else節評価後の変数名のリストを結合 *)
     let ids_post = union_list ids_post_if ids_post_el in
     (* 変数名のリストをもとにif式評価後のid_count_chcの更新（プログラムを表す位置の変化を反映） *)
@@ -137,7 +137,7 @@ let rec emit_chc fvs fun_num ifel c =
         (List.map 
           (fun (id, depth) -> 
             let idx_list = make_idx_list depth in
-            Imply(ptrpred id idx_list fvs ("if" :: ifel), ptrpred id idx_list fvs ifel)
+            Imply(ptrpred id idx_list fvs ("then" :: ifel), ptrpred id idx_list fvs ifel)
           ) ids_post_if) in
     (* 条件節が成り立たないならば(else節ならば，if節前)という制約リスト？ *)
     let ss_post_el = 
@@ -146,7 +146,7 @@ let rec emit_chc fvs fun_num ifel c =
         (List.map 
           (fun (id, depth) -> 
             let idx_list = make_idx_list depth in
-            Imply(ptrpred id idx_list fvs ("el" :: ifel), ptrpred id idx_list fvs ifel)
+            Imply(ptrpred id idx_list fvs ("else" :: ifel), ptrpred id idx_list fvs ifel)
           ) ids_post_el) in
     (* 制約の結合 *)
     ss_pre @ ss1' @ ss2' @ ss_post_if @ ss_post_el
