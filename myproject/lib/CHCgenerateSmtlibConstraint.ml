@@ -393,10 +393,13 @@ let rec emit_chc fvs fun_num ifel c =
   | CHCLetDeref (id1,id2,pos) -> (*　let id1 = *id2 in ... *)
     let depth = lookup_depth id2 !id_count_chc in
     new_id id1 pos ifel (depth-1);
+    new_id id2 pos ifel depth;
       (* 真　ならば　新たに定義された参照の述語
       どんな述語も許容？ *)
-    [Imply(ptrpred id2 ((Id "0")::(make_idx_list (depth-1))) fvs ifel, 
-      ptrpred id1 (make_idx_list (depth-1)) fvs ifel)]
+    [Imply(ptrpred_p id2 ((Id "0")::(make_idx_list (depth-1))) fvs ifel, 
+      ptrpred id1 (make_idx_list (depth-1)) fvs ifel);
+    Imply(ptrpred_p id2 (make_idx_list depth) fvs ifel,
+      ptrpred id2 (make_idx_list depth) fvs ifel)]
   | CHCAlloc (id,_,simplety,l) -> (*　let id = alloc e in ... *)
     let depth = ref_depth simplety in
     new_id id l ifel depth;
@@ -445,10 +448,12 @@ let rec emit_chc fvs fun_num ifel c =
   | CHCAssignRef (id1, id2, pos) -> (* id1 := id2(参照);... *)
     let depth = lookup_depth id1 !id_count_chc in
     new_id id1 pos ifel depth;
+    new_id id2 pos ifel (depth-1);
     let outer_idx = FV (Format.sprintf "i%n" depth) in 
-    [Imply(And(Imply(Eq((outer_idx), (Id "0")), ptrpred id2 (make_idx_list (depth-1)) fvs ifel), 
+    [Imply(And(Imply(Eq((outer_idx), (Id "0")), ptrpred_p id2 (make_idx_list (depth-1)) fvs ifel), 
       Imply(Not(Eq((outer_idx), (Id "0"))), ptrpred_p id1 (make_idx_list depth) fvs ifel)),
-    ptrpred id1 (make_idx_list depth) fvs ifel)]
+    ptrpred id1 (make_idx_list depth) fvs ifel);
+    Imply((ptrpred_p id2 (make_idx_list (depth-1)) fvs ifel),ptrpred id2 (make_idx_list (depth-1)) fvs ifel)]
   | CHCAlias (id1,id2,pos) -> (*　alias(x = y); ... *)
     let depth = lookup_depth id1 !id_count_chc in
     new_id id1 pos ifel depth; new_id id2 pos ifel depth;
