@@ -25,8 +25,8 @@ rule read =
   | "o_" { O }
   | "c_" { C }
   | "d_" { D }
-  | "l_" { L }
-  | "h_" { H }
+  | "_l_" { L }
+  | "_h_" { H }
   | "i_" { I }
   | '(' { LPAREN }
   | ')' { RPAREN }
