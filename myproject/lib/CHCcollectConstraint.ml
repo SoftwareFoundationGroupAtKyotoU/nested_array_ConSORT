@@ -47,6 +47,10 @@ let rec chc_collect_exp pos exp =
   | Assert (e1,e2) ->
     let c2 = chc_collect_exp (pos+1) e2 in
     CHCAssert(e1, pos) :: c2
+  | Assume (e1,e2) ->
+    let c1 = chc_collect_exp pos e1 in
+    let c2 = chc_collect_exp pos e2 in
+    CHCAssume(e1, c2, pos) :: c1
   | Seq (e1,e2) ->
     let c1 = chc_collect_exp pos e1 in
     let c2 = chc_collect_exp (pos+1) e2 in

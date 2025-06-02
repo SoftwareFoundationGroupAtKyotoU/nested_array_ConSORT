@@ -543,6 +543,11 @@ let rec emit_chc fvs fun_num ifel c =
          :: (subst ids (List.length ids))),
           Eq(Id "v", exp_to_smtlib ex))])
       | _ -> raise (Error "assert error"))
+    | CHCAssume(e, cs, _) ->
+      let ss = List.concat (List.map (emit_chc fvs fun_num ifel) cs) in
+      (* 条件式が成り立つならば残りの制約が成り立つ，という形に変更 *)
+      let ss' = List.map (fun s -> Imply(exp_to_smtlib e, s)) ss in
+      ss'
   | _ -> raise ConstrError
   (*追加分，あとで消す*)
 

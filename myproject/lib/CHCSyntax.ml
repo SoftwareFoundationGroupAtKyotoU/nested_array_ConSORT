@@ -25,6 +25,7 @@ type chc =
   | CHCAliasDeref of id * id * pos
   | CHCAliasAddPtr of id * id * exp * pos
   | CHCAssert of exp * pos
+  | CHCAssume of exp * chc list * pos
   | CHCApp of id * exp list * pos
 
 (* intpred_env:篩型の環境
