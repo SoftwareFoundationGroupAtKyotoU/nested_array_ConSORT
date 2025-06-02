@@ -84,6 +84,12 @@ let rec print_exp exp =
       print_string ", ";
       print_exp e2;
       print_string ")")
+  | Assume (e1,e2) ->
+    (print_string ("Assume(");
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
   | AssignInt (id,e1,e2) ->
     (print_string ("AssignInt( \"" ^ id ^ "\", ");
       print_exp e1;
@@ -621,6 +627,8 @@ let rec exp_subst subst exp =
     AliasAddPtr(id1, id2, i, exp_subst subst e)
   | Assert (e1,e2) ->
     Assert(exp_subst subst e1, exp_subst subst e2)
+  | Assume (e1,e2) ->
+    Assume(exp_subst subst e1, exp_subst subst e2)
   | Seq (e1,e2) ->
     Seq(exp_subst subst e1, exp_subst subst e2)
   | AppExp (id,es) ->
@@ -721,7 +729,7 @@ let rec ret_of_exp cond exp =
   match exp with
   | LetIntExp (_,_,e) | LetDerefExp (_,_,e) | LetAllocExp (_,_,_,e) | Assign (_,_,e) 
   | AssignInt (_,_,e) | LetAddPtrExp (_,_,_,e) | AssignPtr (_,_,e) | AliasAddPtr (_,_,_,e)
-  | AliasDeref (_,_,e) | Assert (_,e) | Seq (_,e) -> 
+  | AliasDeref (_,_,e) | Assert (_,e) | Assume (_,e) | Seq (_,e) -> 
     ret_of_exp cond e
   | IfExp (e1,e2,e3) ->
     (* 条件節を場合わけ *)
