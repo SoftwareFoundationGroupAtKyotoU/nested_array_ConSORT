@@ -1,0 +1,23 @@
+init(n, p) 
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+{
+  let p = alloc 10 : int ref in
+  let m = 10 in
+  let d = init(m, p) in
+  assert(p(1) = 2);
+  ()
+}

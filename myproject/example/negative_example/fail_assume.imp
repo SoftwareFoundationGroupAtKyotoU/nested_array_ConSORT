@@ -1,0 +1,13 @@
+verify(x)
+[<x:int> -> <x:int|int>]
+{
+    assume(x > 0);
+    assert(x < 0);
+    1
+}
+
+{
+    let x = 1 in
+    let d = verify(x) in
+    ()
+}
