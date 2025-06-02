@@ -24,6 +24,9 @@ open SmtlibSyntax
 // aseert expression
 %token ASSERT
 
+// assume expression
+%token ASSUME
+
 // binary operator
 %token OR AND PLUS MINUS LT GT LEQ GEQ NEQ
 %token STAR // multipul and pointer dereference
@@ -158,6 +161,7 @@ InsertSEMIExpr :
   | x=ID ASSIGN e1=Expr SEMI e2=Expr { Assign(x, e1, e2) }
   | ALIAS LPAREN e1=ID EQ e2=Expr RPAREN SEMI e3=Expr { Alias(Var e1, e2, e3) }
   | ASSERT LPAREN e1=Expr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
+  | ASSUME LPAREN e1=Expr RPAREN SEMI e2=Expr { Assume(e1, e2) } 
   | e1=Expr SEMI e2=Expr { Seq(e1, e2) }
 
 ORExpr :

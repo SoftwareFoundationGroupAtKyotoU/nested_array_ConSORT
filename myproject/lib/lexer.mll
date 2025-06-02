@@ -3,6 +3,7 @@
         (*予約語*)
         ("alias", Parser.ALIAS);
         ("assert", Parser.ASSERT);
+        ("assume", Parser.ASSUME);
         ("else", Parser.ELSE);
         ("ifnp", Parser.IFNP);
         ("if", Parser.IF);
