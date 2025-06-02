@@ -56,6 +56,9 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     c1 @ c2
+  | Assume (_,exp2) ->
+    let c1 = collect_exp env fun_name args position exp2 in
+    c1
   | Seq (exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in

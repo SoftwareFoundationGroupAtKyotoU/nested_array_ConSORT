@@ -36,6 +36,7 @@ let rec elaborate_exp fun_name exp =
   | IfnpExp (id,exp1,exp2) -> IfnpExp(id,  elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | LetAllocExp (id,exp1,simpleTy,exp2) -> LetAllocExp(id, elaborate_exp fun_name exp1, simpleTy, elaborate_exp fun_name exp2)
   | Assert (exp1,exp2) -> Assert(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
+  | Assume (exp1,exp2) -> Assume(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | Seq (exp1,exp2) -> Seq(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | AppExp (id,es) -> AppExp(id, List.map (elaborate_exp fun_name) es)
   | EqExp (exp1,exp2) -> EqExp(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)

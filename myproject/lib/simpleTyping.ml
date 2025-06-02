@@ -89,11 +89,15 @@ let rec infer_simple_ty tyenv exp =
     let (c1,ty1) = infer_simple_ty tyenv exp1 in
     let (c2,ty2) = infer_simple_ty tyenv exp2 in
     let c3 = unify((ty1, SUnit) :: c1 @ c2) in (c3, ty2)
-  | Assert(exp1, exp2) ->
+  | Assert(_, exp2) ->
     (* let (c1,ty1) = infer_simple_ty tyenv exp1 in *)
     let (c2,ty2) = infer_simple_ty tyenv exp2 in
     (* let c3 = unify((ty1, SBool) :: c1 @ c2) in (c3, ty2) *)
     (c2, ty2)
+  | Assume(exp1, exp2) ->
+    let (c1,ty1) = infer_simple_ty tyenv exp1 in
+    let (c2,ty2) = infer_simple_ty tyenv exp2 in
+    let c3 = unify((ty1, SBool) :: c1 @ c2) in (c3, ty2)
   | Deref id ->
     let ty = lookup id !tyenv in
     (match ty with

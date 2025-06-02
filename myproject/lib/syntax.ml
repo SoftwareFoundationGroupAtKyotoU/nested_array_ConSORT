@@ -70,6 +70,7 @@ type exp =
   | Alias of exp * exp * exp
   | Seq of exp * exp
   | Assert of exp * exp
+  | Assume of exp * exp
   | Deref of id
   | AppExp of id * exp list
   | Unit
