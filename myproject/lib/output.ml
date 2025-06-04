@@ -207,7 +207,7 @@ else
   (* 所有権の基本的な制約，所有範囲の範囲内で篩型が満たされるという制約 *)
   let args_own_sls = ownexp_to_ownchc varpred_count n in
   (*  *)
-  let own_sls = collect_ownchc z3res n fvs in 
+  (* let own_sls = collect_ownchc z3res n fvs in  *)
 
   (* 制約をファイルに書き出し　daclare-fun部分 
   intpred_env:篩型の環境 *)
@@ -232,7 +232,8 @@ let rec main_chc_sub oc all_chcs n =
       ss: 篩型の制約 *)
     let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
     let args_own_sls = ownexp_to_ownchc varpred_count n in
-    let own_sls = collect_ownchc z3res n fvs in 
+    let (_, chcs, _) = (List.nth all_chcs n) in
+    let own_sls = List.concat_map (fun x -> outer_constrs z3res n fvs x) chcs in 
 
     (* 制約をファイルに書き出し　assert部分 *)
     print_smtlibs oc sls true fvs n 0; 
