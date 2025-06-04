@@ -763,15 +763,20 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     xの所有範囲の上限はe-1 *)
     let depth = ref_depth (lookup id ty_env) in
     make_mkarray_smtlib fvs id fun_num branch_trace depth e
-  | CAssignInt (id,_) -> 
+  | CAssignInt (id,pos) -> 
     (* x := num; ... *)
     (* 
     xの所有権は1;
     xの所有範囲の下限は0以下;
     xの所有範囲の上限は0以上 *)
-    [Eq(make_own_var id fun_num branch_trace 1, Id "1");
-     Leq(make_bound_exp fvs id "_l" fun_num branch_trace 1, Id "0"); 
-     Geq(make_bound_exp fvs id "_h" fun_num branch_trace 1, Id "0")]
+    let simpleTy = lookup id ty_env in
+    new_id id pos branch_trace simpleTy;
+    [Eq(make_pre_own_var id fun_num branch_trace 1, Id "1");
+     Leq(make_pre_bound_exp fvs id "_l" fun_num branch_trace 1, Id "0"); 
+     Geq(make_pre_bound_exp fvs id "_h" fun_num branch_trace 1, Id "0");
+     Eq(make_pre_own_var id fun_num branch_trace 1, make_own_var id fun_num branch_trace 1);
+     Eq(make_pre_bound_exp fvs id "_l" fun_num branch_trace 1, make_bound_exp fvs id "_l" fun_num branch_trace 1);
+     Eq(make_pre_bound_exp fvs id "_h" fun_num branch_trace 1, make_bound_exp fvs id "_h" fun_num branch_trace 1)]
   | CAssignRef (id1, id2, pos) -> 
     (* id1 := id2; ... *)
     let id1_eq0 = id1 ^ "_eq0" in
