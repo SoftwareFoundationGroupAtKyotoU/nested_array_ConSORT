@@ -503,18 +503,11 @@ and fvs_of_smtlib sl =
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
   | FV fv -> 
     [fv]
-  | Id _ -> 
-    []
-  | IntPred (_,ids) ->
-    ids
-  | IntVarPred (_,_,ids) ->
+  | IntPred (_,ids) | IntVarPred (_,_,ids) ->
     ids
   | PtrPred (_,_,s1,fvs) | PtrVarPred (_,_,_,s1,fvs) ->
     "v" :: (List.concat @@ List.map fvs_of_smtlib s1) @ fvs 
-  | VarPred ->
-    []
-  | True ->
-    []
+  | VarPred | True | Id _-> []
   | Ands ss ->
     List.concat (List.map fvs_of_smtlib ss)
 
