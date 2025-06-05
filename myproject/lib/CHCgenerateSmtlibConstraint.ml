@@ -517,7 +517,8 @@ let rec emit_chc fvs fun_num ifel c =
     with 
     | Error _ ->
       match e with
-      | EqExp(AppExp(f, ids), ex) -> 
+      (* | _-> print_exp e ; raise (Error "assert error") *)
+      | EqExp(DerefBracketExp(f, ids), ex) -> 
         let rec subst ids depth =
           (match ids with
           | [] -> [] 
@@ -542,7 +543,8 @@ let rec emit_chc fvs fun_num ifel c =
           (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
          :: (subst ids (List.length ids))),
           Eq(Id "v", exp_to_smtlib ex))])
-      | _ -> raise (Error "assert error"))
+      | _ -> raise (Error "assert error")
+      )
     | CHCAssume(e, cs, _) ->
       let ss = List.concat (List.map (emit_chc fvs fun_num ifel) cs) in
       (* 条件式が成り立つならば残りの制約が成り立つ，という形に変更 *)

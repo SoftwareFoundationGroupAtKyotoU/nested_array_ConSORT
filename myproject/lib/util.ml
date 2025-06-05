@@ -244,6 +244,10 @@ let rec print_exp exp =
     print_string (x ^ "\"")
   | ENull ->
     print_string "ENull"
+  | DerefBracketExp(id, es) ->
+    (print_string ("DerefBracketExp( \"" ^ id ^ "\", [");
+      print_exps es;
+      print_string "])") 
 and print_exps es =
   match es with
   | [] -> ()

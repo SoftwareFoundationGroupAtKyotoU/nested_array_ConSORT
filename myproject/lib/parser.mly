@@ -127,6 +127,10 @@ Smtlib:
   { Id(Z.to_string i) }
 ;
 
+Brackets :
+  | LBRACKET e=Expr RBRACKET { [e] }
+  | LBRACKET e=Expr RBRACKET b=Brackets {e :: b}
+
 Expr :
   | e=LetExpr{ e }
   | e=IfExpr { e }
@@ -160,8 +164,8 @@ MultExpr :
 InsertSEMIExpr :
   | x=ID ASSIGN e1=Expr SEMI e2=Expr { Assign(x, e1, e2) }
   | ALIAS LPAREN e1=ID EQ e2=Expr RPAREN SEMI e3=Expr { Alias(Var e1, e2, e3) }
-  | ASSERT LPAREN e1=Expr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
-  | ASSUME LPAREN e1=Expr RPAREN SEMI e2=Expr { Assume(e1, e2) } 
+  | ASSERT LPAREN e1=CompareExpr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
+  | ASSUME LPAREN e1=CompareExpr RPAREN SEMI e2=Expr { Assume(e1, e2) } 
   | e1=Expr SEMI e2=Expr { Seq(e1, e2) }
 
 ORExpr :
@@ -194,7 +198,7 @@ AExpr :
   | FALSE { BLit false }
   | ConstRandInt { ConstRandInt }
   | UNITV { Unit }
-  | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }
+  | id=ID ids=Brackets { DerefBracketExp(id, ids) }
 
 AppExpr :
   | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }

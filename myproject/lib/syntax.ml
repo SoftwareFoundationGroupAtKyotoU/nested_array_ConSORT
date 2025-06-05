@@ -72,6 +72,7 @@ type exp =
   | Assert of exp * exp
   | Assume of exp * exp
   | Deref of id
+  | DerefBracketExp of id * exp list (* id [n]...で配列のn番目にアクセス*)
   | AppExp of id * exp list
   | Unit
   | ENull
