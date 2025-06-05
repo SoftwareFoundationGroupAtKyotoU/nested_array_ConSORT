@@ -196,7 +196,7 @@ if n < 0 then
   ()
 else
   (let oc_r2 = open_in "experiment/result" in
-  let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
+  (* let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in *)
   close_in oc_r2;
   (* 
   id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
@@ -205,7 +205,7 @@ else
   ss: 篩型の制約 *)
   let (id_count, varpred_count, fvs, _) = all_cs_to_smtlib_chc all_chcs n in
   (* 所有権の基本的な制約，所有範囲の範囲内で篩型が満たされるという制約 *)
-  let args_own_sls = ownexp_to_ownchc varpred_count n in
+  (* let args_own_sls = ownexp_to_ownchc varpred_count n in *)
   (*  *)
   (* let own_sls = collect_ownchc z3res n fvs in  *)
 
