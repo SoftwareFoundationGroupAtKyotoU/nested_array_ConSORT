@@ -5,7 +5,6 @@ open Syntax
 open SmtlibSyntax
 open Util
 open PrintOwnConstraint
-open OwnConstraintSyntax
 open CHCSyntax
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
