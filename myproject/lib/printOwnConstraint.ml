@@ -118,6 +118,21 @@ let rec list_to_set li res =
     let res' = list_to_set li' res in
     if List.mem x res' then res' else x :: res' 
 
+let binop_smtlib_to_string oc smtlib =
+match smtlib with
+| Or _ -> output_string oc "or "
+| And _ -> output_string oc "and "
+| Imply _ -> output_string oc "=> "
+| Eq _ -> output_string oc "= "
+| Lt _ ->  output_string oc "< "
+| Gt _ -> output_string oc "> "
+| Leq _ ->  output_string oc "<= "
+| Geq _ -> output_string oc ">= "
+| Add _ -> output_string oc "+ "
+| Sub _ -> output_string oc "- "
+| Mul _ -> output_string oc "* " 
+(* | Div _ -> output_string oc "/ "  *)
+| _ -> raise (Error "binop_smtlib_to_string error") 
 
 (* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
   slはsmtlibの制約
@@ -127,20 +142,10 @@ numは篩型の識別番号？
 *)
 let rec print_smtlib oc sl bool_id map num = 
   match sl with 
-  | Or (s1,s2) -> 
-    (output_string oc "(or ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | And (s1,s2) -> 
-    (output_string oc "(and ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Imply (s1,s2) -> 
-    (output_string oc "(=> ";
+  | Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
+  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
+    (output_string oc "(";
+     binop_smtlib_to_string oc sl;
      print_smtlib oc s1 bool_id map num;
      output_string oc " ";
      print_smtlib oc s2 bool_id map num;
@@ -149,70 +154,11 @@ let rec print_smtlib oc sl bool_id map num =
     (output_string oc "(not ";
      print_smtlib oc s bool_id map num;
      output_string oc ")")
-  | Eq (s1,s2) -> 
-    (output_string oc "(= ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Lt (s1,s2) -> 
-    (output_string oc "(< ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Gt (s1,s2) -> 
-    (output_string oc "(> ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Leq (s1,s2) -> 
-    (output_string oc "(<= ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Geq (s1,s2) -> 
-    (output_string oc "(>= ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Add (s1,s2) -> 
-    (output_string oc "(+ ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Sub (s1,s2) -> 
-    (output_string oc "(- ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  | Mul (s1,s2) -> 
-    (output_string oc "(* ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")")
-  (* | Div (s1,s2) -> 
-    (output_string oc "(div ";
-     print_smtlib oc s1 bool_id map num;
-     output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
-     output_string oc ")") *)
-  | FV fv -> 
-    (try
-      let n = lookup fv map in
-      output_string oc (string_of_int n)
-    with Error _ -> output_string oc fv)
-  | Id id -> 
+  | FV id | Id id-> 
     (try
       let n = lookup id map in
       output_string oc (string_of_int n)
-    with Error _ -> output_string oc id)
+    with Error _ -> output_string oc id)    
   | IntPred (id1,ids) -> 
     (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
      List.iter
@@ -260,82 +206,18 @@ let rec print_smtlib oc sl bool_id map num =
 (* 反例出力に使うsmtlibの出力関数 *)
 let rec print_smtlib' oc sl bool_id map num z3_res = 
 match sl with 
-| Or (s1,s2) -> 
-  (output_string oc "(or ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| And (s1,s2) -> 
-  (output_string oc "(and ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Imply (s1,s2) -> 
-  (output_string oc "(=> ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
+| Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
+| Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
+  (output_string oc "(";
+  binop_smtlib_to_string oc sl;
+  print_smtlib' oc s1 bool_id map num z3_res;
+  output_string oc " ";
+  print_smtlib' oc s2 bool_id map num z3_res;
+  output_string oc ")")
 | Not s -> 
   (output_string oc "(not ";
     print_smtlib' oc s bool_id map num z3_res;
     output_string oc ")")
-| Eq (s1,s2) -> 
-  (output_string oc "(= ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Lt (s1,s2) -> 
-  (output_string oc "(< ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Gt (s1,s2) -> 
-  (output_string oc "(> ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Leq (s1,s2) -> 
-  (output_string oc "(<= ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Geq (s1,s2) -> 
-  (output_string oc "(>= ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Add (s1,s2) -> 
-  (output_string oc "(+ ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Sub (s1,s2) -> 
-  (output_string oc "(- ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-| Mul (s1,s2) -> 
-  (output_string oc "(* ";
-    print_smtlib' oc s1 bool_id map num z3_res;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num z3_res;
-    output_string oc ")")
-(* | Div (s1,s2) -> 
-  (output_string oc "(div ";
-    print_smtlib' oc s1 bool_id map num;
-    output_string oc " ";
-    print_smtlib' oc s2 bool_id map num;
-    output_string oc ")") *)
 | FV fv -> 
   (try
     let n = lookup fv map in
@@ -343,18 +225,6 @@ match sl with
   with Error _ -> output_string oc fv)
 | Id id -> 
     print_z3result_value oc z3_res id
-| IntPred (id1,ids) -> 
-  (output_string oc ("(P" ^ string_of_int num ^ "_" ^ id1);
-    List.iter
-      (fun id -> 
-        output_string oc (" " ^ id)) ids;
-  output_string oc ")")
-| IntVarPred (num',id1,ids) -> 
-  (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id1);
-    List.iter
-      (fun id -> 
-        output_string oc (" " ^ id)) ids;
-  output_string oc ")")
 | True ->
   output_string oc "true"
 | Ands smtlibs -> 
