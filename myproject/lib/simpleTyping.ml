@@ -1,5 +1,4 @@
 open Syntax
-(* open Util *)
 
 exception Error of string
 
@@ -114,6 +113,13 @@ let rec infer_simple_ty tyenv exp =
     | _ -> err ("Although " ^ id ^ " is used like a function, " ^ id ^ " isn't function."))
   | Unit -> ([], SUnit)
   | ENull -> err ("TyError: Mismatch Simple Type")
+  | DerefBracketExp (id, ids) ->
+    let t = lookup id !tyenv in
+    let rec deref t ids =
+      match ids with
+      | [] -> t
+      | _ :: tl -> deref (deref_simpleTy t) tl in
+    ([], deref t ids)
   | _ -> err("TyError: If this error occurs, the parser is wrong.")
 
 (* 関数のアノテーションから引数と返り値の単純型を求める *)
