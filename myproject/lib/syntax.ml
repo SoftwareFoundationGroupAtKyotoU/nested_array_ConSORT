@@ -36,6 +36,11 @@ let rec pp_simpleTy fmt simpleTy =
     let _ = List.map (fun ty -> Format.fprintf fmt "%a -> " pp_simpleTy ty) ty_list in
     Format.fprintf fmt "%a" pp_simpleTy ty
 
+let deref_simpleTy simpleTy =
+  match simpleTy with
+  | SRef simpleTy' -> simpleTy'
+  | _ -> raise (Error "deref_simpleTy error")
+
 type funcallexp = 
     FunCall of id * (id list)
 

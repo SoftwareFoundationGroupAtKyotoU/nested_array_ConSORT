@@ -695,11 +695,6 @@ let rec depth_to_simpleTy depth =
   else 
     SRef (depth_to_simpleTy (depth-1))
 
-let deref_simpleTy simpleTy =
-  match simpleTy with
-  | SRef simpleTy' -> simpleTy'
-  | _ -> raise (Error "deref_simpleTy error")
-
 let find_idx_vars var_locations fun_num =
   let rec find_idx_vars_sub id pos branch_trace depth =
     if depth < 1 then []
