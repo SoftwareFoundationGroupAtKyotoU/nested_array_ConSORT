@@ -1,0 +1,55 @@
+init(n, x, p) 
+[ <#n: int, #x: int, p: int ref  > -> 
+  <#n: int, #x: int, p: int ref| int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, x, q) in
+    1
+  }
+}
+
+/*init(n, x, p) 
+[ <#n: int, #x: int, p: int ref  > -> 
+  <#n: int, #x: int, p: int ref| int> ]
+{
+  if x >= 5 then {
+    p:= 10;
+    1
+  } else {
+    p := 1;
+    1
+  }
+}*/
+
+init2(n, x, p) 
+[ <#n: int, #x: int, p: int ref  > -> 
+  <#n: int, #x: int, p: int ref| int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init2(m, x, q) in
+    1
+  }
+}
+
+{
+  let tt = alloc 10 : int ref in
+  let tt2 = alloc 10 : int ref in
+  let one = 1 in
+  let ten = 10 in
+  let d = init(ten, one, tt) in
+  let j = *tt in
+  assert(j = 1);
+  let d2 = init2(ten, ten, tt2) in
+  ()
+}
+/* initを二つにするとcontext sensitivityの問題が解消され通る*/

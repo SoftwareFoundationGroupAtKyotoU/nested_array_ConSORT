@@ -1,0 +1,43 @@
+assumption(a, b)
+[<a:int, b:int> -> <a:int, b:int|int>]
+{
+    if a > b then {
+        a
+    } else {
+        let d = assumption(a, b) in
+        d
+    }
+}
+
+verify(x)
+[<x:int> -> <x:int|int>]
+{
+    assume(x > 0);
+    assert(x > 0);
+    1
+
+    /*let zero = 0 in
+    let g = assumption(x, zero) in
+    /*assert(g < 0);*/
+    1*/
+    
+    /*if x > 0 then {
+        assert(x < 0);
+        x
+    } else {
+        x
+    }*/
+
+    /*if x > 0 then {
+        assert(x < 0);
+        x
+    } else {
+        x
+    }*/
+}
+
+{
+    let n = 0 in
+    let d = verify(n) in
+    ()
+}

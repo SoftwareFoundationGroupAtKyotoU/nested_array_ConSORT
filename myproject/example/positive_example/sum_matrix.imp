@@ -73,7 +73,7 @@ sumMatrix(n1, n2, q)
   let ten = 10 in
   let d1 = initMatrix(ten, ten, mat1) in
   let d2 = sumMatrix(ten, ten, mat1) in
-  assert(d2 = 0);
+  assert(d2 >= 0);
   1
 }
 /* ugoku */

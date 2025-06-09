@@ -1,0 +1,31 @@
+init(flag, n, x,  p) 
+[ <#flag: int, #n: int, #x: int, p: int ref(0, n- 1, 1.)  > -> 
+  <#flag: int, #n: int, #x: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(flag, m, x, q) in
+    alias(q = p + 1);
+    1
+  }
+}
+
+
+{
+  let tt = alloc 10 : int ref in
+  let tt2 = alloc 10 : int ref  in
+  let one = 1 in
+  let ten = 10 in
+  let zero = 0 in
+  let d = init(zero, ten, one, tt) in
+  let j = *tt in
+  assert(j = 1 || j = 10);
+  let d2 = init(one, ten, ten, tt2) in
+  ()
+}
+
+/* initにflagを追加してもcontext sensitivityは解決せず */
