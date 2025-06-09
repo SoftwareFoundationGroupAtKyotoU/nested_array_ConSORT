@@ -10,14 +10,6 @@ open Cexample
 let eq0_list : id list ref = ref []
 let serial_num = ref 0
 
-(* 文字列の末尾の一致判定 *)
-let ends_with s suffix =
-  let s_len = String.length s in
-  let suffix_len = String.length suffix in
-  if suffix_len > s_len then false
-  else
-    String.sub s (s_len - suffix_len) suffix_len = suffix
-
   (* 文字列の末尾の削除 *)
 let remove_suffix s n =
   let s_len = String.length s in
@@ -243,6 +235,12 @@ match sl with
 let starts_with prefix s =
   let prefix_len = String.length prefix in
   String.length s >= prefix_len && String.sub s 0 prefix_len = prefix
+
+let ends_with suffix s =
+  let suffix_len = String.length suffix in
+  let s_len = String.length s in
+  s_len >= suffix_len &&
+  String.sub s (s_len - suffix_len) suffix_len = suffix
 
 let rec idx_of_smtlib sl =
   match sl with 
