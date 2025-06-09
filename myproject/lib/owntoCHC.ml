@@ -26,7 +26,9 @@ let rec get_id ownerships num =
 let find_ref_ids num ownerships =
   let rec find_ref_ids_sub ownerships res =
     match ownerships with
-    | Own (num',id1,_,_,_) :: rest when num = num' && not (List.mem id1 res) -> find_ref_ids_sub rest (id1::res)
+    | Own (num',id1,_,_,_) :: rest 
+    when num = num' && not (List.mem id1 res) && not (ends_with "_eq0" id1) && not (ends_with "_non0" id1)
+    -> find_ref_ids_sub rest (id1::res)
     | _ :: rest -> find_ref_ids_sub rest res
     | [] -> res
   in find_ref_ids_sub ownerships []
