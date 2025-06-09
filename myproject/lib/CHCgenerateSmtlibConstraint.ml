@@ -237,11 +237,11 @@ let rec emit_chc fvs fun_num ifel c =
             (* 篩型で依存できる変数 *)
             let fvs_int = lookup id_e !intpred_env in 
             (* 仮引数の篩型を追加 *)
-            intpred_env := (id_arg, []) :: !intpred_env;
+            (* intpred_env := (id_arg, [id]) :: !intpred_env; *)
             (* 関数の順番 *) 
             let num = lookup id' fun_num in
             (* 実引数の述語ならば仮引数の述語 *)
-            [Imply(IntPred(id_e, "v" :: fvs_int), IntVarPred(num, id_arg, ["v"]))] 
+            [Imply(IntPred(id_e, id :: fvs_int), IntVarPred(num, id_arg, [id; id]))] 
           | _ -> raise (Error "CHC AppExp error"))
          | (RawId _, FTInt sl) | (HashId _, FTInt sl) -> (* #なしの篩型指定あり整数型引数 *)
           (match exp_to_smtlib e with 
@@ -535,9 +535,10 @@ let rec emit_chc fvs fun_num ifel c =
         | Var x -> 
           let vars = lookup x !intpred_env in
           [Imply(Ands(
+          IntPred(x, x :: vars) ::
           (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
          :: (subst ids (List.length ids))),
-          Eq(Id "v", IntPred(x, "v" :: vars)))]
+          Eq(Id "v", FV x))]
         | _ ->
         [Imply(Ands(
           (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
@@ -617,8 +618,8 @@ let ics_to_smtlib ics fun_num =
     (* 篩型のない整数の場合 *)
     | VarPred, FTInt _ -> 
       (* 変数名を追加 *)
-      intpred_env := (id, []) :: !intpred_env;
-      []
+      intpred_env := (id, [id]) :: !intpred_env;
+      [Imply(Eq(Id "v", Id id), IntPred(id, ["v"; id]))]
     (* 篩型のある参照の場合 *)
     | _, FTRef _ -> 
       (* 指定の篩型の述語　ならば　関数評価はじめの篩型の述語 *)
