@@ -349,18 +349,6 @@ let outer_constrs ownerships num fvs cons =
       let chc1_non0 = own_to_chc_non0 (id1,pos') id1_non0_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
       let chc2 = [Imply(Id "true", (PtrPred(id2, pos', make_idx_list depth2, fvs)))] in
       chc1_eq0 @ chc1_non0 @ chc2
-    | CHCApp (_, args, pos) -> 
-      let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
-      List.concat (List.map
-      (fun arg ->
-        match arg with
-        | Var id ->
-          let id_ownerships = find_id (id,pos') num ownerships in
-          if id_ownerships = [] then [] else
-            let depth = max_depth id_ownerships in
-            own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
-        | _ -> raise (Error "prog_to_chc error"))
-      args)
     | CHCLetDeref (id1, id2, pos) ->
       eq0_list := id2 :: !eq0_list;
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
