@@ -539,7 +539,6 @@ let rec emit_chc fvs fun_num ifel c =
       (* 条件式が成り立つならば残りの制約が成り立つ，という形に変更 *)
       let ss' = List.map (fun s -> Imply(exp_to_smtlib e, s)) ss in
       ss'
-  | _ -> raise ConstrError
 
 (* #付きの変数名を抜き出す *)
 let find_fv ftid_ft = 

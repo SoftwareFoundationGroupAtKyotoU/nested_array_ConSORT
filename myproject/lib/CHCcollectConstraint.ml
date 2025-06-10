@@ -55,9 +55,6 @@ let rec chc_collect_exp pos exp =
     let c1 = chc_collect_exp pos e1 in
     let c2 = chc_collect_exp (pos+1) e2 in
     c1 @ c2
-  | AppExp (id,es) ->
-    let cs = List.concat (List.map (chc_collect_exp pos) es) in
-    CHCApp(id, es, pos) :: cs
   | _ -> []
 
 let elim_hash ftid =

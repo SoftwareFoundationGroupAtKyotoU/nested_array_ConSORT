@@ -15,7 +15,6 @@ let intpred_env : (id * id list) list ref = ref []
 type chc = 
   | CHCIf of exp * chc list * chc list * pos
   | CHCLetInt of id * exp * pos
-  (* | CHCLet of id * id * pos *)
   | CHCLetDeref of id * id * pos
   | CHCLetAddPtr of id * id * exp * pos
   | CHCAlloc of id * exp * simpleTy * pos
@@ -26,7 +25,7 @@ type chc =
   | CHCAliasAddPtr of id * id * exp * pos
   | CHCAssert of exp * pos
   | CHCAssume of exp * chc list * pos
-  | CHCApp of id * exp list * pos
+
 
 (* intpred_env:篩型の環境
 num:関数の番号 *)
