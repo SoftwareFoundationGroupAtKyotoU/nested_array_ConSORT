@@ -13,7 +13,7 @@ let () =
       flush oc;
       close_out oc;
       while !continue do
-        generate_constrs file_name !iter;
+        generate_constrs file_name;
         let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_int.smt2 > experiment/result_int" in
         (* let _ = Sys.command "/usr/bin/time -v z3 experiment/out_int.smt2 > experiment/result_int" in *)
         let ic = open_in "experiment/result_int" in
@@ -85,6 +85,4 @@ let () =
     let first_line = input_line ic in
     Printf.printf "refinement: %s\n" first_line;
     flush stdout;
-  | [_; file_name; iter] ->
-    generate_constrs file_name (int_of_string iter)
   | _ -> Printf.eprintf "予期せぬエラーが発生しました"

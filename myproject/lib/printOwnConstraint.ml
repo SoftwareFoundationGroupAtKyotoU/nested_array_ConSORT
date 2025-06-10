@@ -283,7 +283,7 @@ is_unconcrete 自由変数を具体化するかどうか falseで具体化 true�
 fvs 所有権termが依存できる自由変数
 num 篩型用の数字
 iter 自由変数を具体化する値の範囲 *)
-let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
+let rec print_smtlibs oc smtlibs is_unconcrete num =
   if is_unconcrete then
     List.iter (print_smtlibs_sub oc num) smtlibs
   else
@@ -300,8 +300,6 @@ let rec print_smtlibs oc smtlibs is_unconcrete fvs num iter =
           output_string oc (make_args fvs);
           output_string oc ") ";
           List.iter 
-          (* (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " iter fv fv iter)) *)
-
           (fun fv -> 
             output_string oc "(=> ";
             print_concrete oc fv)

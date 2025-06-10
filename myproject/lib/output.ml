@@ -77,29 +77,22 @@ flag 現状使ってない
 fun_num 関数の通し番号
 iter 変数の具体化の範囲
 *)
-let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter = 
+let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num = 
   if fun_num < 0 then 
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
-    (let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
-    (* 制約をassertとしてファイルに書き出し，bool_idは関数print_smtlibsの分岐 *)
-    (* let fvs' = find_idx_vars_be varown_count fun_num in
-    let fvs'' = find_idx_vars var_locations fun_num in
-    let fvs = fvs@fvs'@fvs'' in *)
-    (* Format.printf "%d\n" fun_num; *)
-    (* let _ = List.map (fun x -> Format.printf "%s\n" x) fvs' in
-    let _ = List.map (fun x -> Format.printf "%s\n" x) fvs'' in  *)
+    (let (_, _, _, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
-    print_smtlibs oc smtlibs is_unconcrete fvs (-1) iter;
+    print_smtlibs oc smtlibs is_unconcrete (-1);
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
     (* 次の関数の制約出力へ *)
-    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1) iter)
+    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1))
 
 (** First phase of the ownershipip inference:
     Generates n_1, ..., n_k and checks the validity of \exists y . phi(n_1, y) /\ ... /\ phi(n_k, y) *)
-let generate_constrs file iter = 
+let generate_constrs file = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   close_in oc;
@@ -116,7 +109,7 @@ let generate_constrs file iter =
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *)  
-  main_int_smtlibs oc1 all_constrs false false fun_num iter;
+  main_int_smtlibs oc1 all_constrs false false fun_num;
   (* 充足可能か調べる *)
   output_string oc1 "(check-sat-using psmt)\n";
   (* 充足可能な場合に具体的な値を取得 *)
@@ -146,7 +139,7 @@ let main_fv file =
   main_int_declare oc all_constrs n;
   (* 所有権計算に必要なsmtlibでのassert式の書き出し
   ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
-  main_int_smtlibs oc all_constrs true false n 0;
+  main_int_smtlibs oc all_constrs true false n;
   (* main_intで得られた所有権の係数をassert形式で表現 *)
   print_z3result oc z3res;
   output_string oc "\n\n";
@@ -236,11 +229,11 @@ let rec main_chc_sub oc all_chcs n =
     let own_sls = List.concat_map (fun x -> outer_constrs z3res n fvs x) chcs in 
 
     (* 制約をファイルに書き出し　assert部分 *)
-    print_smtlibs oc sls true fvs n 0; 
+    print_smtlibs oc sls true n; 
     output_string oc "\n";
-    print_smtlibs oc args_own_sls true fvs n 0; 
+    print_smtlibs oc args_own_sls true n; 
     output_string oc "\n";
-    print_smtlibs oc own_sls true fvs n 0; 
+    print_smtlibs oc own_sls true n; 
     output_string oc "\n\n";
     main_chc_sub oc all_chcs (n-1))
 
