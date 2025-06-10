@@ -313,7 +313,8 @@ let rec emit_chc fvs fun_num ifel c =
          match ft_r with (* 返り値の型で分類 *)
          | FTInt VarPred -> (* 篩型指定なし整数 *)
          (* 返り値を受け取る変数の篩型を追加？ *)
-           intpred_env := (id, []) :: !intpred_env;
+           (* intpred_env := (id, []) :: !intpred_env; *)
+           intpred_env := (id, ids_depended) :: !intpred_env;
            let num = lookup id' fun_num in
            (* 
            　　　　関数の返り値の篩型の述語
@@ -322,7 +323,8 @@ let rec emit_chc fvs fun_num ifel c =
            ならば
            　　返り値を受け取る変数の述語
            *)
-           Imply(Ands(IntVarPred(num, "ret", id :: fvs') :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs')), IntPred(id, [id])) 
+           (* Imply(Ands(IntVarPred(num, "ret", id :: fvs') :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs')), IntPred(id, []))  *)
+           Imply(Ands(IntVarPred(num, "ret", id :: fvs') :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs')), IntPred(id, id::ids_depended)) 
          | FTInt sl -> (* 篩型指定あり整数 *)
          (* 返り値を受け取る変数の篩型を追加？ *)
            intpred_env := (id, []) :: !intpred_env; 
@@ -341,16 +343,23 @@ let rec emit_chc fvs fun_num ifel c =
      (* e中の自由変数 *)
        let fvs' = fvs_of_exp e in
        (* 自由変数をハッシュ付き，ハッシュなしにわけて返す *)
-       let rec find_hash fvs' h r = 
+       (* let rec find_hash fvs' h r = 
          (match fvs' with
           | fv :: rest -> 
             if List.mem fv fvs then find_hash rest (fv::h) r else find_hash rest h (fv::r) 
           | [] -> (h, r)) 
-       in
+       in *)
        (* ハッシュ付きの変数，ハッシュなしの整数変数のリストの組 *)
-       let (hash_fvs', fvs') = find_hash fvs' [] [] in
+       (* let (hash_fvs', fvs') = find_hash fvs' [] [] in *)
        (* 篩型で依存できる環境の更新？ *)
-       intpred_env := (id, hash_fvs') :: !intpred_env;
+       (* intpred_env := (id, hash_fvs') :: !intpred_env; *)
+       intpred_env := (id, fvs) :: !intpred_env;
+       let rec f fvs_in_e res =
+        (match fvs_in_e with
+        | [] -> res
+        | hd :: tl when List.mem hd res || List.mem hd fvs -> f tl res
+        | hd :: tl -> let fvs' = lookup hd !intpred_env in f (fvs' @ tl) (hd::res)) in
+      let depend_fvs = f fvs' [] in
        (* 
               新たに束縛される変数xと束縛のための式の値eが等しい
           かつ
@@ -358,7 +367,8 @@ let rec emit_chc fvs fun_num ifel c =
        ならば
           新たに束縛される変数xの篩型の述語
           *)
-       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs')), IntPred(id, "v" :: hash_fvs'))])
+       (* [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs)), IntPred(id, "v" :: fvs))]) *)
+       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) depend_fvs)), IntPred(id, "v" :: fvs))])
   (* | CHCLet (id1,id2,l) -> (*　let x = y(参照) in ... *)
   (* 代入評価後のid_count_chcを追加 *)
     new_id id1 l ifel; new_id id2 l ifel;
