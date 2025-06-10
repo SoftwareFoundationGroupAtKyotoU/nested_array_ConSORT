@@ -217,33 +217,19 @@ let rec emit_chc fvs fun_num ifel c =
               :: List.map (fun id -> IntPred(id, id::(lookup id !intpred_env))) ids_depended),
              n_sl)]
            | _ -> raise (Error "CHC AppExp error"))
-        | (RawId id_arg, FTInt VarPred) -> (* #なしの整数型引数 *)
+        | (HashId id_arg, FTInt VarPred) | (RawId id_arg, FTInt VarPred) -> 
           (match exp_to_smtlib e with 
           (* 実引数名 *)
           | FV id_e -> 
             (* 篩型で依存できる変数 *)
             let fvs_int = lookup id_e !intpred_env in 
             (* 仮引数の篩型を追加 *)
-            intpred_env := (id_arg, []) :: !intpred_env; 
-            (* 関数の順番 *)
-            let num = lookup id' fun_num in
-            (* 実引数の述語ならば仮引数の述語 *)
-            [Imply(IntPred(id_e, "v" :: fvs_int), IntVarPred(num, id_arg, ["v"]))] 
-          | _ -> raise (Error "CHC AppExp error"))
-        | (HashId id_arg, FTInt VarPred) -> 
-          (match exp_to_smtlib e with 
-          (* 実引数名 *)
-          | FV id_e -> 
-            (* 篩型で依存できる変数 *)
-            let fvs_int = lookup id_e !intpred_env in 
-            (* 仮引数の篩型を追加 *)
-            (* intpred_env := (id_arg, [id]) :: !intpred_env; *)
             (* 関数の順番 *) 
             let num = lookup id' fun_num in
             (* 実引数の述語ならば仮引数の述語 *)
             [Imply(IntPred(id_e, id :: fvs_int), IntVarPred(num, id_arg, [id; id]))] 
           | _ -> raise (Error "CHC AppExp error"))
-         | (RawId _, FTInt sl) | (HashId _, FTInt sl) -> (* #なしの篩型指定あり整数型引数 *)
+         | (RawId _, FTInt sl) | (HashId _, FTInt sl) -> (* 篩型指定あり整数型引数 *)
           (match exp_to_smtlib e with 
           (* 実引数名 *)
           | FV id_e -> 
@@ -506,12 +492,6 @@ let rec emit_chc fvs fun_num ifel c =
     Imply(Imply((Eq(outer_idx, (Id "0")), ptrpred_p id1 (make_idx_list depth) fvs ifel)),p);
     Imply(Imply(Eq(outer_idx, (Id "0")), ptrpred_p id2 ((Id "0")::(make_idx_list depth)) fvs ifel),p);
     Imply(Imply(Not(Eq(outer_idx, (Id "0"))), ptrpred_p id2 (make_idx_list (depth+1)) fvs ifel),p);
-      (* Imply(
-      Ands[
-        Imply(Eq(outer_idx, (Id "0")), ptrpred_p id1 (make_idx_list depth) fvs ifel);
-        Imply(Eq(outer_idx, (Id "0")), ptrpred_p id2 ((Id "0")::(make_idx_list depth)) fvs ifel);
-        Imply(Not(Eq(outer_idx, (Id "0"))), ptrpred_p id2 (make_idx_list (depth+1)) fvs ifel)],
-      ptrpred id2 (make_idx_list (depth+1)) fvs ifel) *)
       ]   
   | CHCAssert (e,_) -> (*　assert( e ); ... *)
     (* e中の自由変数 *)
@@ -521,13 +501,11 @@ let rec emit_chc fvs fun_num ifel c =
         (* assert中の論理式eに自由変数が含まれていないならばeをそのまま制約に *)
         [exp_to_smtlib e]
       else
-        (* 
-        自由変数の篩型の述語　ならば　assert中の論理式e *)
+        (* 自由変数の篩型の述語　ならば　assert中の論理式e *)
         [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs_e), exp_to_smtlib e)]
     with 
     | Error _ ->
       match e with
-      (* | _-> print_exp e ; raise (Error "assert error") *)
       | EqExp(DerefBracketExp(f, ids), ex) -> 
         let rec subst ids depth =
           (match ids with
@@ -562,7 +540,6 @@ let rec emit_chc fvs fun_num ifel c =
       let ss' = List.map (fun s -> Imply(exp_to_smtlib e, s)) ss in
       ss'
   | _ -> raise ConstrError
-  (*追加分，あとで消す*)
 
 (* #付きの変数名を抜き出す *)
 let find_fv ftid_ft = 
@@ -638,9 +615,9 @@ let ics_to_smtlib ics fun_num =
     (* 篩型のある整数の場合 *)
     | _, FTInt _ -> 
       (* 引数の篩型が依存できる変数のリスト？ *)
-      intpred_env := (id, []) :: !intpred_env;
+      intpred_env := (id, [id]) :: !intpred_env;
       (* 指定の篩型の述語　ならば　関数評価はじめの篩型の述語 *)
-      [Imply(sl, IntPred(id, ["v"]))]
+      [Imply(sl, IntPred(id, ["v"; id]))]
   in
   (* 引数変数の篩型に関する制約 *)
   let s1 = List.concat (List.map g1 ids) in
