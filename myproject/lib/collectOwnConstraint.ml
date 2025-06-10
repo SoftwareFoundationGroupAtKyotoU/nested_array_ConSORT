@@ -88,7 +88,7 @@ let elim_hash ftid =
   | RawId id -> id
   | HashId id -> id
 
-(* ある一つの関数の関数定義を受け取り，関数名と制約集合を表すリスト「を返す *)
+(* ある一つの関数の関数定義を受け取り，関数名と制約集合を表すリストを返す *)
 let collect_function_own_constraints fdef =
   let (id, _, annotation, e) = fdef in
   let (args_before_eval, args_after_eval, _) = annotation in
