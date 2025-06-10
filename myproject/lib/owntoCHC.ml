@@ -49,21 +49,6 @@ let rec find_id (id,i) num ownerships =
   | _ :: rest -> find_id (id,i) num rest
   | [] -> []
 
-(* let rec find_id_d (id,i) num ownerships dep =
-  match ownerships with
-  (* num':関数の順番番号 id1:どの変数の所有権を表すか　i1:関数内の場所 f:所有権？ *)
-  | Own (num',id1,i1,depth,Float f) :: rest when num = num' && id = id1 && i = i1 && dep = depth -> Own (num',id1,i1,depth,Float f) :: find_id_d (id,i) num rest dep
-  (* CHigh:所有範囲の上限を表す一次式の係数　num':関数の順番番号？ id1:どの変数の係数となるか　id2:どの変数の所有権を表すか　i1:関数内の場所 i2:係数の数値？ *)
-  | CHigh (num',id1,id2,i1,depth,Int i2) :: rest when num = num' && id = id2 && i = i1 && dep = depth -> CHigh (num',id1,id2,i1,depth,Int i2) :: find_id_d (id,i) num rest dep
-  (* CHigh:所有範囲の下限を表す一次式の係数　num':関数の順番番号？ id1:どの変数の係数となるか　id2:どの変数の所有権を表すか　i1:関数内の場所 i2:係数の数値？ *)
-  | CLow (num',id1,id2,i1,depth,Int i2) :: rest when num = num' && id = id2 && i = i1 && dep = depth -> CLow (num',id1,id2,i1,depth,Int i2) :: find_id_d (id,i) num rest dep
-  (* DHigh:所有範囲の上限を表す一次式の切片　num':関数の順番番号？　id1:どの変数の所有権を表すか　i1:関数内の場所 i2:切片の数値？ *)
-  | DHigh (num',id1,i1,depth,Int i2) :: rest when num = num' && id = id1 && i = i1 && dep = depth -> DHigh (num',id1,i1,depth,Int i2) :: find_id_d (id,i) num rest dep
-  (* DHigh:所有範囲の下限を表す一次式の切片　num':関数の順番番号？ id1:どの変数の所有権を表すか　i1:関数内の場所 i2:切片の数値？ *)
-  | DLow (num',id1,i1,depth,Int i2) :: rest when num = num' && id = id1 && i = i1 && dep = depth -> DLow (num',id1,i1,depth,Int i2) :: find_id_d (id,i) num rest dep
-  | _ :: rest -> find_id_d (id,i) num rest dep
-  | [] -> [] *)
-
 let rec is_0own (id,i) ownerships =
   match ownerships with
   (* num':関数の順番番号 id1:どの変数の所有権を表すか　i1:関数内の場所 f:所有権？ *)
@@ -405,59 +390,6 @@ let outer_constrs ownerships num fvs cons =
       | _ -> [])
     | CHCAssert _ | CHCAssume _ -> [] in
     sl_first @ (outer_constrs_iter [] cons)
-  
-
-(* let rec own_to_chc (id,i) h_now l_now fvs ownerships =
-match ownerships with
-| Own (_,id1,i1,_,Float f) :: rest -> 
-  (if f = 0. then 
-    (* 真　ならば　参照の篩型 *)
-    [Imply(Id "true", PtrPred(id1, i1, FV "i", fvs))]
-  else
-    own_to_chc (id,i) h_now l_now fvs rest)
-| CHigh (_,id1,_,_,_,Int i2) :: rest ->
-  (if i2 = 0 then
-    (* 係数が0の場合は何もしない *)
-    own_to_chc (id,i) h_now l_now fvs rest
-  else if i2 > 0 then
-    (* 係数が0以外の場合はかけるべき変数とかけ合わせ足す *)
-    own_to_chc (id,i) (Add(h_now, Mul(FV id1, Id (string_of_int i2)))) l_now fvs rest
-  else
-    own_to_chc (id,i) (Add(h_now, Mul(FV id1, Id ("(- " ^ string_of_int (-i2) ^ ")")))) l_now fvs rest)
-| CLow (_,id1,_,_,_,Int i2) :: rest ->
-  (* 以下CHighと同じ *)
-  (if i2 = 0 then
-    own_to_chc (id,i) h_now l_now fvs rest
-  else if i2 > 0 then 
-    own_to_chc (id,i) h_now (Add(l_now, Mul(FV id1, Id (string_of_int i2)))) fvs rest
-  else 
-    own_to_chc (id,i) h_now (Add(l_now, Mul(FV id1, Id ("(- " ^ string_of_int (-i2) ^ ")")))) fvs rest)
-| DHigh (_,_,_,_,Int i2) :: rest ->
-  (if i2 = 0 then
-    own_to_chc (id,i) h_now l_now fvs rest
-  else if i2 > 0 then
-    own_to_chc (id,i) (Add(h_now, Id (string_of_int i2))) l_now fvs rest
-  else
-    own_to_chc (id,i) (Add(h_now, Id ("(- " ^ string_of_int (-i2) ^ ")"))) l_now fvs rest)
-| DLow (_,_,_,_,Int i2) :: rest ->
-  (if i2 = 0 then
-    own_to_chc (id,i) h_now l_now fvs rest
-  else if i2 > 0 then
-    own_to_chc (id,i) h_now (Add(l_now, Id (string_of_int i2))) fvs rest
-  else 
-    own_to_chc (id,i) h_now (Add(l_now, Id ("(- " ^ string_of_int (-i2) ^ ")"))) fvs rest)
-| _ :: rest ->
-  own_to_chc (id,i) h_now l_now fvs rest
-| [] -> 
-  (* 配列のインデックスが所有範囲の上限より大きい　ならば　篩型の述語？
-    配列のインデックスが所有範囲の下限より小さい　ならば　篩型の述語？ *)
-  [Imply(Gt(Id "i", h_now), PtrPred(id, i, FV "i", fvs));
-    Imply(Lt(Id "i", l_now), PtrPred(id, i, FV "i", fvs))] *)
-
-(* let collect_ownchc ownerships num fvs = 
-(* 所有権を持つ（参照に束縛される）変数名 *)
-  let ids = get_id ownerships num in
-  List.concat (List.map (fun (id,i) -> own_to_chc (id,i) fvs (find_id (id,i) num ownerships)) ids) *)
 
 (* 
 num 関数の番号
