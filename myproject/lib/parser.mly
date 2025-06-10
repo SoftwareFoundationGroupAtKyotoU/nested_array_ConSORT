@@ -177,7 +177,7 @@ ANDExpr :
   | e=NotExpr { e }
 
 NotExpr :
-  | NOT e=NotExpr { e }
+  | NOT e=NotExpr { NotExp e }
   | e=CompareExpr { e }
 
 CompareExpr :
@@ -191,7 +191,7 @@ CompareExpr :
 
 AExpr :
     i=INTV { ILit i }
-  | MINUS e=Expr { MinusExp(ILit Z.zero, e) }
+  | MINUS e=AExpr { MinusExp(ILit Z.zero, e) }
   | i=ID   { Var i }
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
