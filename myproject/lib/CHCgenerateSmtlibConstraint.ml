@@ -605,7 +605,8 @@ let ics_to_smtlib ics fun_num =
     | VarPred, FTInt _ -> 
       (* 変数名を追加 *)
       intpred_env := (id, [id]) :: !intpred_env;
-      [Imply(Eq(Id "v", Id id), IntPred(id, ["v"; id]))]
+      []
+      (* [Imply(Eq(Id "v", Id id), IntPred(id, ["v"; id]))] *)
     (* 篩型のある参照の場合 *)
     | _, FTRef _ -> 
       (* 指定の篩型の述語　ならば　関数評価はじめの篩型の述語 *)
@@ -616,7 +617,8 @@ let ics_to_smtlib ics fun_num =
       (* 引数の篩型が依存できる変数のリスト？ *)
       intpred_env := (id, [id]) :: !intpred_env;
       (* 指定の篩型の述語　ならば　関数評価はじめの篩型の述語 *)
-      [Imply(sl, IntPred(id, ["v"; id]))]
+      []
+      (* [Imply(sl, IntPred(id, ["v"; id]))] *)
   in
   (* 引数変数の篩型に関する制約 *)
   let s1 = List.concat (List.map g1 ids) in
