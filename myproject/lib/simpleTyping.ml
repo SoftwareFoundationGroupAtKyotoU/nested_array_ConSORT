@@ -1,4 +1,5 @@
 open Syntax
+open SmtlibSyntax
 
 exception Error of string
 
@@ -193,8 +194,27 @@ let subst_arg_name program =
       match arg with
       | RawId id -> RawId (lookup id subst)
       | HashId id -> HashId (lookup id subst) in
+    let rec subst_id_smtlib subst sl =
+      let find_name id =
+        if starts_with "i" id then id else (lookup id subst) in
+      match sl with
+      | FV id -> if starts_with "i" id then sl else FV (find_name id)
+      | Id id -> if starts_with "i" id then sl else Id (find_name id)
+      | IntPred (id, ids) -> IntPred (find_name id, List.map find_name ids)
+      | IntVarPred (n, id, ids) -> IntVarPred (n, find_name id, List.map find_name ids)
+      | PtrPred(id, ifel, sls, ids) -> 
+          PtrPred(find_name id, ifel, List.map (subst_id_smtlib subst) sls, List.map find_name ids)
+      | PtrVarPred(n, id, ifel, sls, ids) ->
+          PtrVarPred(n, find_name id, ifel, List.map (subst_id_smtlib subst) sls, List.map find_name ids)
+      | VarPred | True -> sl
+      | _ -> map_smtlib (subst_id_smtlib subst) sl in
+    let rec subst_ftype ftype =
+      match ftype with
+      | FTInt sl -> FTInt (subst_id_smtlib subst sl)
+      | FTRef (ftype, exp1, exp2, float) -> 
+          FTRef(subst_ftype ftype, subst_id subst exp1, subst_id subst exp2, float) in
     let new_annotation = 
-      (List.map (fun (x, y) -> (subst_arg x, y)) args_before_eval, List.map (fun (x, y) -> (subst_arg x, y)) args_after_eval, return_type) in
+      (List.map (fun (arg, ftype) -> (subst_arg arg, subst_ftype ftype)) args_before_eval, List.map (fun (arg, ftype) -> (subst_arg arg, subst_ftype ftype)) args_after_eval, return_type) in
     let new_fun_body = subst_id subst fun_body in
     (fun_name, new_args, new_annotation, new_fun_body) in
   let (fdefs, exp) = program in
