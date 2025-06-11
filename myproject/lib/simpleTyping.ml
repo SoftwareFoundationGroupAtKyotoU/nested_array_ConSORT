@@ -157,3 +157,45 @@ let infer_prog_simpleTy program =
   let _ = infer_simple_ty tyenv exp in
   (* assert(ty = SUnit); *)
   all_tyenv := ("main", !tyenv) :: !all_tyenv
+
+let subst_arg_name program =
+  let rec subst_id subst exp =
+    let find_name id = 
+      try lookup id subst with | Error _ -> id in
+    match exp with
+    | Var x -> Var (find_name x)
+    | ILit _ | ConstRandInt | BLit _ -> exp
+    | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ | Unit | ENull
+    | EqExp _ | LtExp _ | GtExp _ | MultExp _ | IfExp _ | Assume _
+    | LeqExp _ | GeqExp _ | NeqExp _ | Alias _ | Seq _ | Assert _-> 
+      map_exp (subst_id subst) exp
+    | IfnpExp (id, exp1, exp2) ->
+      IfnpExp (find_name id, subst_id subst exp1, subst_id subst exp2)
+    | LetAllocExp (id, exp1, simpleTy, exp2) ->
+      LetAllocExp (find_name id, subst_id subst exp1, simpleTy, subst_id subst exp2)
+    | Let(id, exp1, exp2) ->
+      Let(find_name id, subst_id subst exp1, subst_id subst exp2) 
+    | Assign(id, exp1, exp2) ->
+      Assign(find_name id, subst_id subst exp1, subst_id subst exp2)
+    | Deref id ->
+      Deref (find_name id)
+    | AppExp(id, exps) ->
+      AppExp(find_name id, List.map (subst_id subst) exps)
+    | DerefBracketExp (id, exps) ->
+      DerefBracketExp (find_name id, List.map (subst_id subst) exps)
+    | _ -> err("subst_arg_name Error: If this error occurs, the parser is wrong.") in
+  let rec subst_arg_name_sub fdef = 
+    let (fun_name, args, annotation, fun_body) = fdef in
+    let subst = List.map (fun arg -> (arg, (fun_name ^ arg))) args in
+    let new_args = List.map (fun arg -> (fun_name ^ arg)) args in
+    let (args_before_eval, args_after_eval, return_type) = annotation in
+    let subst_arg arg = 
+      match arg with
+      | RawId id -> RawId (lookup id subst)
+      | HashId id -> HashId (lookup id subst) in
+    let new_annotation = 
+      (List.map (fun (x, y) -> (subst_arg x, y)) args_before_eval, List.map (fun (x, y) -> (subst_arg x, y)) args_after_eval, return_type) in
+    let new_fun_body = subst_id subst fun_body in
+    (fun_name, new_args, new_annotation, new_fun_body) in
+  let (fdefs, exp) = program in
+  (List.map subst_arg_name_sub fdefs, exp)

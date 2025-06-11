@@ -47,6 +47,7 @@ let main_cexample file =
   let oc = open_in file in
   let oc_r2 = open_in "experiment/result_int" in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  let program = subst_arg_name program in
   (* main_intで得られた所有権関数の係数の候補 *)
   let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
   close_in oc; close_in oc_r2;
@@ -95,6 +96,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num =
 let generate_constrs file = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  let program = subst_arg_name program in
   close_in oc;
   let (fdefs, _) = program in
   let fun_num = List.length fdefs in 
@@ -123,6 +125,7 @@ let main_fv file =
   let oc_r2 = open_in "experiment/result_int" in
   (* プログラムの読み出し *)
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+  let program = subst_arg_name program in
   (* main_intで得られた所有権関数の係数の候補 *)
   let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
   close_in oc_r1; close_in oc_r2;
@@ -167,6 +170,7 @@ let main_sat_ans file =
     let oc_r2 = open_in "experiment/result_int" in
     (* プログラムの読み出し *)
     let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+    let program = subst_arg_name program in
     (* main_intで得られた所有権関数の係数の候補 *)
     let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
     close_in oc_r1; close_in oc_r2;
@@ -240,13 +244,14 @@ let rec main_chc_sub oc all_chcs n =
 (** Main procedure for the refinement inference *)
 let main_chc file =
   let oc_r1 = open_in file  in
-  let prog = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
+  let program = subst_arg_name program in
   close_in oc_r1; 
-  let (fdefs, _) = prog in
+  let (fdefs, _) = program in
   let n = List.length fdefs in 
-  infer_prog_simpleTy prog;
+  infer_prog_simpleTy program;
   (* 関数名，CHCの制約を表すデータ型，最後に評価されうる式の組 *)
-  let all_chcs = chc_collect_prog (elaborate_prog prog) in 
+  let all_chcs = chc_collect_prog (elaborate_prog program) in 
 
   let oc = open_out "experiment/out_chc.smt2" in
   output_string oc "(set-logic HORN)\n\n\n";
@@ -260,6 +265,7 @@ let main_chc file =
 let print_program file = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  let program = subst_arg_name program in
   close_in oc;
   infer_prog_simpleTy program;
   let (fdef, main) = elaborate_prog program in
