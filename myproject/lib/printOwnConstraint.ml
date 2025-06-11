@@ -232,16 +232,6 @@ match sl with
       output_string oc ")"))
 | _ -> ()
 
-let starts_with prefix s =
-  let prefix_len = String.length prefix in
-  String.length s >= prefix_len && String.sub s 0 prefix_len = prefix
-
-let ends_with suffix s =
-  let suffix_len = String.length suffix in
-  let s_len = String.length s in
-  s_len >= suffix_len &&
-  String.sub s (s_len - suffix_len) suffix_len = suffix
-
 let rec idx_of_smtlib sl =
   match sl with 
   | Or (s1,s2) | And(s1, s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) 
@@ -252,9 +242,9 @@ let rec idx_of_smtlib sl =
   (* | Div (s1,s2) -> 
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
   | Id id -> 
-    if starts_with "i_" id then [id] else []
+    if Syntax.starts_with "i_" id then [id] else []
   | FV id -> 
-    if starts_with "i_" id then [id] else []
+    if Syntax.starts_with "i_" id then [id] else []
   | Ands ss ->
     List.concat (List.map idx_of_smtlib ss)
   | _ -> 

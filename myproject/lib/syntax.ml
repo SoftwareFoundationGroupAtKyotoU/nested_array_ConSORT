@@ -150,3 +150,13 @@ type own_represent =
   | UnitRange of smtlib * smtlib * smtlib
   | DivRange of (smtlib * smtlib) * (smtlib) * (smtlib * smtlib)
   | NestedUnitRange of smtlib * smtlib * smtlib * own_represent
+
+let starts_with prefix s =
+  let prefix_len = String.length prefix in
+  String.length s >= prefix_len && String.sub s 0 prefix_len = prefix
+
+let ends_with suffix s =
+  let suffix_len = String.length suffix in
+  let s_len = String.length s in
+  s_len >= suffix_len &&
+  String.sub s (s_len - suffix_len) suffix_len = suffix
