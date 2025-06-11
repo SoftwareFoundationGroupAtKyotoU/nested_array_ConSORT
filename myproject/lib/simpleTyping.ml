@@ -165,8 +165,8 @@ let subst_arg_name program =
       try lookup id subst with | Error _ -> id in
     match exp with
     | Var x -> Var (find_name x)
-    | ILit _ | ConstRandInt | BLit _ -> exp
-    | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ | Unit | ENull
+    | ILit _ | ConstRandInt | BLit _ | Unit | ENull -> exp
+    | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ 
     | EqExp _ | LtExp _ | GtExp _ | MultExp _ | IfExp _ | Assume _
     | LeqExp _ | GeqExp _ | NeqExp _ | Alias _ | Seq _ | Assert _-> 
       map_exp (subst_id subst) exp
