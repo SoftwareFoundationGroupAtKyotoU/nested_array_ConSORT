@@ -83,6 +83,48 @@ type exp =
   | ENull
   | ConstRandInt
 
+let rec map_exp f exp =
+  match exp with
+  | IfnpExp _ | LetAllocExp _ | Let _ | Assign _ | Deref _ | AppExp _ | Var _
+  | Unit | ENull | DerefBracketExp _ | ILit _ | ConstRandInt | BLit _ 
+  | LetIntExp _ | LetAddPtrExp _ | LetDerefExp _ | AssignInt _ | AssignPtr _ 
+  | AliasAddPtr _ | AliasDeref _ -> f exp
+  | Seq (exp1, exp2) ->
+    Seq (map_exp f exp1, map_exp f exp2)
+  | Assert(exp1, exp2) ->
+    Assert (map_exp f exp1, map_exp f exp2)
+  | Assume(exp1, exp2) ->
+    Assume (map_exp f exp1, map_exp f exp2)
+  | OrExp (exp1, exp2)  -> 
+    OrExp (map_exp f exp1, map_exp f exp2)
+  | AndExp(exp1, exp2) ->
+    AndExp(map_exp f exp1, map_exp f exp2)
+  | NotExp exp ->
+    NotExp(map_exp f exp)
+  | EqExp (exp1, exp2) ->
+    EqExp(map_exp f exp1, map_exp f exp2)
+  | LtExp (exp1, exp2) ->
+    LtExp(map_exp f exp1, map_exp f exp2)
+  | GtExp (exp1, exp2) ->
+    GtExp(map_exp f exp1, map_exp f exp2)
+  | LeqExp (exp1, exp2) ->
+    LeqExp(map_exp f exp1, map_exp f exp2)
+  | GeqExp (exp1, exp2) ->
+    GeqExp(map_exp f exp1, map_exp f exp2)
+  | NeqExp (exp1, exp2) ->
+    NeqExp(map_exp f exp1, map_exp f exp2)
+  | PlusExp (exp1, exp2) ->
+    PlusExp(map_exp f exp1, map_exp f exp2)
+  | MinusExp (exp1, exp2) ->
+    MinusExp(map_exp f exp1, map_exp f exp2)
+  | MultExp (exp1, exp2) ->
+    MultExp(map_exp f exp1, map_exp f exp2)
+  | IfExp (exp1, exp2, exp3) ->
+    IfExp (map_exp f exp1, map_exp f exp2, map_exp f exp3)
+  | Alias(exp1, exp2, exp3) ->
+    Alias (map_exp f exp1, map_exp f exp2, map_exp f exp3)
+  
+
 (* 篩型と所有権付きの型 *)
 type ftype =
   | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
