@@ -506,7 +506,17 @@ let rec emit_chc fvs fun_num ifel c =
     with 
     | Error _ ->
       match e with
-      | EqExp(DerefBracketExp(f, ids), ex) -> 
+      | EqExp(DerefBracketExp(f, ids), ex) | LtExp(DerefBracketExp(f, ids), ex)
+      | LeqExp(DerefBracketExp(f, ids), ex) | GtExp(DerefBracketExp(f, ids), ex) 
+      | GeqExp(DerefBracketExp(f, ids), ex) -> 
+        let main_assert sl = 
+          match e with
+          | EqExp _ -> Eq(Id "v", sl)
+          | LtExp _ -> Lt(Id "v", sl)
+          | LeqExp _ -> Leq(Id "v", sl)
+          | GtExp _ -> Gt(Id "v", sl)
+          | GeqExp _ -> Geq(Id "v", sl)
+          | _ -> raise (Error "main assert error") in
         let rec subst ids depth =
           (match ids with
           | [] -> [] 
@@ -526,12 +536,12 @@ let rec emit_chc fvs fun_num ifel c =
           IntPred(x, x :: vars) ::
           (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
          :: (subst ids (List.length ids))),
-          Eq(Id "v", FV x))]
+          main_assert (FV x))]
         | _ ->
         [Imply(Ands(
           (ptrpred f (make_idx_list (List.length ids)) fvs ifel)
          :: (subst ids (List.length ids))),
-          Eq(Id "v", exp_to_smtlib ex))])
+          main_assert (exp_to_smtlib ex))])
       | _ -> raise (Error "assert error")
       )
     | CHCAssume(e, cs, _) ->
@@ -586,7 +596,7 @@ let ics_to_smtlib ics fun_num =
   let ref_ids =  List.concat (List.map find_ref_id ftid_fts1) in
   (* 引数名の抽出 *)
   let ids =  List.concat (List.map find_id ftid_fts1) in
-  id_count_chc := List.map (fun (id, depth) -> (id, (1,[],depth))) ref_ids;
+  id_count_chc := List.map (fun (id, depth) -> (id, (0,[],depth))) ref_ids;
   intpred_env := [];
   varpred_count := [];
   let g1 id = 
