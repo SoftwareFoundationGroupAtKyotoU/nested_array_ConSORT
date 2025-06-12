@@ -30,14 +30,14 @@ type smtlib =
 let rec map_smtlib f smtlib =
   match smtlib with
   | FV _ | Id _ | IntPred _ | IntVarPred _ | PtrPred _ 
-  | PtrVarPred _ | VarPred _ | True -> smtlib
+  | PtrVarPred _ | VarPred | True -> smtlib
   | Or(sl1, sl2) -> Or(map_smtlib f sl1, map_smtlib f sl2)
   | And(sl1, sl2) -> And(map_smtlib f sl1, map_smtlib f sl2)
   | Imply(sl1, sl2) -> Imply(map_smtlib f sl1, map_smtlib f sl2)
   | Not sl -> Not (map_smtlib f sl)
   | Eq(sl1, sl2) -> Eq(map_smtlib f sl1, map_smtlib f sl2)
   | Lt(sl1, sl2) -> Lt(map_smtlib f sl1, map_smtlib f sl2)
-  | Gt(sl1, sl2) -> Lt(map_smtlib f sl1, map_smtlib f sl2)
+  | Gt(sl1, sl2) -> Gt(map_smtlib f sl1, map_smtlib f sl2)
   | Leq(sl1, sl2) -> Leq(map_smtlib f sl1, map_smtlib f sl2)
   | Geq(sl1, sl2) -> Geq(map_smtlib f sl1, map_smtlib f sl2)
   | Add(sl1, sl2) -> Add(map_smtlib f sl1, map_smtlib f sl2)
