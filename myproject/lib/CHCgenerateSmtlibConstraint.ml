@@ -495,14 +495,8 @@ let rec emit_chc fvs fun_num ifel c =
       ]   
   | CHCAssert (e,_) -> (*　assert( e ); ... *)
     (* e中の自由変数 *)
-    let fvs_e = fvs_of_exp e in
     (try
-      if fvs_e = [] then
-        (* assert中の論理式eに自由変数が含まれていないならばeをそのまま制約に *)
-        [exp_to_smtlib e]
-      else
-        (* 自由変数の篩型の述語　ならば　assert中の論理式e *)
-        [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs_e), exp_to_smtlib e)]
+      [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs), exp_to_smtlib e)]
     with 
     | Error _ ->
       match e with
