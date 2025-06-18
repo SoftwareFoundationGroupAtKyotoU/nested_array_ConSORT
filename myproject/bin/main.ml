@@ -78,11 +78,12 @@ let () =
   | [_; file_name; "print_program"] ->
     print_program file_name
   | [_; file_name; "refinement"] ->
+    let start_time = Unix.gettimeofday () in
     main_chc file_name;
     let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
     let ic = open_in "experiment/chc_result" in
     (* 最初の行を読み取る *)
     let first_line = input_line ic in
-    Printf.printf "refinement: %s\n" first_line;
+    Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
     flush stdout;
   | _ -> Printf.eprintf "予期せぬエラーが発生しました"
