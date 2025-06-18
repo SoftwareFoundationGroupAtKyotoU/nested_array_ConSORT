@@ -60,6 +60,68 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
       fprintf formatter "(declare-fun %s () Int)\n" coeff;
       ) fvs
 
+let rec print_lim oc var_locations fvs fun_num =
+  let formatter = formatter_of_out_channel oc in
+  let rec nested_ref_declare id pos branch_trace depth fvs = 
+    if depth < 1 then ()
+    else
+      (
+      (* 下限の係数を宣言 *)
+      print_declare_c formatter fvs "_l" id pos branch_trace fun_num depth;
+      (* 上限の係数を宣言 *)
+      print_declare_c formatter fvs "_h" id pos branch_trace fun_num depth;
+      let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
+      let fvs' = idx::fvs in
+      nested_ref_declare id pos branch_trace (depth-1) fvs') in
+  (List.iter
+    (fun (id,(pos,branch_trace, simpleTy)) ->
+      let depth = ref_depth simpleTy in 
+      nested_ref_declare id pos branch_trace depth fvs) var_locations);
+(* 所有範囲の上限または下限の宣言 *)
+and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
+  List.iter
+    (fun fv ->
+      (* smtlibに渡す参照の範囲の上限下限を表す一次式のうち，環境の自由変数の係数定数を宣言
+      [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のc1やc1'
+      c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(関数内での位置を表す整数)_(if or el)_(参照の深さ) *)
+      let coeff = asprintf "c_%d_%s_%s_%s_%d%a_%d"
+        fun_num l_or_h fv id pos pp_branch_trace branch_trace depth in
+      fprintf formatter "(assert (and (<= (- 1) %s) (<= %s 1)))\n" coeff coeff;
+      ) fvs
+
+(* smtlib形式で変数宣言を行う
+関数評価前と評価後の所有権の範囲を表す
+print_declareと大体同じ *)
+let rec print_lim_begin_and_end oc varown_count fvs fun_num =
+  let formatter = formatter_of_out_channel oc in
+  let rec nested_ref_declare_begin_and_end id b_or_e depth fvs = 
+    if depth < 1 then ()
+    else
+       (print_declare_b_and_e_c formatter fvs "_l" id b_or_e fun_num depth;
+       print_declare_b_and_e_c formatter fvs "_h" id b_or_e fun_num depth;
+       let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
+       let fvs' = idx::fvs in
+       nested_ref_declare_begin_and_end id b_or_e (depth-1) fvs');
+     in
+  (List.iter
+    (fun (id,b_or_e,fun_num',depth) ->
+       if fun_num' = fun_num then
+        nested_ref_declare_begin_and_end id b_or_e depth fvs
+       else 
+         ()
+       ) varown_count);
+(* 関数評価前，評価後の上限下限の定数係数の宣言 *)
+and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num depth =
+  List.iter
+  (* smtlibに渡す参照の範囲の上限下限を表す一次式のうち，環境の自由変数の係数定数を宣言
+      [d + c1*x1 + ..., d' + c1'*x1 + ...] -> o のc1やc1'
+      c_(関数のシリアル番号)_(l(下限) or h(上限))_(自由変数名)_(参照変数名)_(b(評価前) or e(評価後))_(参照の深さ) *)
+    (fun fv ->
+      let coeff = asprintf "c_%d_%s_%s_%s_%s_%d" fun_num l_or_h fv id b_or_e depth in
+      fprintf formatter "(assert (and (<= (- 1) %s) (<= %s 1)))\n" coeff coeff;
+       ) fvs
+
+
 (* smtlib形式で変数宣言を行う
 関数評価前と評価後の所有権の範囲を表す
 print_declareと大体同じ *)
@@ -330,17 +392,21 @@ and print_smtlibs_sub oc num sl =
   let fvs = list_to_set ((fvs_of_smtlib sl)@idxs) [] in
   if fvs = [] then
     (output_string oc "(assert ";
+    (* (output_string oc "(assert (! "; *)
     (* smtlibの制約部分の記述 *)
       print_smtlib oc sl true [] num; 
       output_string oc (")\n");
+      (* output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n"); *)
       serial_num := !serial_num + 1)
   else 
     (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
     (output_string oc "(assert (forall (";
+    (* (output_string oc "(assert (! (forall ("; *)
       output_string oc (make_args fvs);
       output_string oc ") ";
       print_smtlib oc sl true [] num; 
       output_string oc ("))\n");
+      (* output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n"); *)
       serial_num := !serial_num + 1)
   and make_args fvs = 
   match fvs with
@@ -555,5 +621,6 @@ and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num z3res depth =
     (fun fv ->
       let s = sprintf "c_%d_%s_%s_%s_%s_%d" fun_num l_or_h fv id b_or_e depth in
       let res = lookup s z3res in
+      if res = Int Z.zero then () else 
       fprintf formatter " + %a * %s" pp_value res fv;
         ) fvs
