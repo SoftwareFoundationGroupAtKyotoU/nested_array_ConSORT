@@ -24,25 +24,29 @@ easyMatrix(l, k, pp)
     let r = alloc l : int ref in
     let zero = 0 in
     let d = init(l, zero, r) in
+    /*assert(r[0] = 0);*/
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = easyMatrix(l, m, q) in
+    let d2 = easyMatrix(l, m, q) in
+    /*assert(pp[0][0] = 0);*/
     alias(q=pp+1);
     0
   } else {
     0
   }
 }
-
+/* 同じ初期化の方法でもsatにならない */
 boomerang(b1, b2, r)
 [ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.)> ->
     <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
 {
   if b2 > 0 && b1 > 0 then {
     let t = *r in
-    let uu = 1 in
-    let f = init(b1, uu, t) in
+    let n = *t in
+    /*assert(n = 0);*/
+    /*let f = init(b1, n, t) in*/
+    /*t := n;*/
     alias(t = *r);
     let b3 = b2 - 1 in
     let t2 = r+ 1 in
@@ -54,17 +58,17 @@ boomerang(b1, b2, r)
   }
 }
 
-verify(s, s2, q)
+/*verify(s, s2, q)
 [ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
     <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
 {
   if s >= 0 && s2 >= 0 && s2 < s then { 
-    assert(q(s2, 0) = 0);
+    assert(q[0][0] = 0);
     1
   } else {
     0
   }
-}
+}*/
 
 
 {
@@ -73,8 +77,10 @@ verify(s, s2, q)
   let zero = 0 in
   let one = 1 in
   let d = easyMatrix(ten, ten, kp) in
-  let d2 = verify(ten, zero, kp) in
+  /*assert(kp[0][0] = 0);*/
+  /*let d2 = verify(ten, one, kp) in*/
   let d3 = boomerang(ten, ten,  kp) in
-  let d4 = verify(ten, zero, kp) in
+  assert(kp[0][0] = 0);
+  /*let d4 = verify(ten, one, kp) in*/
   ()
 }

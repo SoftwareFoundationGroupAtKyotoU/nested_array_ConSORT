@@ -5,7 +5,7 @@ init(pin, p)
   if pin <= 0 then {
     1
   } else {
-    p := 0;
+    p := 1;
     let q = p + 1 in
     let m1 = pin - 1 in
     let d = init(m1, q) in
@@ -24,7 +24,7 @@ initMatrix(l, k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = initMatrix(l, m, q) in
+    let d2 = initMatrix(l, m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -60,6 +60,6 @@ trace(n1, n2, q)
   let ten = 10 in
   let d1 = initMatrix(ten, ten, mat1) in
   let d2 = trace(ten, ten, mat1) in
-  assert(d2 = 0);
+  assert(d2 >= 0);
   1
 }
