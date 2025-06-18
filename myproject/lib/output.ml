@@ -83,9 +83,11 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num =
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
-    (let (_, _, _, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
+    (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
     print_smtlibs oc smtlibs is_unconcrete (-1);
+    print_lim oc var_locations fvs fun_num;
+    print_lim_begin_and_end oc varown_count fvs fun_num;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
     (* 次の関数の制約出力へ *)
@@ -255,10 +257,12 @@ let main_chc file =
 
   let oc = open_out "experiment/out_chc.smt2" in
   output_string oc "(set-logic HORN)\n\n\n";
+  output_string oc "(set-option :produce-unsat-cores true)\n";
   main_chc_sub_declare oc all_chcs n;
   main_chc_sub oc all_chcs n;
   output_string oc "(check-sat)\n";
   output_string oc "(get-model)\n";
+  output_string oc "(get-unsat-core)\n";
   close_out oc
   
 
