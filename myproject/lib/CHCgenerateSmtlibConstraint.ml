@@ -14,11 +14,10 @@ let id_count_chc = ref []
 (* 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト *)
 let varpred_count = ref []
 
-let make_idx_list depth =
-  let rec make_idx_list_sub depth lis =
-    if depth <= 0 then lis else
-      make_idx_list_sub (depth-1) ((FV (Format.sprintf "i%n" depth))::lis) in
-  make_idx_list_sub depth []
+let rec make_idx_list depth =
+  if depth <= 0 then [] else
+    (FV (Format.sprintf "i%n" depth))::
+    make_idx_list (depth-1)
 
 let rec lookup_depth id env =
   match env with
@@ -489,14 +488,16 @@ let rec emit_chc fvs fun_num ifel c =
     let p = ptrpred id2 (make_idx_list (depth+1)) fvs ifel in
     [Imply(And(ptrpred_p id2 ((Id "0")::(make_idx_list depth)) fvs ifel, 
     ptrpred_p id1 (make_idx_list depth) fvs ifel), ptrpred id1 (make_idx_list depth) fvs ifel);
-    Imply(Imply((Eq(outer_idx, (Id "0")), ptrpred_p id1 (make_idx_list depth) fvs ifel)),p);
-    Imply(Imply(Eq(outer_idx, (Id "0")), ptrpred_p id2 ((Id "0")::(make_idx_list depth)) fvs ifel),p);
-    Imply(Imply(Not(Eq(outer_idx, (Id "0"))), ptrpred_p id2 (make_idx_list (depth+1)) fvs ifel),p);
+    Imply(And((Eq(outer_idx, (Id "0")), ptrpred_p id1 (make_idx_list depth) fvs ifel)),p);
+    (* Imply(And(Eq(outer_idx, (Id "0")), ptrpred_p id2 ((Id "0")::(make_idx_list depth)) fvs ifel),p); *)
+    Imply(And(Not(Eq(outer_idx, (Id "0"))), ptrpred_p id2 (make_idx_list (depth+1)) fvs ifel),p);
       ]   
   | CHCAssert (e,_) -> (*　assert( e ); ... *)
     (* e中の自由変数 *)
+    let fvs_e = fvs_of_exp e in
+    let fvs' = union_list fvs_e fvs in
     (try
-      [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs), exp_to_smtlib e)]
+        [Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs'), exp_to_smtlib e)]
     with 
     | Error _ ->
       match e with
