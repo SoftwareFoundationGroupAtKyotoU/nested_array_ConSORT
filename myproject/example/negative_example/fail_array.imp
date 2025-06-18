@@ -18,6 +18,7 @@ init(n, p)
   let p = alloc 10 : int ref in
   let m = 10 in
   let d = init(m, p) in
-  assert(p(1) = 2);
+  /* 失敗例 */
+  assert(p[1] = 2);
   ()
 }

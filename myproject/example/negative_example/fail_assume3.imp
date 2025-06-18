@@ -1,0 +1,18 @@
+assum(a, b)
+[<a:int, b:int> -> <a:int, b:int|int>]
+{/* assumeが正しく動く失敗例 */
+    if a > 5 then {
+        a
+    } else {
+        let d = assum(a, b) in
+        d
+    }
+}
+
+{
+    let n = 0 in
+    let arg = _ in
+    let d = assum(arg, n) in
+    assert(d > 10);
+    ()
+}

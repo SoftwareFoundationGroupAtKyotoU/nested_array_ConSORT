@@ -22,10 +22,11 @@ init(flag, n, x,  p)
   let ten = 10 in
   let zero = 0 in
   let d = init(zero, ten, one, tt) in
-  let j = *tt in
-  assert(j = 1 || j = 10);
+  assert(tt[0] = 1);
   let d2 = init(one, ten, ten, tt2) in
+  assert(tt2[0] = 10);
   ()
 }
 
-/* initにflagを追加してもcontext sensitivityは解決せず */
+/* initにflagを追加してもcontext sensitivityは解決せず
+->仮引数の述語を二引数にして二引数が一致するときに真，にすることで解決 */

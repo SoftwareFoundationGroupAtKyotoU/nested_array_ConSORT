@@ -24,7 +24,7 @@ initMatrix(l, k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = initMatrix(l, m, q) in
+    let d2 = initMatrix(l, m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -76,6 +76,6 @@ sumMatrix(n1, n2, q)
   let ten = 10 in
   let d1 = initMatrix(ten, ten, mat1) in
   let d2 = sumMatrix(ten, ten, mat1) in
-  assert(d2 = 0);
+  assert(d2 >= 0);
   1
 }

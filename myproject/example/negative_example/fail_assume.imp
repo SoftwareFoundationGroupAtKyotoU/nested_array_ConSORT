@@ -1,6 +1,7 @@
 verify(x)
 [<x:int> -> <x:int|int>]
 {
+    /* assumeが正しく動く失敗例 */
     assume(x > 0);
     assert(x < 0);
     1
