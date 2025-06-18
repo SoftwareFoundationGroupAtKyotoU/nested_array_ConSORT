@@ -185,7 +185,7 @@ let subst_arg_name program =
     | DerefBracketExp (id, exps) ->
       DerefBracketExp (find_name id, List.map (subst_id subst) exps)
     | _ -> err("subst_arg_name Error: If this error occurs, the parser is wrong.") in
-  let rec subst_arg_name_sub fdef = 
+  let subst_arg_name_sub fdef = 
     let (fun_name, args, annotation, fun_body) = fdef in
     let subst = List.map (fun arg -> (arg, (fun_name ^ arg))) args in
     let new_args = List.map (fun arg -> (fun_name ^ arg)) args in
