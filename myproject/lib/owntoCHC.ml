@@ -10,11 +10,10 @@ open CHCSyntax
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
 
-let make_idx_list depth =
-  let rec make_idx_list_sub depth lis =
-    if depth <= 0 then lis else
-      make_idx_list_sub (depth-1) ((FV (Format.sprintf "i%n" depth))::lis) in
-  make_idx_list_sub depth []
+let rec make_idx_list depth =
+  if depth <= 0 then [] else
+    (FV (Format.sprintf "i%n" depth))::
+    make_idx_list (depth-1)
 
 (* num番目の関数のz3からの所有権推論結果から所有権を持つ変数名と関数内でのその変数の位置をリストアップ *)
 let rec get_id ownerships num = 
