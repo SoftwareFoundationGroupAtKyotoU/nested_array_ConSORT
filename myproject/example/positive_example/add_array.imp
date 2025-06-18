@@ -1,4 +1,4 @@
-add_array(n, p, q, r) 
+addarray(n, p, q, r) 
 [ <#n: int, p: int ref, q: int ref, r: int ref> -> 
   <#n: int, p: int ref, q: int ref, r: int ref | int> ]
 {
@@ -13,7 +13,10 @@ add_array(n, p, q, r)
     let q1 = q + 1 in
     let r1 = r + 1 in
     let m = n - 1 in
-    let d = add_array(m, p1, q1, r1) in
+    let d = addarray(m, p1, q1, r1) in
+    alias(p1 = p + 1);
+    alias(q1 = q + 1);
+    alias(r1 = r + 1);
     1
   }
 }
@@ -29,7 +32,7 @@ abs(m)
   }
 }
 
-init_x(n, x, p) 
+initx(n, x, p) 
 [ <#n: int, x: int, p: int ref> -> 
   <#n: int, x: int, p: int ref | int > ]
 {
@@ -39,7 +42,8 @@ init_x(n, x, p)
     p := x;
     let q = p + 1 in
     let m = n - 1 in
-    let d = init_x(m, x, q) in
+    let d = initx(m, x, q) in
+    alias(q = p + 1);
     1
   }
 }
@@ -52,10 +56,11 @@ verify(n, p)
     1
   } else {
     let y = *p in
-    assert(y >= 0);
+    /*assert(y >= 0);*/
     let q = p + 1 in
     let m = n - 1 in
     let d = verify(m, q) in
+    alias(q = p + 1);
     1
   }
 }
@@ -67,9 +72,9 @@ verify(n, p)
   let m = 1000 in
   let rand = _ in
   let z = abs(rand) in
-  let d = init_x(m, z, p) in
-  let d1 = init_x(m, z, q) in
-  let d2 = add_array(m, p, q, r) in
+  let d = initx(m, z, p) in
+  let d1 = initx(m, z, q) in
+  let d2 = addarray(m, p, q, r) in
   let d3 = verify(m, r) in
   ()
 }

@@ -11,8 +11,8 @@ assum(a, b)
 
 {
     let n = 0 in
-    let arg = _ in
+    let arg = 5 in
     let d = assum(arg, n) in
-    assert(d > 5);
+    assert(d > 10);
     ()
 }

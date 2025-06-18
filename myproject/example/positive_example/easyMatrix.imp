@@ -22,11 +22,12 @@ easyMatrix(n, pp)
         1 
   } else {
     let r = alloc 10 : int ref in
-    let d = init(10, r) in
+    let ten = 10 in
+    let d = init(ten, r) in
     pp := r;
     let q = pp + 1 in
     let m = n - 1 in
-    let d = easyMatrix(m, q) in
+    let d2 = easyMatrix(m, q) in
     alias(q=pp+1);
     0
   }

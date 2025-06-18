@@ -45,7 +45,7 @@ easyMatrix(k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = easyMatrix(m, q) in
+    let d2 = easyMatrix(m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -55,13 +55,10 @@ easyMatrix(k, pp)
 
 
 {
-  /*let p = alloc 10 : int ref ref in*/
-  /*let pp = alloc 10 : int ref in
-  let d = init(10, pp) in*/
-  /*let d = easyMatrix(10, p) in*/
+  let p = alloc 10 : int ref ref in
+  let ten = 10 in
+  let d = easyMatrix(ten, p) in
   let pp = alloc 10 : int ref in
-  /*pp := 1;
-  let v = *pp in
-  assert(1 = 0);*/
+  assert(p[0][0] = 0);
   ()
 }

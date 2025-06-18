@@ -31,7 +31,7 @@ init(n, p)
   }
 }
 
-
+/* ループ中ずっとk*k行列ではないため失敗 */
 easyMatrix(k, pp)
 [ <#k: int, pp: int ref(0, k- 1, 1.) ref(0, k - 1, 1.)> ->
     <#k: int, pp: int ref(0 , k- 1, 1.) ref(0, k - 1, 1.) | int> ]

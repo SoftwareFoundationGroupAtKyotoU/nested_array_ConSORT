@@ -24,7 +24,7 @@ initMatrix(l, k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = initMatrix(l, m, q) in
+    let d2 = initMatrix(l, m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -32,35 +32,35 @@ initMatrix(l, k, pp)
   }
 }
 
-scalarMult(ll, co, be) 
-[ <#ll: int, co: int, be: int ref (0, ll - 1, 1.) > -> 
-  <#ll: int, co: int, be: int ref (0, ll - 1, 1.) | int> ]
+scalarMult(ll, coh, p) 
+[ <#ll: int, coh: int, p: int ref (0, ll - 1, 1.) > -> 
+  <#ll: int, coh: int, p: int ref (0, ll - 1, 1.) | int> ]
 {
   if ll <= 0 then {
     1
   } else {
-    let x = *be in
-    let y = co * x in
-    be := y;
-    let ne = be + 1 in
+    let x = *p in
+    let y = coh * x in
+    p := y;
+    let ne = p + 1 in
     let m1 = ll - 1 in
-    let d = scalarMult(m1, co, ne) in
-    alias(ne = be + 1);
+    let d = scalarMult(m1, coh, ne) in
+    alias(ne = p + 1);
     1
   }
 }
 
-scalarMultMatrix(n1, n2, coef, q) 
-[ <#n1: int, #n2: int, coef: int, q: int ref (0, n1 - 1, 1.) ref(0, n2- 1, 1.) > -> 
-  <#n1: int, #n2: int, coef: int, q: int ref (0, n1 - 1, 1.) ref(0, n2- 1, 1.) | int> ]
+scalarMultMatrix(n1, n2, be, q) 
+[ <#n1: int, #n2: int, be: int, q: int ref (0, n1 - 1, 1.) ref(0, n2- 1, 1.) > -> 
+  <#n1: int, #n2: int, be: int, q: int ref (0, n1 - 1, 1.) ref(0, n2- 1, 1.) | int> ]
 {
   if n1 > 0 && n2 > 0 then {
     let qin = *q in
-    let d = scalarMult(n1, coef, qin) in
+    let d = scalarMult(n1, be, qin) in
     alias(qin = *q);
     let q2 = q + 1 in
     let m = n2 - 1 in
-    let d2 = scalarMultMatrix(n1, m, coef, q2) in
+    let d2 = scalarMultMatrix(n1, m, be, q2) in
     alias(q2 = q + 1);
     0
   } else {
@@ -75,9 +75,6 @@ scalarMultMatrix(n1, n2, coef, q)
   let zero = 0 in
   let d = initMatrix(x, y, p) in
   let d2 = scalarMultMatrix(x, y, zero, p) in
-  let h = *p in
-  let hin = *h in
-  assert(hin = 0);
-  alias(h = *p);
+  assert(p[0][0] = 0);
   1
 }

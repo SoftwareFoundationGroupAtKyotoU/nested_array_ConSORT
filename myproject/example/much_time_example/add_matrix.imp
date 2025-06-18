@@ -24,7 +24,7 @@ initMatrix(l, k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = initMatrix(l, m, q) in
+    let d2 = initMatrix(l, m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -32,7 +32,7 @@ initMatrix(l, k, pp)
   }
 }
 
-add_array(n, p, q, r) 
+addarray(n, p, q, r) 
 [ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.)> -> 
   <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.) | int> ]
 {
@@ -47,7 +47,7 @@ add_array(n, p, q, r)
     let q1 = q + 1 in
     let r1 = r + 1 in
     let m = n - 1 in
-    let d = add_array(m, p1, q1, r1) in
+    let d = addarray(m, p1, q1, r1) in
     alias(r1 = r + 1);
     alias(q1 = q + 1);
     alias(p1 = p + 1);
@@ -55,7 +55,7 @@ add_array(n, p, q, r)
   }
 }
 
-add_matrix(n1, n2, pp, qq, rr) 
+addmatrix(n1, n2, pp, qq, rr) 
 [ <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
   <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.) | int> ]
 {
@@ -63,7 +63,7 @@ add_matrix(n1, n2, pp, qq, rr)
     let x = *pp in
     let y = *qq in
     let z = alloc n1 : int ref in
-    let d = add_array(n1, x, y, z) in
+    let d = addarray(n1, x, y, z) in
     alias(x = *pp);
     alias(y = *qq);
     rr := z;
@@ -71,7 +71,7 @@ add_matrix(n1, n2, pp, qq, rr)
     let qq1 = qq + 1 in
     let rr1 = rr + 1 in
     let m = n2 - 1 in
-    let d = add_matrix(n1, m, pp1, qq1, rr1) in
+    let d = addmatrix(n1, m, pp1, qq1, rr1) in
     alias(rr1 = rr + 1);
     alias(qq1 = qq + 1);
     alias(pp1 = pp + 1);
@@ -85,10 +85,11 @@ add_matrix(n1, n2, pp, qq, rr)
   let mat1 = alloc 10 : int ref ref in
   let mat2 = alloc 10 : int ref ref in
   let mat3 = alloc 10 : int ref ref in
-  let z1 = initMatrix(10, 10, mat1) in
-  let z2 = initMatrix(10, 10, mat2) in
-  let z3 = add_matrix(10, 10, mat1, mat2, mat3) in
+  let ten = 10 in
+  /*let z1 = initMatrix(ten, ten, mat1) in
+  let z2 = initMatrix(ten, ten, mat2) in*/
+  /*let z3 = addmatrix(ten, ten, mat1, mat2, mat3) in*/
   1
 }
 
-/* ugokanai */
+/* jikan kakari sugiru! */

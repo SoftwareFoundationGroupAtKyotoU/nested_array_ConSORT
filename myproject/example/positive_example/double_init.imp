@@ -9,6 +9,7 @@ init(n, x, p)
     let q = p + 1 in
     let m = n - 1 in
     let d = init(m, x, q) in
+    alias(q = p + 1);
     1
   }
 }
@@ -37,6 +38,7 @@ init2(n, x, p)
     let q = p + 1 in
     let m = n - 1 in
     let d = init2(m, x, q) in
+    alias(q = p + 1);
     1
   }
 }

@@ -36,7 +36,7 @@ init(n, p)
 
 
 easyMatrix(l, k, pp)
-[ <#l: int, #k: int, pp: int ref(0, l- 1, 1.) ref(0, k - 1, 1.)> ->
+[ <#l: int, #k: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
     <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
@@ -45,7 +45,7 @@ easyMatrix(l, k, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d = easyMatrix(l, m, q) in
+    let d2 = easyMatrix(l, m, q) in
     alias(q=pp+1);
     0
   } else {
@@ -55,9 +55,8 @@ easyMatrix(l, k, pp)
 
 
 {
-  let pp = alloc 10 : int ref in
-  /*pp := 1;
-  let v = *pp in
-  assert(1 = 0);*/
+  let pp = alloc 10 : int ref ref in
+  let ten = 10 in
+  let d = easyMatrix(ten, ten, pp) in
   ()
 }

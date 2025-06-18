@@ -5,14 +5,23 @@ sum(n, p)
   if n <= 0 then {
     0
   } else {
-    let m = n - 1 in
-    let q = p + m in
-    let y = *q in
-    let s = sum(m, p) in
-    alias(q=p+1);
-    let z = y + s in
-    z
-  } 
+    let x = *p in
+    if n = 1 then {
+      x
+    } else {
+      let k = n - 1 in
+      let q = p + k in
+      let x2 = *q in
+      let y = x + x2 in
+      let m = n - 2 in
+      let p1 = p + 1 in
+      let s = sum(m, p1) in
+      alias(p1=p+1);
+      alias(q=p+k);
+      let z = y + s in
+      z
+    } 
+  }
 }
 
 abs(m)
@@ -26,7 +35,7 @@ abs(m)
   }
 }
 
-init_x(n, x, p) 
+initx(n, x, p) 
 [ <#n: int, x: int, p: int ref> -> 
   <#n: int, x: int, p: int ref | int> ]
 {
@@ -36,7 +45,7 @@ init_x(n, x, p)
     p := x;
     let q = p + 1 in
     let m = n - 1 in
-    let d = init_x(m, x, q) in
+    let d = initx(m, x, q) in
     alias(q=p+1);
     1
   }
@@ -47,7 +56,7 @@ init_x(n, x, p)
   let m = 1000 in
   let rand = _ in
   let z = abs(rand) in
-  let d = init_x(m, z, p) in
+  let d = initx(m, z, p) in
   let x = sum(m, p) in
   assert(x >= 0);
   ()
