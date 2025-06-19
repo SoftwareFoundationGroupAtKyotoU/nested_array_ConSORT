@@ -37,7 +37,7 @@ trace(n1, n2, q)
 [ <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)> -> 
   <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
 {
-  if n1 > 0 && n2 > 0 then {
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
     let qin = *q in
     let m = n1 - n2 in
     let qinShift = qin + m in
@@ -56,8 +56,8 @@ trace(n1, n2, q)
 }
 
 {
-  let mat1 = alloc 10 : int ref ref in
-  let ten = 10 in
+  let mat1 = alloc 4 : int ref ref in
+  let ten = 4 in
   let d1 = initMatrix(ten, ten, mat1) in
   let d2 = trace(ten, ten, mat1) in
   assert(d2 >= 0);

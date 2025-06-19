@@ -1,0 +1,105 @@
+init(pin, val, p) 
+[ <#pin: int, #val: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, #val: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := val;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, val, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+initMatrix(k, n, val, pp)
+[ <#k: int, #n: int, #val: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#k: int, #n: int, #val: int, pp: int ref(0 , n - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 then { 
+    let r = alloc n : int ref in
+    let d = init(n, val, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(m, n, val, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+sum(plen, p) 
+[ <#plen: int, p: int ref(0, plen - 1, 1.)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 1.) | int> ]
+{
+  if plen <= 0 then {
+    0
+  } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    alias(q = p + 1);
+    y
+  }
+}
+
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sum(n1, qin) in
+    assert(0 = 0);
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+/*sumMatrix(q) 
+[ <q: int ref(0 , 9, 1.) ref(0, 9, 1.) > -> 
+  <q: int ref(0 , 9, 1.) ref(0, 9, 1.) | int> ]
+{
+  if 1 > 0 then {
+    assert(q[0][0] = 1);
+    let qin = *q in
+    assert(qin[0] = 1);
+    alias(qin = *q);
+    let q2 = q + 1 in
+    alias(q2 = q + 1);
+    0
+  } else {
+    0
+  }
+}*/
+
+{
+  let mat1 = alloc 3 : int ref ref in
+  let ten = 3 in
+  let one = 1 in
+  let d1 = initMatrix(ten, ten, one, mat1) in
+  let d2 = sumMatrix(ten, ten, mat1) in
+  assert(d2 >= 9);
+  1
+}
+/* ugoku 
+3*3固定値 で　所有権sat time: 9.684232s　total time: 1546.844611s
+4*4固定値 で　total time: 3500.376395s
+sat time: 36.513070s
+ownership: sat
+refinement: sat
+total time: 1239.688310s
+*/
