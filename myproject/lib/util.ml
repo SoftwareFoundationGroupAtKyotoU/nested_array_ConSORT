@@ -233,7 +233,7 @@ let rec print_exp exp =
   | BLit b ->
     print_string "BLit ";
     if b then print_string "true" else print_string "false"
-  | ConstRandInt ->
+  | ConstRandInt _ ->
     print_string "ConstRandInt"
   (* | EConstTrue ->
     print_string "true"
@@ -406,6 +406,7 @@ let rec exp_to_smtlib exp =
     else 
       Id(sprintf "(- %s)" (Z.to_string @@ Z.neg @@ i))
   | Var x -> FV x
+  (* | ConstRandInt _ -> raise (Error "exp_to_smtlib error") *)
   | _ -> 
     raise (Error "exp_to_smtlib error")
 
