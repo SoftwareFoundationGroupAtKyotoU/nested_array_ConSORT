@@ -319,11 +319,12 @@ let rec emit_chc fvs fun_num ifel c =
        in
        (* 制約の結合 *)
        sl_ret :: ss1 @ ss2
-     | ConstRandInt ->(* 不定値整数の場合　let x = _ in *)
+     | ConstRandInt exp ->(* 不定値整数の場合　let x = _ in *)
        intpred_env := (id, []) :: !intpred_env;
-       (* 真　ならば　新たに定義された変数の述語
-       どんな述語も許容？ *)
-       [Imply((Id "true"), IntPred(id, [id]))]
+       if exp = (BLit true) then [Imply(Id "true", IntPred(id, [id]))] else 
+        let fvs' = fvs_of_exp exp in
+        let g = (List.map (fun fv -> if fv = id then True else IntPred(fv, fv :: (lookup fv !intpred_env))) fvs') in
+        [Imply(Ands ((exp_to_smtlib exp):: g), IntPred(id, [id]))]
      | e -> (* そのほかの場合　let x = e in　*)
      (* e中の自由変数 *)
        let fvs' = fvs_of_exp e in
@@ -542,8 +543,10 @@ let rec emit_chc fvs fun_num ifel c =
     | CHCAssume(e, cs, _) ->
       let ss = List.concat (List.map (emit_chc fvs fun_num ifel) cs) in
       (* 条件式が成り立つならば残りの制約が成り立つ，という形に変更 *)
-      let ss' = List.map (fun s -> Imply(exp_to_smtlib e, s)) ss in
-      ss'
+      let fvs_e = fvs_of_exp e in
+      if fvs_e = [] then ss else
+        let ss' = List.map (fun s -> Imply(Ands(exp_to_smtlib e :: List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs_e), s)) ss in
+        ss'
 
 (* #付きの変数名を抜き出す *)
 let find_fv ftid_ft = 

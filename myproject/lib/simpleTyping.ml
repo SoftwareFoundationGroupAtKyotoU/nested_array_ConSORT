@@ -25,7 +25,7 @@ let rec unify lis =
 let rec infer_simple_ty tyenv exp =
   match exp with
     Var x -> ([], lookup x !tyenv)
-  | ILit _ | ConstRandInt -> ([], SInt)
+  | ILit _ | ConstRandInt _ -> ([], SInt)
   | BLit _ -> ([], SBool)
   | OrExp (exp1, exp2) | AndExp(exp1, exp2) -> 
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
@@ -165,8 +165,8 @@ let subst_arg_name program =
       try lookup id subst with | Error _ -> id in
     match exp with
     | Var x -> Var (find_name x)
-    | ILit _ | ConstRandInt | BLit _ | Unit | ENull -> exp
-    | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ 
+    | ILit _ | BLit _ | Unit | ENull -> exp
+    | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ | ConstRandInt _
     | EqExp _ | LtExp _ | GtExp _ | MultExp _ | IfExp _ | Assume _
     | LeqExp _ | GeqExp _ | NeqExp _ | Alias _ | Seq _ | Assert _-> 
       map_exp (subst_id subst) exp

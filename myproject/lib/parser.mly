@@ -196,7 +196,8 @@ AExpr :
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
   | FALSE { BLit false }
-  | ConstRandInt { ConstRandInt }
+  | ConstRandInt { ConstRandInt (BLit true) }
+  | ConstRandInt COLON LPAREN x=Expr RPAREN { ConstRandInt x }
   | UNITV { Unit }
   | id=ID ids=Brackets { DerefBracketExp(id, ids) }
 
