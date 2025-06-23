@@ -335,9 +335,9 @@ is_unconcrete 自由変数を具体化するかどうか falseで具体化 true�
 fvs 所有権termが依存できる自由変数
 num 篩型用の数字
 iter 自由変数を具体化する値の範囲 *)
-let rec print_smtlibs oc smtlibs is_unconcrete num =
+let rec print_smtlibs oc smtlibs is_unconcrete unsat_core_flag num =
   if is_unconcrete then
-    List.iter (print_smtlibs_sub oc num) smtlibs
+    List.iter (print_smtlibs_sub oc unsat_core_flag num) smtlibs
   else
       List.iter
       (fun sl -> 
@@ -386,33 +386,44 @@ let rec print_smtlibs oc smtlibs is_unconcrete num =
           output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
           serial_num := !serial_num + 1)) *)
       smtlibs
-and print_smtlibs_sub oc num sl = 
+and print_smtlibs_sub oc unsat_core_flag num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
   let idxs = list_to_set (idx_of_smtlib sl) [] in
   let fvs = list_to_set ((fvs_of_smtlib sl)@idxs) [] in
-  if fvs = [] then
-    (output_string oc "(assert ";
-    (* (output_string oc "(assert (! "; *)
-    (* smtlibの制約部分の記述 *)
+  if unsat_core_flag then
+    (if fvs = [] then
+      (output_string oc "(assert (! ";
+      print_smtlib oc sl true [] num; 
+      output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      serial_num := !serial_num + 1)
+    else 
+      (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
+      (output_string oc "(assert (! (forall (";
+      output_string oc (make_args fvs);
+      output_string oc ") ";
+      print_smtlib oc sl true [] num; 
+      output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
+      serial_num := !serial_num + 1))
+  else 
+    (if fvs = [] then
+      (output_string oc "(assert ";
+      (* smtlibの制約部分の記述 *)
       print_smtlib oc sl true [] num; 
       output_string oc (")\n");
-      (* output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n"); *)
       serial_num := !serial_num + 1)
-  else 
-    (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
-    (output_string oc "(assert (forall (";
-    (* (output_string oc "(assert (! (forall ("; *)
+    else 
+      (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
+      (output_string oc "(assert (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
       print_smtlib oc sl true [] num; 
       output_string oc ("))\n");
-      (* output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n"); *)
-      serial_num := !serial_num + 1)
+      serial_num := !serial_num + 1))
   and make_args fvs = 
-  match fvs with
-  | [] -> ""
-  | fv :: [] -> "(" ^ fv ^ " Int)" 
-  | fv :: fvs' -> "(" ^ fv ^ " Int) " ^ (make_args fvs')
+    match fvs with
+    | [] -> ""
+    | fv :: [] -> "(" ^ fv ^ " Int)" 
+    | fv :: fvs' -> "(" ^ fv ^ " Int) " ^ (make_args fvs')
 (* smtlib形式から自由変数のリストを返す関数 *)
 and fvs_of_smtlib sl =
   match sl with 
@@ -445,6 +456,7 @@ let find_own_res fun_num id pos branch_trace z3res ty_env fvs =
       (fun fv ->
         let s = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num l_or_h fv id pos pp_branch_trace branch_trace depth in
         let res_c = lookup s z3res in
+        if res_c = Int Z.zero then () else 
         res := asprintf "%s + %a * %s" !res pp_value res_c fv;
           ) fvs
       in
