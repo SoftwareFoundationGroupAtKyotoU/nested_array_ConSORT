@@ -10,6 +10,9 @@ let () =
       let continue = ref true in
       let oc = open_out "experiment/result_cex_all" in
       output_string oc "counter example list\n";
+      let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file_name)) in
+      let oc = open_out result_path in
+      close_out oc;
       flush oc;
       close_out oc;
       while !continue do
@@ -33,9 +36,9 @@ let () =
         else if first_line = "sat" then
           (Printf.printf "int fin \n";
           main_fv file_name;
-          let _ = Sys.command "z3 experiment/out_fv.smt2 > experiment/result" in
+          let _ = Sys.command (Format.sprintf "z3 experiment/out_fv.smt2 > %s" result_path) in
           Printf.printf "fv fin ";
-          let ic = open_in "experiment/result" in
+          let ic = open_in result_path in
           (* 最初の行を読み取る *)
           let first_line = input_line ic in
           (* ファイルを閉じる *)
@@ -61,12 +64,17 @@ let () =
         iter := !iter + 1      
       done;
       (main_sat_ans file_name;
-      main_chc file_name;
+      main_chc file_name result_path false;
       let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
       let ic = open_in "experiment/chc_result" in
       (* 最初の行を読み取る *)
       let first_line = input_line ic in
       Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
+      flush stdout;
+      (if first_line = "unsat" then
+        (main_chc file_name result_path true;
+        let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_chc.smt2 > experiment/chc_result" in
+        ()));
       flush stdout;)
     with Sys_error msg -> Printf.eprintf "Error: %s\n" msg
     | End_of_file -> Printf.printf "canceled"
@@ -78,12 +86,20 @@ let () =
   | [_; file_name; "print_program"] ->
     print_program file_name
   | [_; file_name; "refinement"] ->
+    let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file_name)) in
     let start_time = Unix.gettimeofday () in
-    main_chc file_name;
+    main_chc file_name result_path false;
     let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
     let ic = open_in "experiment/chc_result" in
     (* 最初の行を読み取る *)
     let first_line = input_line ic in
     Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
     flush stdout;
+    (if first_line = "unsat" 
+    then
+      (main_chc file_name result_path true;
+      let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_chc.smt2 > experiment/chc_result" in
+      ())
+    );
+    flush stdout
   | _ -> Printf.eprintf "予期せぬエラーが発生しました"
