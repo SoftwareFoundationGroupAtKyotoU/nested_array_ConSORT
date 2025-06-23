@@ -81,12 +81,12 @@ type exp =
   | AppExp of id * exp list
   | Unit
   | ENull
-  | ConstRandInt
+  | ConstRandInt of exp
 
 let rec map_exp f exp =
   match exp with
   | IfnpExp _ | LetAllocExp _ | Let _ | Assign _ | Deref _ | AppExp _ | Var _
-  | Unit | ENull | DerefBracketExp _ | ILit _ | ConstRandInt | BLit _ 
+  | Unit | ENull | DerefBracketExp _ | ILit _ | BLit _ 
   | LetIntExp _ | LetAddPtrExp _ | LetDerefExp _ | AssignInt _ | AssignPtr _ 
   | AliasAddPtr _ | AliasDeref _ -> f exp
   | Seq (exp1, exp2) ->
@@ -123,7 +123,9 @@ let rec map_exp f exp =
     IfExp (map_exp f exp1, map_exp f exp2, map_exp f exp3)
   | Alias(exp1, exp2, exp3) ->
     Alias (map_exp f exp1, map_exp f exp2, map_exp f exp3)
-  
+  | ConstRandInt exp ->
+    ConstRandInt (map_exp f exp)
+
 
 (* 篩型と所有権付きの型 *)
 type ftype =
