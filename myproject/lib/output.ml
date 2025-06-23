@@ -85,7 +85,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num =
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
-    print_smtlibs oc smtlibs is_unconcrete (-1);
+    print_smtlibs oc smtlibs is_unconcrete false (-1);
     print_lim oc var_locations fvs fun_num;
     print_lim_begin_and_end oc varown_count fvs fun_num;
     (* 関数の制約の間は二行開ける *)
@@ -98,7 +98,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num =
 let generate_constrs file = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
-  let program = subst_arg_name program in
+  let program = subst_arg_name program in 
   close_in oc;
   let (fdefs, _) = program in
   let fun_num = List.length fdefs in 
@@ -112,7 +112,7 @@ let generate_constrs file =
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
-  ヒューリスティクスによるfor all付きの変数の整数値への具体化 *)  
+  ヒューリスティクスによるfor all付きの変数の整数値への具体化 *) 
   main_int_smtlibs oc1 all_constrs false false fun_num;
   (* 充足可能か調べる *)
   output_string oc1 "(check-sat-using psmt)\n";
@@ -194,9 +194,7 @@ let rec main_chc_sub_declare oc all_chcs n =
 if n < 0 then 
   ()
 else
-  (let oc_r2 = open_in "experiment/result" in
-  (* let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in *)
-  close_in oc_r2;
+  (
   (* 
   id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
   varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
@@ -216,36 +214,41 @@ else
   output_string oc "\n";
   main_chc_sub_declare oc all_chcs (n-1))
 
-let rec main_chc_sub oc all_chcs n = 
+let rec main_chc_sub oc z3res all_chcs unsat_core_flag n = 
   (* 前半はmain_chc_sub_declare *)
   if n < 0 then 
     ()
   else
-    (let oc_r2 = open_in @@ "experiment/result" in
-    let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel oc_r2) in
-    close_in oc_r2;
-    (* 
+    ((* 
       id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト
       varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
       fvs: 自由整数変数(#付きの整数引数)
       ss: 篩型の制約 *)
     let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
-    let args_own_sls = ownexp_to_ownchc varpred_count n in
+    let args_own_sls = ownexp_to_ownchc varpred_count n fvs in
     let (_, chcs, _) = (List.nth all_chcs n) in
     let own_sls = List.concat_map (fun x -> outer_constrs z3res n fvs x) chcs in 
+    let own_sls = 
+      if fvs = [] then own_sls
+      else 
+        let fvs_sl = SmtlibSyntax.Ands (List.map (fun fv -> SmtlibSyntax.IntVarPred(n, fv, [fv; fv])) fvs) in
+        List.map (fun sl -> SmtlibSyntax.Imply(fvs_sl, sl)) own_sls in
 
     (* 制約をファイルに書き出し　assert部分 *)
-    print_smtlibs oc sls true n; 
+    print_smtlibs oc sls true unsat_core_flag n; 
     output_string oc "\n";
-    print_smtlibs oc args_own_sls true n; 
+    print_smtlibs oc args_own_sls true unsat_core_flag n; 
     output_string oc "\n";
-    print_smtlibs oc own_sls true n; 
+    print_smtlibs oc own_sls true unsat_core_flag n; 
     output_string oc "\n\n";
-    main_chc_sub oc all_chcs (n-1))
+    main_chc_sub oc z3res all_chcs unsat_core_flag (n-1))
 
 (** Main procedure for the refinement inference *)
-let main_chc file =
+let main_chc file file2 unsat_core_flag =
   let oc_r1 = open_in file  in
+  let ic = open_in file2 in
+  let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel ic) in
+  close_in ic;
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
   let program = subst_arg_name program in
   close_in oc_r1; 
@@ -259,7 +262,7 @@ let main_chc file =
   output_string oc "(set-logic HORN)\n\n\n";
   output_string oc "(set-option :produce-unsat-cores true)\n";
   main_chc_sub_declare oc all_chcs n;
-  main_chc_sub oc all_chcs n;
+  main_chc_sub oc z3res all_chcs unsat_core_flag n;
   output_string oc "(check-sat)\n";
   output_string oc "(get-model)\n";
   output_string oc "(get-unsat-core)\n";
