@@ -22,7 +22,7 @@ easyMatrix(l, k, pp)
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
-    let zero = 0 in
+    let zero = 1 in
     let d = init(l, zero, r) in
     /*assert(r[0] = 0);*/
     pp := r;
@@ -44,6 +44,7 @@ boomerang(b1, b2, r)
   if b2 > 0 && b1 > 0 then {
     let t = *r in
     let n = *t in
+    assert(n = 1);
     /*assert(n = 0);*/
     /*let f = init(b1, n, t) in*/
     /*t := n;*/
@@ -58,29 +59,29 @@ boomerang(b1, b2, r)
   }
 }
 
-/*verify(s, s2, q)
+verify(s, s2, q)
 [ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
     <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
 {
-  if s >= 0 && s2 >= 0 && s2 < s then { 
-    assert(q[0][0] = 0);
+  if s > 0 then { 
+    let ind1 = _ : (ind1 >= 0 && ind1 < s) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < s) in
+    assert(q[ind1][ind2] = 1);
     1
   } else {
     0
   }
-}*/
+}
 
 
 {
   let kp = alloc 10 : int ref ref in
-  let ten = 10 in
+  let ten = 4 in
   let zero = 0 in
-  let one = 1 in
+  let one = _ : (one >= 0 && one < ten) in
   let d = easyMatrix(ten, ten, kp) in
-  /*assert(kp[0][0] = 0);*/
-  /*let d2 = verify(ten, one, kp) in*/
-  let d3 = boomerang(ten, ten,  kp) in
-  assert(kp[0][0] = 0);
-  /*let d4 = verify(ten, one, kp) in*/
+  let d2 = boomerang(ten, ten, kp) in
+  let d3 = verify(ten, ten, kp) in
+  /*assert(kp[0][0] = 1);*/
   ()
 }
