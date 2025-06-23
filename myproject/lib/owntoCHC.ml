@@ -405,5 +405,11 @@ let ownexp_to_ownchc_sub num (sl, (el,eh,f)) =
 
 (* varpred_count 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト 
 num 関数の番号 *)
-let ownexp_to_ownchc varpred_count num =
-  List.concat (List.map (ownexp_to_ownchc_sub num) (list_to_set varpred_count []))
+let ownexp_to_ownchc varpred_count num fvs =
+  let chcs = List.concat (List.map (ownexp_to_ownchc_sub num) (list_to_set varpred_count [])) in
+  if fvs = [] then 
+    chcs
+  else
+    let fvs_sl = Ands (List.map (fun fv -> IntVarPred(num, fv, [fv; fv])) fvs) in
+    List.map (fun chc -> Imply(fvs_sl, chc)) chcs
+
