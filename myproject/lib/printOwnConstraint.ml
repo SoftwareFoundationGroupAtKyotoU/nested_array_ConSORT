@@ -18,7 +18,7 @@ let remove_suffix s n =
     String.sub s 0 (s_len - n)
 
 (* 所有権計算に必要なsmtlibでの変数宣言 *)
-let rec print_declare oc var_locations fvs fun_num =
+let rec print_declare oc var_locations fun_num =
   let formatter = formatter_of_out_channel oc in
   let rec nested_ref_declare id pos branch_trace depth fvs = 
     if depth < 1 then ()
@@ -60,7 +60,7 @@ and print_declare_c formatter fvs l_or_h id pos branch_trace fun_num depth =
       fprintf formatter "(declare-fun %s () Int)\n" coeff;
       ) fvs
 
-let rec print_lim oc var_locations fvs fun_num =
+let rec print_lim oc var_locations fun_num =
   let formatter = formatter_of_out_channel oc in
   let rec nested_ref_declare id pos branch_trace depth fvs = 
     if depth < 1 then ()

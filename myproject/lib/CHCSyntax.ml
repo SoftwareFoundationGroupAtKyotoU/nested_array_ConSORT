@@ -39,7 +39,7 @@ List.iter
      ) intpred_set
 
 (* id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト *)
-let print_declare_chc oc id_count fvs num =
+let print_declare_chc oc id_count num =
 List.iter
   (fun (id,(pos,ifel,depth, fvs)) ->
      try 

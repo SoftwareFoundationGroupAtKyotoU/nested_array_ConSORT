@@ -20,7 +20,7 @@ let rec main_int_declare oc all_cs fun_num =
   else
     (let (var_locations, varown_count, fvs, _) = all_cs_to_smtlib all_cs false fun_num in
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
-    print_declare oc var_locations fvs fun_num;
+    print_declare oc var_locations fun_num;
     (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
     print_declare_begin_and_end oc varown_count fvs fun_num;
     (* 関数ブロックごとに一行区切る *)
@@ -87,7 +87,7 @@ let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num =
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
     print_smtlibs oc smtlibs is_unconcrete false (-1);
-    print_lim oc var_locations fvs fun_num;
+    print_lim oc var_locations fun_num;
     print_lim_begin_and_end oc varown_count fvs fun_num;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
@@ -201,7 +201,7 @@ else
   varpred_count: 篩型の述語，(所有範囲の下限，所有範囲の上限，所有権の値)のリスト
   fvs: 自由整数変数(#付きの整数引数)
   ss: 篩型の制約 *)
-  let (id_count, varpred_count, fvs, _) = all_cs_to_smtlib_chc all_chcs n in
+  let (id_count, varpred_count, _, _) = all_cs_to_smtlib_chc all_chcs n in
   (* 所有権の基本的な制約，所有範囲の範囲内で篩型が満たされるという制約 *)
   (* let args_own_sls = ownexp_to_ownchc varpred_count n in *)
   (*  *)
@@ -210,7 +210,7 @@ else
   (* 制約をファイルに書き出し　daclare-fun部分 
   intpred_env:篩型の環境 *)
   print_declare_chc_int oc !CHCSyntax.intpred_env n;
-  print_declare_chc oc id_count fvs n;
+  print_declare_chc oc id_count n;
   print_declare_varpred oc varpred_count n;
   output_string oc "\n";
   main_chc_sub_declare oc all_chcs (n-1))
