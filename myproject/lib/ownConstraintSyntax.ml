@@ -11,6 +11,7 @@ type constr =
   | CIfnp of id * constr list * constr list * pos
   (* | CLet of id * id * pos *)
   | CLetDeref of id * id * pos
+  | CLetUndet of id * constr list
   | CLetAddPtr of id * id * exp * pos
   (* | CLetSubPtr of id * id * exp * pos *)
   | CMkArray of id * exp * simpleTy * pos

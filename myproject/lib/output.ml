@@ -34,6 +34,7 @@ let rec main_cexample_declare oc all_cs fun_num z3res=
       []
     else
       (print_idx oc fun_num all_cs;
+      printConstrRandInt oc fun_num all_cs;
       let (_, _, fvs, smtlibs) = all_cs_to_smtlib all_cs false fun_num in
       List.iter (fun x -> output_string oc (Format.asprintf "(declare-fun %s () Int)\n" x)) fvs;
       let smtlibs' = main_cexample_sub (fun_num-1) in
@@ -228,11 +229,7 @@ let rec main_chc_sub oc z3res all_chcs unsat_core_flag n =
     let args_own_sls = ownexp_to_ownchc varpred_count n fvs in
     let (_, chcs, _) = (List.nth all_chcs n) in
     let own_sls = List.concat_map (fun x -> outer_constrs z3res n fvs x) chcs in 
-    let own_sls = 
-      if fvs = [] then own_sls
-      else 
-        let fvs_sl = SmtlibSyntax.Ands (List.map (fun fv -> SmtlibSyntax.IntVarPred(n, fv, [fv; fv])) fvs) in
-        List.map (fun sl -> SmtlibSyntax.Imply(fvs_sl, sl)) own_sls in
+    let own_sls = List.map (fun sl -> make_imply sl n fvs) own_sls in
 
     (* 制約をファイルに書き出し　assert部分 *)
     print_smtlibs oc sls true unsat_core_flag n; 

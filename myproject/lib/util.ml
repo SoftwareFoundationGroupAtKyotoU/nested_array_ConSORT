@@ -323,7 +323,9 @@ let rec elim_int_var env fun_name args exp =
       Var x
     (* 変数が関数内で定義された整数変数の場合は具体化する *)
     else if lookup x (lookup fun_name !all_tyenv) = SInt then
-      lookup x env
+      match lookup x env with 
+      | ConstRandInt _ -> Var x
+      | _ -> lookup x env
     (* それ以外の場合は具体化しない *)
     else 
       Var x
@@ -696,7 +698,7 @@ let rec depth_to_simpleTy depth =
   else 
     SRef (depth_to_simpleTy (depth-1))
 
-let find_idx_vars var_locations fun_num =
+(* let find_idx_vars var_locations fun_num =
   let rec find_idx_vars_sub id pos branch_trace depth =
     if depth < 1 then []
     else
@@ -705,7 +707,7 @@ let find_idx_vars var_locations fun_num =
   in
   List.flatten
     ((List.map
-      (fun (id,(pos,branch_trace, simpleTy)) ->
+      (fun (id,(pos,branch_trace, simpleTy, _)) ->
         let depth = ref_depth simpleTy in 
         find_idx_vars_sub id pos branch_trace depth) var_locations ))
 
@@ -722,7 +724,7 @@ let find_idx_vars_be varown_count fun_num =
         if fun_num' = fun_num then
           find_idx_vars_be_sub id b_or_e depth
         else
-         []) varown_count ))
+         []) varown_count )) *)
 
 (* 最後に評価される式を条件節で場合わけしてリスト *)
 let rec ret_of_exp cond exp = 

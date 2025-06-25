@@ -45,7 +45,7 @@ let rec print_declare oc var_locations fvs fun_num =
       let fvs' = idx::fvs in
       nested_ref_declare id pos branch_trace (depth-1) fvs') in
   (List.iter
-    (fun (id,(pos,branch_trace, simpleTy)) ->
+    (fun (id,(pos,branch_trace, simpleTy, fvs)) ->
       let depth = ref_depth simpleTy in 
       nested_ref_declare id pos branch_trace depth fvs) var_locations);
 (* 所有範囲の上限または下限の宣言 *)
@@ -74,7 +74,7 @@ let rec print_lim oc var_locations fvs fun_num =
       let fvs' = idx::fvs in
       nested_ref_declare id pos branch_trace (depth-1) fvs') in
   (List.iter
-    (fun (id,(pos,branch_trace, simpleTy)) ->
+    (fun (id,(pos,branch_trace, simpleTy, fvs)) ->
       let depth = ref_depth simpleTy in 
       nested_ref_declare id pos branch_trace depth fvs) var_locations);
 (* 所有範囲の上限または下限の宣言 *)
@@ -409,16 +409,14 @@ and print_smtlibs_sub oc unsat_core_flag num sl =
       (output_string oc "(assert ";
       (* smtlibの制約部分の記述 *)
       print_smtlib oc sl true [] num; 
-      output_string oc (")\n");
-      serial_num := !serial_num + 1)
+      output_string oc (")\n");)
     else 
       (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
       (output_string oc "(assert (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
       print_smtlib oc sl true [] num; 
-      output_string oc ("))\n");
-      serial_num := !serial_num + 1))
+      output_string oc ("))\n");))
   and make_args fvs = 
     match fvs with
     | [] -> ""
@@ -501,6 +499,24 @@ let rec print_idx oc fun_num all_cs =
   in
   List.iter print_fvs_sub ty_env
 
+let printConstrRandInt oc fun_num all_cs =
+  let (_, cs) = (List.nth all_cs fun_num) in
+  let rec printConstrRandInt_sub cs =
+    match cs with
+    | [] -> ()
+    | CLetUndet(id, cs) :: left->
+      output_string oc 
+        (sprintf "(declare-fun %s () Int)\n" id);
+      printConstrRandInt_sub cs;
+      printConstrRandInt_sub left
+    | CIf(_, cs1, cs2, _) :: left -> 
+      printConstrRandInt_sub cs1;
+      printConstrRandInt_sub cs2;
+      printConstrRandInt_sub left
+    | _ :: left -> 
+      printConstrRandInt_sub left in
+  printConstrRandInt_sub cs
+
 
 let print_cexample oc smtlibs z3_res =
   let rec print_cexample_sub smtlibs = 
@@ -558,11 +574,11 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       else 
         ()
       ) varown_count);
-  let rec print_body_own branch_trace cons =
+  let rec print_body_own branch_trace fvs cons =
     match cons with
     | CIf (_, c_lis1, c_lis2, _) ->
-      let s1 = String.concat "" (List.map (print_body_own (Then :: branch_trace)) c_lis1 ) in
-      let s2 = String.concat "" (List.map (print_body_own (Else :: branch_trace)) c_lis2) in
+      let s1 = String.concat "" (List.map (print_body_own (Then :: branch_trace) fvs) c_lis1 ) in
+      let s2 = String.concat "" (List.map (print_body_own (Else :: branch_trace) fvs) c_lis2) in
       asprintf "if exp then {\n  %s} else {\n%s}\n" s1 s2
     | CLetAddPtr (id1, id2, e, pos) ->
       let sl = exp_to_smtlib e in
@@ -581,6 +597,9 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
             asprintf "%s\n%s%s" id2_outer id2_eq0 id2_non0
           else find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s" s res1 res2
+    | CLetUndet(id, cs) ->
+      let s1 = String.concat "" (List.map (print_body_own (branch_trace) (id::fvs)) cs ) in
+      asprintf "let %s = _ in \n%s\n" id s1
     | CMkArray (id, _, _, pos) ->
       let s = cons_to_program cons in
       let res = find_own_res fun_num id pos branch_trace z3res ty_env fvs in
@@ -625,7 +644,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
       let res2_non0 = find_own_res fun_num (id2^"_non0") pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s%s" s res1 res2_eq0 res2_non0
     | _ -> cons_to_program cons in
-  let prog = String.concat " " (List.map (print_body_own []) constrs) in
+  let prog = String.concat " " (List.map (print_body_own [] fvs) constrs) in
   fprintf formatter "%s" prog;
 (* 関数評価前，評価後の上限下限の定数係数の宣言 *)
 and print_declare_b_and_e_c formatter fvs l_or_h id b_or_e fun_num z3res depth =

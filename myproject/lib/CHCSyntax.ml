@@ -41,7 +41,7 @@ List.iter
 (* id_count_chc: (変数id, (プログラムの位置l, ifel))のリスト *)
 let print_declare_chc oc id_count fvs num =
 List.iter
-  (fun (id,(pos,ifel,depth)) ->
+  (fun (id,(pos,ifel,depth, fvs)) ->
      try 
        let fvs' = List.assoc id !intpred_env in
        output_string oc (Format.sprintf "(declare-fun P%d_%s ( " num id);

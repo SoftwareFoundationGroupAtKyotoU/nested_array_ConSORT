@@ -80,7 +80,7 @@ let rec own_to_chc (id,pos) full_ownerships sl =
   then [Imply(Id "true", sl)] 
   else
     let rec own_to_chc_sub h_now l_now ownerships now_depth =
-      if now_depth <= 0 then [True] 
+      if now_depth <= 0 then [] 
       else
         match ownerships with
         | CHigh (_,id1,_,_,depth,Int i2) :: rest when depth = now_depth->
@@ -136,7 +136,7 @@ let rec own_to_chc_eq0 (id,pos) full_ownerships sl =
   then [Imply(Id "true", sl)] 
   else
     let rec own_to_chc_sub h_now l_now ownerships now_depth =
-      if now_depth <= 0 then [True] 
+      if now_depth <= 0 then [] 
       else
         match ownerships with
         | CHigh (_,id1,_,_,depth,Int i2) :: rest when depth = now_depth->
@@ -196,7 +196,7 @@ let rec own_to_chc_non0 (id,pos) full_ownerships sl =
   then [Imply(Id "true", sl)] 
   else
     let rec own_to_chc_sub h_now l_now ownerships now_depth =
-      if now_depth <= 0 then [True] 
+      if now_depth <= 0 then [] 
       else
         match ownerships with
         | CHigh (_,id1,_,_,depth,Int i2) :: rest when depth = now_depth->
@@ -271,6 +271,32 @@ let rec own_to_chc_non0 (id,pos) full_ownerships sl =
       sl1 @ (List.map (fun x -> Imply((And(Leq(Id (Format.sprintf "i%n" now_depth), h_now), Geq(Id (Format.sprintf "i%n" now_depth), Id "1"))), x)) sl2) in
   own_to_chc_sub_first (Id "0") full_ownerships max_dep
 
+let make_imply smtlib num fvs =
+  let rec depend_fvs_of_smtlib smtlib =
+    match smtlib with 
+    | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
+    | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+     (depend_fvs_of_smtlib s1) @ (depend_fvs_of_smtlib s2)
+    | Not s -> 
+      depend_fvs_of_smtlib s
+    (* | Div (s1,s2) -> 
+      (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
+    | FV fv -> 
+      [fv]
+    | IntPred _ | IntVarPred _ | PtrPred _ | PtrVarPred _ | VarPred | True | Id _
+      -> []
+    | Ands ss ->
+      List.concat (List.map fvs_of_smtlib ss) in
+  let depend_fvs = union_list (depend_fvs_of_smtlib smtlib) [] in
+  if depend_fvs = [] then smtlib
+  else 
+    let fvs_sl = SmtlibSyntax.Ands (List.map 
+      (fun fv -> 
+        if List.mem fv fvs then IntVarPred(num, fv, [fv; fv])
+        else IntPred(fv, [fv])) depend_fvs) in
+    SmtlibSyntax.Imply(fvs_sl, smtlib)
+
+
 let outer_constrs ownerships num fvs cons =
   let ref_ids = find_ref_ids num ownerships in
   let sl_first = List.concat_map (fun id -> 
@@ -312,7 +338,13 @@ let outer_constrs ownerships num fvs cons =
           raise (Error "prog_to_chc error")
       else
         chc1 @ chc2
-    | CHCAlloc (id, _, _, pos) | CHCAssignInt (id,_,pos) ->
+    | CHCAlloc (id, e, _, pos) ->
+      let depend_fvs = union_list (fvs_of_exp e) fvs in
+      let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
+      let id_ownerships = find_id (id,pos') num ownerships in
+      let depth = max_depth id_ownerships in
+      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, depend_fvs))
+    | CHCAssignInt (id,_,pos) ->
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id_ownerships = find_id (id,pos') num ownerships in
       let depth = max_depth id_ownerships in
