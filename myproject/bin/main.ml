@@ -25,16 +25,20 @@ let () =
           (Printf.printf "iter: %d unknown " !iter;
           let end_time = Unix.gettimeofday () in
           Printf.printf "time: %fs\n" (end_time -. start_time);
+          flush stdout;
           add_sample ()
           )
         else if first_line = "unsat" then
           (Printf.printf "iter: %d unsat " !iter;
           let end_time = Unix.gettimeofday () in
-          Printf.printf "time: %fs\nprogram error " (end_time -. start_time);
-          continue := false
+          Printf.printf "time: %fs\nprogram error \n" (end_time -. start_time);
+          flush stdout;
+          continue := false;
+          exit 0;
           )
         else if first_line = "sat" then
           (Printf.printf "int fin \n";
+          flush stdout;
           main_fv file_name;
           let _ = Sys.command (Format.sprintf "z3 experiment/out_fv.smt2 > %s" result_path) in
           Printf.printf "fv fin ";
@@ -59,7 +63,14 @@ let () =
             create_cexapmle ();
             flush stdout;
             Printf.printf "cex fin ";
-            )));
+            ))
+          else
+            (Printf.printf "implement error\n %s\n" first_line;
+            let end_time = Unix.gettimeofday () in
+            Printf.printf "time: %fs\nprogram error " (end_time -. start_time);
+            flush stdout;
+            continue := false
+            ));
         flush stdout;
         iter := !iter + 1      
       done;
