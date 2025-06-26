@@ -14,7 +14,7 @@ let intpred_env : (id * id list) list ref = ref []
 (** AST with position information used for refienment inference *)
 type chc = 
   | CHCIf of exp * chc list * chc list * pos
-  | CHCLetInt of id * exp * pos
+  | CHCLetInt of id * exp * chc list * pos
   | CHCLetDeref of id * id * pos
   | CHCLetAddPtr of id * id * exp * pos
   | CHCAlloc of id * exp * simpleTy * pos
