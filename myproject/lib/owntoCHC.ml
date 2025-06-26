@@ -282,7 +282,8 @@ let make_imply smtlib num fvs =
     (* | Div (s1,s2) -> 
       (fvs_of_smtlib s1) @ (fvs_of_smtlib s2) *)
     | FV fv -> 
-      [fv]
+      (try Scanf.sscanf fv "i%d%!" (fun _ -> []) with 
+      | Scanf.Scan_failure _ | End_of_file -> [fv])
     | IntPred _ | IntVarPred _ | PtrPred _ | PtrVarPred _ | VarPred | True | Id _
       -> []
     | Ands ss ->
@@ -304,7 +305,7 @@ let outer_constrs ownerships num fvs cons =
     let depth = max_depth id_ownerships in
     own_to_chc (id, "1") id_ownerships (PtrPred(id, "1", make_idx_list depth, fvs)))
     ref_ids in
-  let rec outer_constrs_iter ifel cons =
+  let rec outer_constrs_iter ifel fvs cons =
     match cons with
     | CHCIf (_, c_lis1, c_lis2, pos) ->
       let pos_then = (string_of_int pos) ^ (ifel_to_str ("then" :: ifel)) in
@@ -318,8 +319,8 @@ let outer_constrs ownerships num fvs cons =
       let sl_then = make_sl pos_then in
       let sl_else = make_sl pos_else in
       let sl_postif = make_sl pos_postif in
-      let sl1 = List.concat (List.map (outer_constrs_iter ("then" :: ifel)) c_lis1) in
-      let sl2 = List.concat (List.map (outer_constrs_iter ("else" :: ifel)) c_lis2) in
+      let sl1 = List.concat (List.map (outer_constrs_iter ("then" :: ifel) fvs) c_lis1) in
+      let sl2 = List.concat (List.map (outer_constrs_iter ("else" :: ifel) fvs) c_lis2) in
       sl_then @ sl_else @ sl_postif @
       sl1 @ sl2
     | CHCLetAddPtr (id1, id2, exp, pos) -> 
@@ -338,12 +339,11 @@ let outer_constrs ownerships num fvs cons =
           raise (Error "prog_to_chc error")
       else
         chc1 @ chc2
-    | CHCAlloc (id, e, _, pos) ->
-      let depend_fvs = union_list (fvs_of_exp e) fvs in
+    | CHCAlloc (id, _, _, pos) ->
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id_ownerships = find_id (id,pos') num ownerships in
       let depth = max_depth id_ownerships in
-      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, depend_fvs))
+      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
     | CHCAssignInt (id,_,pos) ->
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id_ownerships = find_id (id,pos') num ownerships in
@@ -392,11 +392,15 @@ let outer_constrs ownerships num fvs cons =
       let chc2_eq0 = own_to_chc_eq0 (id2,pos') id2_eq0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
       let chc2_non0 = own_to_chc_non0 (id2,pos') id2_non0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
       chc1 @ chc2_eq0 @ chc2_non0
-    | CHCLetInt (_, exp, pos) ->
+    | CHCLetInt (id, exp, c_lis, pos) ->
+      let sl1 = 
+        match exp with
+        | ConstRandInt _ -> List.concat_map (outer_constrs_iter ifel (id::fvs)) c_lis 
+        | _ -> List.concat_map (outer_constrs_iter ifel fvs) c_lis in
       (match exp with
       | AppExp (_, exps) ->
         let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
-        List.concat (List.map
+        (List.concat_map
         (fun e ->
           match e with
           | Var id ->
@@ -405,10 +409,10 @@ let outer_constrs ownerships num fvs cons =
               let depth = max_depth id_ownerships in
               own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
           | _ -> raise (Error "prog_to_chc error"))
-        exps)
-      | _ -> [])
+        exps) @ sl1
+      | _ -> sl1)
     | CHCAssert _ | CHCAssume _ -> [] in
-    sl_first @ (outer_constrs_iter [] cons)
+    sl_first @ (outer_constrs_iter [] fvs cons)
 
 (* 
 num 関数の番号

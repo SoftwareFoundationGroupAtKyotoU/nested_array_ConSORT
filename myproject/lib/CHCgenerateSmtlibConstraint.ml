@@ -166,8 +166,9 @@ let rec emit_chc fvs fun_num ifel c =
           ) ids_post_el) in
     (* 制約の結合 *)
     ss_pre @ ss1' @ ss2' @ ss_post_if @ ss_post_el
-  | CHCLetInt (id,e,pos) -> 
-    (match e with
+  | CHCLetInt (id,e, c_lis, pos) -> 
+    let ss_bound = 
+      (match e with
      | Deref id' -> (* let id = *id' in ... *)
      (* xの篩型を追加？ *)
        intpred_env := (id, []) :: !intpred_env;
@@ -345,33 +346,22 @@ let rec emit_chc fvs fun_num ifel c =
      | e -> (* そのほかの場合　let x = e in　*)
      (* e中の自由変数 *)
        let fvs' = fvs_of_exp e in
-       (* 自由変数をハッシュ付き，ハッシュなしにわけて返す *)
-       (* let rec find_hash fvs' h r = 
-         (match fvs' with
-          | fv :: rest -> 
-            if List.mem fv fvs then find_hash rest (fv::h) r else find_hash rest h (fv::r) 
-          | [] -> (h, r)) 
-       in *)
-       (* ハッシュ付きの変数，ハッシュなしの整数変数のリストの組 *)
-       (* let (hash_fvs', fvs') = find_hash fvs' [] [] in *)
-       (* 篩型で依存できる環境の更新？ *)
-       (* intpred_env := (id, hash_fvs') :: !intpred_env; *)
        intpred_env := (id, (union_list fvs' fvs)) :: !intpred_env;
-       (* let rec f fvs_in_e res =
-        (match fvs_in_e with
-        | [] -> res
-        | hd :: tl when List.mem hd res || List.mem hd fvs -> f tl res
-        | hd :: tl -> let fvs' = lookup hd !intpred_env in f (fvs' @ tl) (hd::res)) in *)
-      let depend_fvs = union_list fvs' fvs in
+       let depend_fvs = union_list fvs' fvs in
        (* 
               新たに束縛される変数xと束縛のための式の値eが等しい
           かつ
-              ハッシュなしの整数変数の篩型の述語
+              整数変数の篩型の述語
        ならば
           新たに束縛される変数xの篩型の述語
           *)
        (* [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs)), IntPred(id, "v" :: fvs))]) *)
-       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) depend_fvs)), IntPred(id, "v" :: depend_fvs))])
+       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) depend_fvs)), IntPred(id, "v" :: depend_fvs))]) in
+    let ss_body = 
+    match e with 
+    | ConstRandInt _ -> List.concat_map (emit_chc (id::fvs) fun_num ifel) c_lis 
+    | _ -> List.concat_map (emit_chc fvs fun_num ifel) c_lis in
+    ss_bound @ ss_body
   (* | CHCLet (id1,id2,l) -> (*　let x = y(参照) in ... *)
   (* 代入評価後のid_count_chcを追加 *)
     new_id id1 l ifel; new_id id2 l ifel;
@@ -413,10 +403,9 @@ let rec emit_chc fvs fun_num ifel c =
       ptrpred id1 (make_idx_list (depth-1)) ifel);
     Imply(ptrpred_p id2 (make_idx_list depth) ifel,
       ptrpred id2 (make_idx_list depth) ifel)]
-  | CHCAlloc (id,e,simplety,l) -> (*　let id = alloc e in ... *)
+  | CHCAlloc (id,_,simplety,l) -> (*　let id = alloc e in ... *)
     let depth = ref_depth simplety in
-    let depend_fvs = union_list (fvs_of_exp e) fvs in
-    new_id id l ifel depth depend_fvs;
+    new_id id l ifel depth fvs;
       (* 真　ならば　新たに定義された参照の述語
        どんな述語も許容？ *)
     if depth > 1 then

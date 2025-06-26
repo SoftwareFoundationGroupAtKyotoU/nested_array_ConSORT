@@ -19,7 +19,7 @@ let rec chc_collect_exp pos exp =
     CHCIf(e1, c2, c3, pos) :: c1
   | LetIntExp (id,e1,e2) ->
     let c2 = chc_collect_exp (pos+1) e2 in
-    CHCLetInt(id, e1, pos) :: c2
+    [CHCLetInt(id, e1, c2, pos)]
   | LetDerefExp (id1,id2,e) ->
     let c = chc_collect_exp (pos+1) e in
     CHCLetDeref(id1, id2, pos) :: c
