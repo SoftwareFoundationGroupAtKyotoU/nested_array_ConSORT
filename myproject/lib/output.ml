@@ -155,7 +155,7 @@ let main_fv file =
   (* output_string oc "(get-unsat-core)\n"; *)
   close_out oc
 
-let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num = 
+let rec main_sat_ans_sub oc all_cs fun_num z3_res total_fun_num = 
   let fun_num' = total_fun_num - fun_num in
   if fun_num < 0 then 
     ()
@@ -166,7 +166,7 @@ let rec main_sat_ans_sub oc all_cs fun_num iter z3_res total_fun_num =
     (* 関数ブロックごとに一行区切る *)
     output_string oc "\n";
     (* 次の関数の所有権をsmtlib形式で宣言 *)
-    main_sat_ans_sub oc all_cs (fun_num-1) iter z3_res total_fun_num)
+    main_sat_ans_sub oc all_cs (fun_num-1) z3_res total_fun_num)
 
 let main_sat_ans file =
   let oc_r1 = open_in file  in
@@ -187,7 +187,7 @@ let main_sat_ans file =
     let z3res' = List.map (fun (id , _ , value) -> (id, value)) z3res in
     output_string oc (file ^ " ->\n");
     (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
-    main_sat_ans_sub oc all_constrs n 0 z3res' n;
+    main_sat_ans_sub oc all_constrs n z3res' n;
     close_out oc
 
 (* refinement検査のための変数の書き出し *)
