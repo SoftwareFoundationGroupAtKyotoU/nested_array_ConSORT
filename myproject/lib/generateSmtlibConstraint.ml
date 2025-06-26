@@ -23,6 +23,9 @@ let own_represents : own_represent list ref = ref []
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
 
+let make_idx_id fun_num id depth = 
+  asprintf "i_%d_%s_%dth" fun_num id depth
+
 (* 環境からidとbranch_traceに対応する関数内の位置posを返す *)
 (* branch_traceはif文の分岐情報を表す *)
 let rec lookup_pos id branch_trace env =
@@ -40,19 +43,27 @@ let rec lookup_pre_pos id branch_trace env =
     if id = x then lookup_pos id branch_trace left_env 
     else lookup_pre_pos id branch_trace left_env
 
-let rec lookup_fvs id branch_trace env =
-  match env with
-  | [] -> 
-    raise Unbound
-  | (x, (_, branch_trace', _, fvs)) :: left_env -> 
-    if id = x && branch_trace = branch_trace' then fvs else lookup_fvs id branch_trace left_env
+let lookup_fvs id branch_trace env depth fun_num =
+  let rec lookup_fvs_sub env =
+    match env with
+    | [] -> 
+      raise Unbound
+    | (x, (_, branch_trace', simpleTy, fvs)) :: left_env -> 
+      if id = x && branch_trace = branch_trace' then (ref_depth simpleTy), fvs 
+      else lookup_fvs_sub left_env in
+  let max_depth, fvs = lookup_fvs_sub env in
+  let rec add_idx fvs now_depth =
+    if now_depth = depth then fvs
+    else 
+      add_idx ((make_idx_id fun_num id now_depth) :: fvs) (now_depth-1) in
+  add_idx fvs max_depth
 
-let rec lookup_pre_fvs id branch_trace env = 
+let rec lookup_pre_fvs id branch_trace env depth fun_num = 
   match env with
   | [] -> raise Unbound
   | (x, _) :: left_env -> 
-    if id = x then lookup_fvs id branch_trace left_env 
-    else lookup_pre_fvs id branch_trace left_env
+    if id = x then lookup_fvs id branch_trace left_env depth fun_num
+    else lookup_pre_fvs id branch_trace left_env depth fun_num
 
 (* var_locationsに新しい変数idを追加または既存のidの情報を更新 *)
 let new_id id position branch_trace simpleTy fvs =
@@ -117,7 +128,7 @@ let rec make_bound_exp fvs id h_or_l fun_num branch_trace depth =
     Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace depth)
 
 (*直前の所有範囲の下限,または上限を環境変数の一次式で表す *)
-let  make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
+let make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
   let id_pre_pos = lookup_pre_pos id branch_trace !var_locations in 
   let rec make_pre_bound_exp_sub fvs =
     match fvs with
@@ -127,7 +138,7 @@ let  make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
     | fv :: fvs' ->
       let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pre_pos pp_branch_trace branch_trace depth in
       Add(Mul(Id(var_name), FV(fv)), make_pre_bound_exp_sub fvs') in
-  make_pre_bound_exp_sub (lookup_pre_fvs id branch_trace !var_locations)
+  make_pre_bound_exp_sub (lookup_pre_fvs id branch_trace !var_locations depth fun_num)
 
 let rec same_bound_branch fvs id h_or_l fun_num branch1 branch2 depth = 
   let pos1 = lookup_pos id branch1 !var_locations in
@@ -141,9 +152,6 @@ let rec same_bound_branch fvs id h_or_l fun_num branch1 branch2 depth =
     let var_name1 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id pos1 pp_branch_trace branch1 depth in
     let var_name2 = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id pos2 pp_branch_trace branch2 depth in
     And(Eq(Id var_name1, Id var_name2), same_bound_branch fvs' id h_or_l fun_num branch1 branch2 depth)
-
-let make_idx_id fun_num id depth = 
-  asprintf "i_%d_%s_%dth" fun_num id depth
 
 (* 関数評価の最初と最後の状態での所有範囲の上限または下限を表す
 b_or_eはbまたはeでbeginとendの意 *)
@@ -1219,7 +1227,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         | _ -> raise ConstrError in
       match param, arg with
       | (RawId _, FTRef _), AId id -> 
-        let oldfvs = lookup_fvs id branch_trace !var_locations in
+        let oldfvs = lookup_fvs id branch_trace !var_locations depth fun_num in
         subst_param_before_eval_sub oldfvs param arg depth
       | _, AExp _ -> []
       | _ -> raise ConstrError
