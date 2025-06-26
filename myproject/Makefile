@@ -32,6 +32,8 @@ ALL_LOG_FILES := $(patsubst %, logs/%.log, $(notdir $(patsubst %/,%,$(ALL_DIRS))
 # .PHONY は、ファイル名とターゲット名が衝突しても正しく動作させるための宣言
 .PHONY: run run_all clean help default
 
+.PRECIOUS: $(ALL_LOG_FILES)
+
 # デフォルトターゲット (make とだけ打った時に実行される)
 default: help
 
