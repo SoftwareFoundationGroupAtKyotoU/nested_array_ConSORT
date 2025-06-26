@@ -190,7 +190,7 @@ match smtlib with
 
 (* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
   slはsmtlibの制約
-mapは自由変数から整数への割り当て[(fv, -iter), (fv, -iter+1), ... (fv, iter)]
+mapは自由変数から整数への割り当て
 bool_idは使われていない？
 numは篩型の識別番号？
 *)
