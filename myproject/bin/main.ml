@@ -1,11 +1,9 @@
 open Myproject.Output
 open Myproject.Cexample
 
-let () = 
+let execute_main file_name unsat_core_enabled =
   let start_time = Unix.gettimeofday () in
-  match Array.to_list Sys.argv with
-    [_; file_name] -> 
-    (try 
+  (try 
       let iter = ref 0 in
       let continue = ref true in
       let oc = open_out "experiment/result_cex_all" in
@@ -67,9 +65,10 @@ let () =
           else
             (Printf.printf "implement error\n %s\n" first_line;
             let end_time = Unix.gettimeofday () in
-            Printf.printf "time: %fs\nprogram error " (end_time -. start_time);
+            Printf.printf "time: %fs\nprogram error \n" (end_time -. start_time);
             flush stdout;
-            continue := false
+            continue := false;
+            exit 0;
             ));
         flush stdout;
         iter := !iter + 1      
@@ -82,7 +81,7 @@ let () =
       let first_line = input_line ic in
       Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
       flush stdout;
-      (if first_line = "unsat" then
+      (if first_line = "unsat" && unsat_core_enabled then
         (main_chc file_name result_path true;
         let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_chc.smt2 > experiment/chc_result" in
         ()));
@@ -94,8 +93,18 @@ let () =
       let end_time = Unix.gettimeofday () in
       Printf.printf "time: %fs\n" (end_time -. start_time) *)
       )
+
+let () = 
+  match Array.to_list Sys.argv with
+  | [_; file_name] -> 
+    execute_main file_name true
   | [_; file_name; "print_program"] ->
     print_program file_name
+  | [_; file_name; option] when String.starts_with ~prefix:"unsat-core=" option ->
+    (* "unsat-core=" の部分を除いた文字列を取得 *)
+    let value_str = String.sub option 11 (String.length option - 11) in
+    let unsat_core_enabled = (value_str = "true") in
+    execute_main file_name unsat_core_enabled
   | [_; file_name; "refinement"] ->
     let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file_name)) in
     let start_time = Unix.gettimeofday () in
