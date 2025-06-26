@@ -9,7 +9,6 @@
         ("if", Parser.IF);
         ("in", Parser.IN);
         ("int", Parser.INT);
-        ("unit", Parser.UNIT);
         ("let", Parser.LET);
         ("alloc", Parser.ALLOC);
         ("ref", Parser.REF);

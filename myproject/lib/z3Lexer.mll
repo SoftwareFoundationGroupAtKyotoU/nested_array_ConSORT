@@ -23,7 +23,6 @@ rule read =
     | _ -> failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }
   | float { let f = float_of_string @@ Lexing.lexeme lexbuf in FLOAT f }
   | "sat" { SAT }
-  | "model" { MODEL }
   | "define-fun" { DEF }
   | "Real" { TREAL }
   | "Int" { TINT }
@@ -32,5 +31,4 @@ rule read =
   | '-' { MINUS }
   | '/' { DIV }
   | id { ID (Lexing.lexeme lexbuf) }
-  | eof { EOF }
   | _ { failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }

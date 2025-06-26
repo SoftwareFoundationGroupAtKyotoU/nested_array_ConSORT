@@ -45,7 +45,7 @@ open SmtlibSyntax
 
 // type
 %token TOP RARROW
-%token NU INT REF UNIT TOR TAND TIMPLY TNOT
+%token NU INT REF TOR TAND TIMPLY TNOT
 
 // others # | (end_of_file)
 %token HASH BAR EOF

@@ -11,7 +11,7 @@
 %token TINT TREAL MINUS DIV
 
 // structure
-%token SAT MODEL DEF LPAREN RPAREN EOF
+%token SAT DEF LPAREN RPAREN
 
 %start result
 %type <Z3Syntax.result> result
