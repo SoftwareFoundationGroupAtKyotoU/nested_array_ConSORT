@@ -359,8 +359,14 @@ let rec emit_chc fvs fun_num ifel c =
        [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) depend_fvs)), IntPred(id, "v" :: depend_fvs))]) in
     let ss_body = 
     match e with 
-    | ConstRandInt _ -> List.concat_map (emit_chc (id::fvs) fun_num ifel) c_lis 
-    | _ -> List.concat_map (emit_chc fvs fun_num ifel) c_lis in
+    | ConstRandInt _ -> List.concat_map 
+    (fun cs ->
+      let sls = emit_chc (id::fvs) fun_num ifel cs in
+      (List.map (fun c -> Imply(IntPred(id, id :: (lookup id !intpred_env)) , c)) sls)) c_lis 
+    | _ -> List.concat_map 
+    (fun cs -> 
+      let sls = (emit_chc fvs fun_num ifel) cs in
+      List.map (fun c -> Imply(IntPred(id, id :: (lookup id !intpred_env)) , c)) sls) c_lis in
     ss_bound @ ss_body
   (* | CHCLet (id1,id2,l) -> (*　let x = y(参照) in ... *)
   (* 代入評価後のid_count_chcを追加 *)
