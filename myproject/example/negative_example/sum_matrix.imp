@@ -36,9 +36,7 @@ sum(plen, p)
 [ <#plen: int, p: int ref(0, plen - 1, 1.)> -> 
   <#plen: int, p: int ref(0, plen - 1, 1.) | int> ]
 {
-  if plen <= 0 then {
-    0
-  } else {
+  if plen <= 0 then { 0 } else {
     let x = *p in
     let q = p + 1 in
     let m = plen - 1 in

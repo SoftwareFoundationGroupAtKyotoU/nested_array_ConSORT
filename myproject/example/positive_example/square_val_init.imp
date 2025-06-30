@@ -1,0 +1,27 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    let v = val * val in
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let d = init(m, val, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+{
+  let unde = _ : (unde >= 2) in
+  let p = alloc unde : int ref in
+  let unde2 = _ : (unde >= 2) in
+  let v = unde2 * unde2 in
+  let d = init(unde, unde2, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(p[ind1] = 1);
+  ()
+}

@@ -1,0 +1,44 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let d = init(m, val, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+sum(n, p) 
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = n - 1 in
+    let s = sum(m, q) in
+    alias(q = p + 1);
+    let y = x + s in
+    y
+  }
+}
+
+{
+  let unde = 5 in
+  let p = alloc unde : int ref in
+  let unde2 = _ in
+  let d = init(unde, unde2, p) in
+  /*assert(arr[ind] = 1);*/
+  let x = sum(unde, p) in
+  let v = unde * unde2 in
+  assert(x = v);
+  ()
+}
