@@ -122,4 +122,4 @@ let () =
       ())
     );
     flush stdout
-  | _ -> Printf.eprintf "予期せぬエラーが発生しました"
+  | _ -> Printf.eprintf "予期せぬエラーが発生しました\n"
