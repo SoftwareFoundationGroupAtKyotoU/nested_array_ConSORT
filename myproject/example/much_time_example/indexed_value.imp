@@ -34,25 +34,41 @@ easyMatrix(l, k, pp)
 }
 
 verify(s, s2, q)
-[ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
-    <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
-{
-  if s > 0 then { 
+[ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.)> ->
+    <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
+{ 
     let ind1 = _ : (ind1 >= 0 && ind1 < s) in
-    let ind2 = _ : (ind2 >= 0 && ind2 < s) in
-    let val = s - ind1 in
-    assert(q[ind1][ind2] = val);
-    1
-  } else {
+    let ind2 = _ : (ind2 >= 0 && ind2 < s2) in
+    assert(q[ind2][ind1] = s2 - ind2);
     0
-  }
 }
 
-
 {
-  let ten = _ : (ten > 0) in
+  let ten = 3 in
   let pp = alloc ten : int ref ref in
   let d = easyMatrix(ten, ten, pp) in
   let d2 = verify(ten, ten, pp) in
   ()
 }
+
+int fin                               
+fv fin iter: 0 unsat time: 0.102810s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.358435s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.756925s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.291651s
+cex fin int fin 
+fv fin iter: 4 unsat time: 1.754391s
+cex fin int fin 
+fv fin iter: 5 unsat time: 2.200092s
+cex fin int fin 
+fv fin iter: 6 unsat time: 2.761159s
+cex fin int fin 
+fv fin iter: 7 unsat time: 3.552734s
+cex fin int fin 
+fv fin iter: 8 sat time: 4.281908s
+ownership: sat
+refinement: sat
+total time: 217.595474s

@@ -63,3 +63,57 @@ trace(n1, n2, q)
   assert(d2 >= 0);
   1
 }
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.137690s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.324248s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.456272s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.420406s
+cex fin int fin 
+fv fin iter: 4 unsat time: 4.605288s
+cex fin int fin 
+fv fin iter: 5 unsat time: 5.758316s
+cex fin int fin 
+fv fin iter: 6 unsat time: 6.757583s
+cex fin int fin 
+fv fin iter: 7 unsat time: 7.636624s
+cex fin int fin 
+fv fin iter: 8 unsat time: 8.482611s
+cex fin int fin 
+fv fin iter: 9 unsat time: 9.581756s
+cex fin int fin 
+fv fin iter: 10 unsat time: 10.262387s
+cex fin int fin 
+fv fin iter: 11 unsat time: 11.286138s
+cex fin int fin 
+fv fin iter: 12 unsat time: 12.400158s
+cex fin (incomplete quantifiers)
+iter: 13 unknown time: 12.750364s
+int fin 
+fv fin iter: 14 unsat time: 13.745913s
+cex fin int fin 
+fv fin iter: 15 unsat time: 15.222697s
+cex fin int fin 
+fv fin iter: 16 unsat time: 16.739666s
+cex fin int fin 
+fv fin iter: 17 unsat time: 17.733184s
+cex fin int fin 
+fv fin iter: 18 unsat time: 19.316228s
+cex fin int fin 
+fv fin iter: 19 unsat time: 20.674592s
+cex fin int fin 
+fv fin iter: 20 unsat time: 21.908540s
+cex fin (incomplete quantifiers)
+iter: 21 unknown time: 22.168357s
+int fin 
+fv fin iter: 22 unsat time: 23.242179s
+cex fin int fin 
+fv fin iter: 23 sat time: 24.779702s
+ownership: sat
+refinement: sat
+total time: 1649.154658s
+*/

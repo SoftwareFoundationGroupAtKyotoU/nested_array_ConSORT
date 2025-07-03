@@ -21,16 +21,35 @@ verify(m, p)
   if m <= 0 then {
     1
   } else {
-    let ind1 = _ : (ind1 >= 0 && ind1 < m) in
-    assert(p[ind1] = 1);
+    let index = _ : (index >= 0 && index < m) in
+    assert(p[index] = 1);
     0
   }
 }
 
+/*sum(n, p) 
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
 {
-  let n = _ : (n > 0) in
-  let p = alloc 10 : int ref in
-  let d = init(n, p) in
-  let d2 = verify(n, p) in
+  if n <= 0 then {
+    0
+  } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = n - 1 in
+    let s = sum(m, q) in
+    alias(q = p + 1);
+    let y = x + s in
+    y
+  }
+}*/
+
+{
+  let unde = _ : (unde >= 1) in
+  let p = alloc unde : int ref in
+  let d = init(unde, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(p[ind1] = 1);
+  let d2 = verify(unde, p) in
   ()
 }

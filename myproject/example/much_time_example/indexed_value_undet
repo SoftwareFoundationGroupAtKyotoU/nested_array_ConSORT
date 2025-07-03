@@ -1,0 +1,86 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let d = init(m, val, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+
+easyMatrix(l, k,  pp)
+[ <#l: int, #k: int,  pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, k, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = easyMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+verify(s, s2, q)
+[ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.)> ->
+    <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
+{ 
+    let ind1 = _ : (ind1 >= 0 && ind1 < s) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < s2) in
+    assert(q[ind2][ind1] = s2 - ind2);
+    0
+}
+
+{
+  let ten = _ : (ten >= 1) in
+  let pp = alloc ten : int ref ref in
+  let d = easyMatrix(ten, ten, pp) in
+  let d2 = verify(ten, ten, pp) in
+  ()
+}
+
+int fin                               
+fv fin iter: 0 unsat time: 0.049156s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.217572s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.751397s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.084751s
+cex fin int fin 
+fv fin iter: 4 unsat time: 57.497523s
+cex fin int fin 
+fv fin iter: 5 unsat time: 58.377823s
+cex fin int fin 
+fv fin iter: 6 unsat time: 58.771229s
+cex fin int fin 
+fv fin iter: 7 unsat time: 59.119337s
+cex fin int fin 
+fv fin iter: 8 unsat time: 59.642835s
+cex fin (incomplete quantifiers)
+iter: 9 unknown time: 59.761283s
+int fin 
+fv fin iter: 10 unsat time: 60.380756s
+cex fin int fin 
+fv fin iter: 11 unsat time: 60.785297s
+cex fin int fin 
+fv fin iter: 12 unsat time: 61.116358s
+cex fin (incomplete quantifiers)
+iter: 13 unknown time: 62.615295s
+int fin 
+fv fin iter: 14 sat time: 204.651219s
+ownership: sat
+refinement: sat
+total time: 3049.522209s

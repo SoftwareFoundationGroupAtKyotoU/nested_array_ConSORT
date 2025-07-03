@@ -1,0 +1,50 @@
+init(n1, p1) 
+[ <#n1: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := n1;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let d = init(m, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+verify(n, p)
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    assert(p[0] = n);
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = verify(m, q) in
+    alias(q = p + 1);
+    1
+  }
+}
+
+
+{
+  let ten = 10 in
+  let pp = alloc ten : int ref in
+  let d = init(ten, pp) in
+  let d2 = verify(ten, pp) in
+  ()
+}
+
+int fin                               
+fv fin iter: 0 unsat time: 0.094756s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.217571s
+cex fin int fin 
+fv fin iter: 2 sat time: 0.324642s
+ownership: sat
+refinement: sat
+total time: 6.681390s
