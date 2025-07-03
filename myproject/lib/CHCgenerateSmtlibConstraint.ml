@@ -171,9 +171,10 @@ let rec emit_chc fvs fun_num ifel c =
       (match e with
      | Deref id' -> (* let id = *id' in ... *)
      (* xの篩型を追加？ *)
-       intpred_env := (id, []) :: !intpred_env;
-       (* id'の0番目の篩型ならばidの篩型という制約 *)
-       [Imply(ptrpred id' [Id "0"] ifel, IntPred(id, ["v"]))]
+     let fvs' = lookup_fvs id' ifel !id_count_chc in
+     intpred_env := (id, fvs') :: !intpred_env;
+     (* id'の0番目の篩型ならばidの篩型という制約 *)
+     [Imply((ptrpred id' [Id "0"] ifel) , IntPred(id, ["v"]@fvs'))]
      | AppExp (id',es) -> (* let x = f y1 y2 ... in ... *)
        (* 関数の評価前の型，評価後の型，返り値の型 *)
        let (ftid_fts1, ftid_fts2, ft_r) = lookup id' !fn_env_chc in
@@ -182,7 +183,7 @@ let rec emit_chc fvs fun_num ifel c =
        (* #付きの実引数名を抽出する関数 *)
        let rec find_hasharg ftid_fts es =
          match ftid_fts, es with
-         | (HashId _, FTInt _) :: ftid_fts', e' :: es' -> 
+         | (_, FTInt _) :: ftid_fts', e' :: es' -> 
           (match exp_to_smtlib e' with
           | FV id_depended -> id_depended :: find_hasharg ftid_fts' es'
           | _ -> raise (Error "find_hasharg error, not variable"))
@@ -209,7 +210,7 @@ let rec emit_chc fvs fun_num ifel c =
             (* 関数の順番 *)
             let num = lookup id' fun_num in
             (* 参照型の引数に関する述語を追加 *)
-            varpred_count := (PtrVarPred(num, id_arg, "b", make_idx_list depth, fvs), (el,eh,f)) :: !varpred_count;
+            (* varpred_count := (PtrVarPred(num, id_arg, "b", make_idx_list depth, fvs), (el,eh,f)) :: !varpred_count; *)
             (* 
             　　　実引数の参照型の述語
             　　かつ
@@ -272,7 +273,7 @@ let rec emit_chc fvs fun_num ifel c =
               (* 関数の順番 *) 
             let num = lookup id' fun_num in
             (* 仮引数の述語を追加？ *)
-            varpred_count := (PtrVarPred(num, id_arg, "e", (make_idx_list depth), fvs), (el,eh,f)) :: !varpred_count;
+            (* varpred_count := (PtrVarPred(num, id_arg, "e", (make_idx_list depth), fvs), (el,eh,f)) :: !varpred_count; *)
             (* 
             　　　　仮引数の述語
             　　かつ
@@ -307,7 +308,7 @@ let rec emit_chc fvs fun_num ifel c =
        (* #付きの仮引数に対応する実引数の抽出 *)
        let find_fv' ftid_ft e = 
          match ftid_ft, e with
-         | (HashId _, _), Var x -> [x]
+         | (HashId _, FTInt _), Var x | (RawId _, FTInt _), Var x -> [x]
          | _ -> []
        in
        (* #付きの仮引数に対応する実引数名のリスト *)
@@ -519,9 +520,9 @@ let rec emit_chc fvs fun_num ifel c =
     with 
     | Error _ ->
       match e with
-      | EqExp(DerefBracketExp(f, ids), ex) | LtExp(DerefBracketExp(f, ids), ex)
-      | LeqExp(DerefBracketExp(f, ids), ex) | GtExp(DerefBracketExp(f, ids), ex) 
-      | GeqExp(DerefBracketExp(f, ids), ex) -> 
+      | EqExp(DerefBracketExp(ptr_id, ids), ex) | LtExp(DerefBracketExp(ptr_id, ids), ex)
+      | LeqExp(DerefBracketExp(ptr_id, ids), ex) | GtExp(DerefBracketExp(ptr_id, ids), ex) 
+      | GeqExp(DerefBracketExp(ptr_id, ids), ex) -> 
         let main_assert sl = 
           match e with
           | EqExp _ -> Eq(Id "v", sl)
@@ -536,8 +537,8 @@ let rec emit_chc fvs fun_num ifel c =
           | hd :: tl -> 
             match hd with
             | Var x -> 
-              let vars = lookup x !intpred_env in
-              (IntPred(x, (Format.sprintf "i%n" depth) :: vars))
+              (* let vars = lookup x !intpred_env in *)
+              (Eq(FV (Format.sprintf "i%n" depth), FV x))
             :: (subst tl (depth-1))
             | _ -> 
               (Eq(FV (Format.sprintf "i%n" depth), exp_to_smtlib hd))
@@ -547,12 +548,25 @@ let rec emit_chc fvs fun_num ifel c =
           let vars = lookup x !intpred_env in
           [Imply(Ands(
           IntPred(x, x :: vars) ::
-          (ptrpred f (make_idx_list (List.length ids)) ifel)
+          (ptrpred ptr_id (make_idx_list (List.length ids)) ifel)
          :: (subst ids (List.length ids))),
           main_assert (FV x))]
+        | DerefBracketExp(ptr_id', ids') ->
+          let idx' = 
+            (List.map (fun exp -> match exp with 
+            | Var id -> FV id
+            | ILit i ->
+              if Z.geq i Z.zero then 
+                FV (Format.sprintf "%s" (Z.to_string i)) 
+              else 
+                FV (Format.sprintf "(- %s)" (Z.to_string @@ Z.neg @@ i)) 
+            | _ -> raise (Error "main assert error")) ids') in
+          [Imply(Ands((ptrpred ptr_id (make_idx_list (List.length ids)) ifel)
+            :: (subst ids (List.length ids))),
+          ptrpred ptr_id' idx' ifel)]
         | _ ->
         [Imply(Ands(
-          (ptrpred f (make_idx_list (List.length ids)) ifel)
+          (ptrpred ptr_id (make_idx_list (List.length ids)) ifel)
          :: (subst ids (List.length ids))),
           main_assert (exp_to_smtlib ex))])
       | _ -> raise (Error "assert error")
@@ -568,7 +582,7 @@ let rec emit_chc fvs fun_num ifel c =
 (* #付きの変数名を抜き出す *)
 let find_fv ftid_ft = 
   match ftid_ft with
-  | (HashId id, _) -> [id]
+  | (HashId id, FTInt _) | (RawId id, FTInt _) -> [id]
   | _ -> []
 
 (* #なしの変数名を抜き出す *)
