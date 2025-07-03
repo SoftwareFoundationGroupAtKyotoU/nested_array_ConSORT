@@ -74,7 +74,7 @@ let execute_main file_name unsat_core_enabled =
         iter := !iter + 1      
       done;
       (main_sat_ans file_name;
-      main_chc file_name result_path false;
+      main_chc file_name result_path true;
       let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
       let ic = open_in "experiment/chc_result" in
       (* 最初の行を読み取る *)
