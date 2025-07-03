@@ -22,7 +22,7 @@ init(n, x, p)
   let d = init(ten, one, tt) in
   assert(tt[0] = 1);
   let d2 = init(ten, ten, tt2) in
-  assert(tt2[0] = ten)
+  assert(tt2[0] = ten);
   ()
 }
 
