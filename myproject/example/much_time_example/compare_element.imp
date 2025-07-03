@@ -1,0 +1,79 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let nextval = val - 1 in
+    let d = init(m, nextval, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+easyMatrix(l, k, val, pp)
+[ <#l: int, #k: int, val: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, val: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, val, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = easyMatrix(l, m, val, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+/*verify(n, p, q)
+[ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    assert(x < y);
+    let p2 = p + 1 in
+    let q2 = q + 1 in
+    let m = n - 1 in
+    let d = verify(m, p2, q2) in
+    alias(p2=p+1);
+    alias(q2=q+1);
+    1
+  }
+}*/
+
+verifyM(s, s2, p, q)
+[ <#s: int, #s2: int, 
+p: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.), 
+q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.)> ->
+  <#s: int, #s2: int, 
+p: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.), 
+q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
+{
+    let ind1 = _ : (ind1 >= 0 && ind1 < s) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < s2) in
+    assert(p[ind1][ind2] < q[ind1][ind2]);
+    1
+}
+
+{
+    let three = 3 in
+    let four = 4 in
+    let p = alloc three : int ref ref in
+    let q = alloc three : int ref ref in
+    let d = easyMatrix(three, three, three, p) in
+    let d2 = easyMatrix(three, three, four, q) in
+    let d3 = verifyM(three, three, p, q) in
+    ()
+}
