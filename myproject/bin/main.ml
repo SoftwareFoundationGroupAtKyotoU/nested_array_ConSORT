@@ -82,7 +82,8 @@ let execute_main file_name unsat_core_enabled =
       Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
       flush stdout;
       (if first_line = "unsat" && unsat_core_enabled then
-        (main_chc file_name result_path true;
+        (
+          (* main_chc file_name result_path true; *)
         let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_chc.smt2 > experiment/chc_result" in
         ()));
       flush stdout;)
@@ -108,7 +109,7 @@ let () =
   | [_; file_name; "refinement"] ->
     let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file_name)) in
     let start_time = Unix.gettimeofday () in
-    main_chc file_name result_path false;
+    main_chc file_name result_path true;
     let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
     let ic = open_in "experiment/chc_result" in
     (* 最初の行を読み取る *)
@@ -117,7 +118,8 @@ let () =
     flush stdout;
     (if first_line = "unsat" 
     then
-      (main_chc file_name result_path true;
+      (
+        (* main_chc file_name result_path true; *)
       let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_chc.smt2 > experiment/chc_result" in
       ())
     );
