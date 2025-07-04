@@ -25,6 +25,7 @@ easyMatrix(l, k, val, pp)
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
+    /*let nextval = val + 1 in*/
     let d2 = easyMatrix(l, m, val, q) in
     alias(q=pp+1);
     0
@@ -53,7 +54,7 @@ easyMatrix(l, k, val, pp)
   }
 }*/
 
-verifyM(s, s2, p, q)
+/*verifyM(s, s2, p, q)
 [ <#s: int, #s2: int, 
 p: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.), 
 q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.)> ->
@@ -65,15 +66,22 @@ q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
     let ind2 = _ : (ind2 >= 0 && ind2 < s2) in
     assert(p[ind1][ind2] < q[ind1][ind2]);
     1
-}
+}*/
 
 {
     let three = 3 in
     let four = 4 in
-    let p = alloc three : int ref ref in
-    let q = alloc three : int ref ref in
-    let d = easyMatrix(three, three, three, p) in
-    let d2 = easyMatrix(three, three, four, q) in
-    let d3 = verifyM(three, three, p, q) in
+    let p1 = alloc three : int ref ref in
+    let q1 = alloc three : int ref ref in
+    let d = easyMatrix(three, three, three, p1) in
+    let d2 = easyMatrix(three, three, four, q1) in
+    assert(3 = 3);
+    
+    let ind1 = _ : (ind1 >= 0 && ind1 <= 2) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < three) in
+    /*assert(p1[ind1][ind2] = three - ind2);
+    assert(q1[ind1][ind2] = four - ind2);*/
+    assert(p1[ind1][ind2] < q1[ind1][ind2]);
+    /*let d3 = verifyM(three, three, p, qq) in*/
     ()
 }
