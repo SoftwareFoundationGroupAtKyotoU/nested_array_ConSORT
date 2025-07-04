@@ -303,7 +303,7 @@ let outer_constrs ownerships num fvs cons =
   let sl_first = List.concat_map (fun id -> 
     let id_ownerships = find_id (id,"1") num ownerships in
     let depth = max_depth id_ownerships in
-    own_to_chc (id, "1") id_ownerships (PtrPred(id, "1", make_idx_list depth, fvs)))
+    own_to_chc (id, "1") id_ownerships (PtrPred(id, "1", make_idx_list depth, fvs, "v")))
     ref_ids in
   let rec outer_constrs_iter ifel fvs cons =
     match cons with
@@ -314,7 +314,7 @@ let outer_constrs ownerships num fvs cons =
       let make_sl pos = List.concat_map (fun id -> 
         let id_ownerships = find_id (id,pos) num ownerships in
         let depth = max_depth id_ownerships in
-        own_to_chc (id, pos) id_ownerships (PtrPred(id, pos, make_idx_list depth, fvs)))
+        own_to_chc (id, pos) id_ownerships (PtrPred(id, pos, make_idx_list depth, fvs, "v")))
         ref_ids in
       let sl_then = make_sl pos_then in
       let sl_else = make_sl pos_else in
@@ -330,8 +330,8 @@ let outer_constrs ownerships num fvs cons =
       let id2_ownerships = find_id (id2,pos') num ownerships in
       let depth1 = max_depth id1_ownerships in
       let depth2 = max_depth id2_ownerships in
-      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
+      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")) in
       if contains_element eq0_list id2 && sl = Id "1" then
         (remove_element eq0_list id2;
         chc1 @ chc2)
@@ -343,20 +343,20 @@ let outer_constrs ownerships num fvs cons =
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id_ownerships = find_id (id,pos') num ownerships in
       let depth = max_depth id_ownerships in
-      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
+      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs, "v"))
     | CHCAssignInt (id,_,pos) ->
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id_ownerships = find_id (id,pos') num ownerships in
       let depth = max_depth id_ownerships in
-      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
+      own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs, "v"))
     | CHCAliasAddPtr (id1, id2, _, pos) | CHCAlias (id1,id2,pos) ->
       let pos' = (string_of_int pos) ^ (ifel_to_str ifel) in
       let id1_ownerships = find_id (id1,pos') num ownerships in
       let id2_ownerships = find_id (id2,pos') num ownerships in
       let depth1 = max_depth id1_ownerships in
       let depth2 = max_depth id2_ownerships in
-      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
+      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")) in
       chc1 @ chc2
     | CHCAliasDeref (id1, id2, pos) ->
       remove_element eq0_list id2;
@@ -365,8 +365,8 @@ let outer_constrs ownerships num fvs cons =
       let id2_ownerships = find_id (id2,pos') num ownerships in
       let depth1 = max_depth id1_ownerships in
       let depth2 = max_depth id2_ownerships in
-      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
+      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc2 = own_to_chc (id1, pos') id2_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")) in
       chc1 @ chc2
     | CHCAssignRef (id1, id2, pos) ->
       eq0_list := id1 :: !eq0_list;
@@ -376,9 +376,9 @@ let outer_constrs ownerships num fvs cons =
       let id2_ownerships = find_id (id2,pos') num ownerships in
       let depth1 = max_depth id1_eq0_ownerships in
       let depth2 = max_depth id2_ownerships in
-      let chc1_eq0 = own_to_chc_eq0 (id1,pos') id1_eq0_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc1_non0 = own_to_chc_non0 (id1,pos') id1_non0_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc2 = [Imply(Id "true", (PtrPred(id2, pos', make_idx_list depth2, fvs)))] in
+      let chc1_eq0 = own_to_chc_eq0 (id1,pos') id1_eq0_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc1_non0 = own_to_chc_non0 (id1,pos') id1_non0_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc2 = [Imply(Id "true", (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")))] in
       chc1_eq0 @ chc1_non0 @ chc2
     | CHCLetDeref (id1, id2, pos) ->
       eq0_list := id2 :: !eq0_list;
@@ -388,9 +388,9 @@ let outer_constrs ownerships num fvs cons =
       let id2_non0_ownerships = find_id ((id2^"_non0"),pos') num ownerships in
       let depth1 = max_depth id1_ownerships in
       let depth2 = max_depth id2_eq0_ownerships in
-      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs)) in
-      let chc2_eq0 = own_to_chc_eq0 (id2,pos') id2_eq0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
-      let chc2_non0 = own_to_chc_non0 (id2,pos') id2_non0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs)) in
+      let chc1 = own_to_chc (id1, pos') id1_ownerships (PtrPred(id1, pos', make_idx_list depth1, fvs, "v")) in
+      let chc2_eq0 = own_to_chc_eq0 (id2,pos') id2_eq0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")) in
+      let chc2_non0 = own_to_chc_non0 (id2,pos') id2_non0_ownerships (PtrPred(id2, pos', make_idx_list depth2, fvs, "v")) in
       chc1 @ chc2_eq0 @ chc2_non0
     | CHCLetInt (id, exp, c_lis, pos) ->
       let sl1 = 
@@ -407,7 +407,7 @@ let outer_constrs ownerships num fvs cons =
             let id_ownerships = find_id (id,pos') num ownerships in
             if id_ownerships = [] then [] else
               let depth = max_depth id_ownerships in
-              own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs))
+              own_to_chc (id, pos') id_ownerships (PtrPred(id, pos', make_idx_list depth, fvs, "v"))
           | _ -> raise (Error "prog_to_chc error"))
         exps) @ sl1
       | _ -> sl1)

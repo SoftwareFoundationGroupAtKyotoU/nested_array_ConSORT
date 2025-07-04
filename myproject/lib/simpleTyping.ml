@@ -202,8 +202,8 @@ let subst_arg_name program =
       | Id id -> if starts_with "i" id then sl else Id (find_name id)
       | IntPred (id, ids) -> IntPred (find_name id, List.map find_name ids)
       | IntVarPred (n, id, ids) -> IntVarPred (n, find_name id, List.map find_name ids)
-      | PtrPred(id, ifel, sls, ids) -> 
-          PtrPred(find_name id, ifel, List.map (subst_id_smtlib subst) sls, List.map find_name ids)
+      | PtrPred(id, ifel, sls, ids, var_name) -> 
+          PtrPred(find_name id, ifel, List.map (subst_id_smtlib subst) sls, List.map find_name ids, var_name)
       | PtrVarPred(n, id, ifel, sls, ids) ->
           PtrVarPred(n, find_name id, ifel, List.map (subst_id_smtlib subst) sls, List.map find_name ids)
       | VarPred | True -> sl
