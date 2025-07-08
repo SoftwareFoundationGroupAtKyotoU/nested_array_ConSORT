@@ -132,8 +132,8 @@ let rec own_to_chc (id,pos) full_ownerships sl =
 
 let rec own_to_chc_eq0 (id,pos) full_ownerships sl =
   let max_dep = max_depth full_ownerships in
-  if is_0own (id,pos) full_ownerships 
-  then [Imply(Id "true", sl)] 
+  if is_0own (id ^ "_eq0",pos) full_ownerships 
+  then [Imply(Leq(Id (Format.sprintf "i%n" max_dep), Id "0"), sl)] 
   else
     let rec own_to_chc_sub h_now l_now ownerships now_depth =
       if now_depth <= 0 then [] 
@@ -192,8 +192,8 @@ let rec own_to_chc_eq0 (id,pos) full_ownerships sl =
 
 let rec own_to_chc_non0 (id,pos) full_ownerships sl =
   let max_dep = max_depth full_ownerships in
-  if is_0own (id,pos) full_ownerships 
-  then [Imply(Id "true", sl)] 
+  if is_0own (id ^ "_non0",pos) full_ownerships 
+  then [Imply(Gt(Id (Format.sprintf "i%n" max_dep), Id "0"), sl)] 
   else
     let rec own_to_chc_sub h_now l_now ownerships now_depth =
       if now_depth <= 0 then [] 
