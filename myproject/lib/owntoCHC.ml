@@ -6,6 +6,7 @@ open SmtlibSyntax
 open Util
 open PrintOwnConstraint
 open CHCSyntax
+open CHCcollectConstraint
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
@@ -298,13 +299,21 @@ let make_imply smtlib num fvs =
     SmtlibSyntax.Imply(fvs_sl, smtlib)
 
 
-let outer_constrs ownerships num fvs cons =
+let outer_constrs funname ownerships num fvs cons =
   let ref_ids = find_ref_ids num ownerships in
   let sl_first = List.concat_map (fun id -> 
     let id_ownerships = find_id (id,"1") num ownerships in
     let depth = max_depth id_ownerships in
     own_to_chc (id, "1") id_ownerships (PtrPred(id, "1", make_idx_list depth, fvs, "v")))
     ref_ids in
+  (* let (ftid_fts1, ftid_fts2, ft_r) = lookup id' !fn_env_chc in *)
+  let (ftid_fts, _, _) = lookup funname !fn_env_chc in
+  let rec find_refs ft =
+    match ft with
+    | [] -> []
+    | (RawId id, FTRef _) :: left -> id :: find_refs left
+    | _ :: left -> find_refs left in
+  let arg_refids = find_refs ftid_fts in 
   let rec outer_constrs_iter ifel fvs cons =
     match cons with
     | CHCIf (_, c_lis1, c_lis2, pos) ->
@@ -318,7 +327,12 @@ let outer_constrs ownerships num fvs cons =
         ref_ids in
       let sl_then = make_sl pos_then in
       let sl_else = make_sl pos_else in
-      let sl_postif = make_sl pos_postif in
+      let sl_postif = 
+        List.concat_map (fun id -> 
+        let id_ownerships = find_id (id,pos_postif) num ownerships in
+        let depth = max_depth id_ownerships in
+        own_to_chc (id, pos_postif) id_ownerships (PtrPred(id, pos_postif, make_idx_list depth, fvs, "v")))
+        arg_refids in
       let sl1 = List.concat (List.map (outer_constrs_iter ("then" :: ifel) fvs) c_lis1) in
       let sl2 = List.concat (List.map (outer_constrs_iter ("else" :: ifel) fvs) c_lis2) in
       sl_then @ sl_else @ sl_postif @

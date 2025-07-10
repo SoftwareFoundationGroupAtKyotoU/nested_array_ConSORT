@@ -227,8 +227,8 @@ let rec main_chc_sub oc z3res all_chcs unsat_core_flag n =
       ss: 篩型の制約 *)
     let (_, varpred_count, fvs, sls) = all_cs_to_smtlib_chc all_chcs n in
     let args_own_sls = ownexp_to_ownchc varpred_count n fvs in
-    let (_, chcs, _) = (List.nth all_chcs n) in
-    let own_sls = List.concat_map (fun x -> outer_constrs z3res n fvs x) chcs in 
+    let (id, chcs, _) = (List.nth all_chcs n) in
+    let own_sls = List.concat_map (fun x -> outer_constrs id z3res n fvs x) chcs in 
     let own_sls = List.map (fun sl -> make_imply sl n fvs) own_sls in
 
     (* 制約をファイルに書き出し　assert部分 *)
