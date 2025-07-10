@@ -1,0 +1,62 @@
+init(n, l, p) 
+[ <#n: int, #l: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, #l: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 || l <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let n2 = n - 1 in
+    let l2 = l - 1 in
+    let d = init(n2, l2, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+easyMatrix(l, k,  pp)
+[ <#l: int, #k: int,  pp: int ref(0, l - 1, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let initlength = l - k + 1 in
+    let d = init(l, initlength, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = easyMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+
+{
+  let undet = _ : (undet > 0) in
+  let kp = alloc undet : int ref ref in
+  let d = easyMatrix(undet, undet, kp) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < undet) in
+  let ind2 = _ : (ind2 > ind1 && ind2 < undet) in
+  assert(kp[ind1][ind2] = 0);
+  ()
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.128726s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.421001s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.781488s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.284655s
+cex fin int fin 
+fv fin iter: 4 sat time: 1.960756s
+ownership: sat
+refinement: sat
+total time: 8.184025s
+*/
