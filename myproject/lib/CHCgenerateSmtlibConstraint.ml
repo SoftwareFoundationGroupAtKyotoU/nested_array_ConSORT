@@ -353,6 +353,10 @@ let rec emit_chc fvs fun_num ifel c =
      (* e中の自由変数 *)
        let fvs' = fvs_of_exp e in
        intpred_env := (id, (union_list fvs' fvs)) :: !intpred_env;
+       let rec seek_depends fvs =
+        match fvs with
+        | [] -> []
+        | fv :: fvs' -> union_list (lookup fv !intpred_env) (seek_depends fvs') in
        let depend_fvs = union_list fvs' fvs in
        (* 
               新たに束縛される変数xと束縛のための式の値eが等しい
@@ -362,7 +366,8 @@ let rec emit_chc fvs fun_num ifel c =
           新たに束縛される変数xの篩型の述語
           *)
        (* [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs)), IntPred(id, "v" :: fvs))]) *)
-       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) depend_fvs)), IntPred(id, "v" :: depend_fvs))]) in
+       [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: 
+       (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) (union_list (seek_depends fvs') depend_fvs))), IntPred(id, "v" :: depend_fvs))]) in
     let ss_body = 
     match e with 
     | ConstRandInt _ -> List.concat_map 
