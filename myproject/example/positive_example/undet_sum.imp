@@ -38,7 +38,7 @@ sum(n, p)
   let d = init(unde, unde2, p) in
   /*assert(arr[ind] = 1);*/
   let x = sum(unde, p) in
-  let v = unde * unde2 in
-  assert(x = v);
+  let t = unde * unde2 in
+  assert(x = t);
   ()
 }
