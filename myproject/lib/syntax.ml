@@ -65,6 +65,7 @@ type exp =
   | LetAllocExp of id * exp * simpleTy * exp
   | LetIntExp of id * exp * exp
   | LetAddPtrExp of id * id * exp * exp
+  | LetImmutAddPtrExp of id * id * exp * exp
   | LetDerefExp of id * id * exp
   | Let of id * exp * exp
   | Assign of id * exp * exp
@@ -87,7 +88,7 @@ let rec map_exp f exp =
   match exp with
   | IfnpExp _ | LetAllocExp _ | Let _ | Assign _ | Deref _ | AppExp _ | Var _
   | Unit | ENull | DerefBracketExp _ | ILit _ | BLit _ 
-  | LetIntExp _ | LetAddPtrExp _ | LetDerefExp _ | AssignInt _ | AssignPtr _ 
+  | LetIntExp _ | LetAddPtrExp _ | LetImmutAddPtrExp _| LetDerefExp _ | AssignInt _ | AssignPtr _ 
   | AliasAddPtr _ | AliasDeref _ -> f exp
   | Seq (exp1, exp2) ->
     Seq (map_exp f exp1, map_exp f exp2)

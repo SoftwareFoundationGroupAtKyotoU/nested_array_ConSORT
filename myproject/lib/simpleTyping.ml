@@ -71,6 +71,13 @@ let rec infer_simple_ty tyenv exp =
       | _ -> ());
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
     let c3 = unify ( c1 @ c2) in (c3, ty2)
+  | LetImmutAddPtrExp(id1, id2, exp1, exp2) ->
+    let (c1, ty1) = infer_simple_ty tyenv exp1 in
+    let ty2 = lookup id2 !tyenv in
+    assert(ty2 <> SInt);
+    tyenv := (id1,ty2) :: !tyenv;
+    let (c2, ty3) = infer_simple_ty tyenv exp2 in
+    let c3 = unify ( (ty1, SInt)::c1 @ c2) in (c3, ty3)
   | Assign(id, exp1, exp2) ->
     let t = lookup id !tyenv in
     let (c1, ty1) = infer_simple_ty tyenv exp1 in

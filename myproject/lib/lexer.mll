@@ -20,6 +20,7 @@
         ("not", Parser.TNOT);
         ("T", Parser.TOP);
         ("v", Parser.NU);
+        ("immut", Parser.IMMUT);
     ]
 }
 

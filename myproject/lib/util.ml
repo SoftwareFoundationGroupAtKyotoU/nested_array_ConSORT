@@ -46,6 +46,14 @@ let rec print_exp exp =
       print_string ", ";
       print_exp e2;
       print_string ")")
+  | LetImmutAddPtrExp (id1,id2,e1,e2) ->
+    (print_string ("LetImmutAddPtrExp( \"" ^ id1 ^ "\", ");
+      print_string id2;
+      print_string ", ";
+      print_exp e1;
+      print_string ", ";
+      print_exp e2;
+      print_string ")")
   (* | ELetSubPtr (id1,id2,e1,e2) ->
     (print_string ("ELetSubPtr(" ^ id1 ^ ", ");
       print_string id2;
@@ -267,6 +275,8 @@ let rec elim_int_var env fun_name args exp =
     LetIntExp(id, elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
   | LetAddPtrExp(id,id2,exp1,exp2) ->
     LetAddPtrExp(id, id2, elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
+  | LetImmutAddPtrExp(id,id2,exp1,exp2) ->
+    LetImmutAddPtrExp(id, id2, elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
   | LetDerefExp(id1,id2,e) ->
     LetDerefExp(id1, id2, elim_int_var env fun_name args e)
   | IfExp (exp1,exp2,exp3) ->
@@ -612,6 +622,8 @@ let rec exp_subst subst exp =
     LetDerefExp(id1, id2, exp_subst subst e)
   | LetAddPtrExp (id1,id2,e1,e2) ->
     LetAddPtrExp(id1, id2, exp_subst subst e1, exp_subst subst e2)
+  | LetImmutAddPtrExp (id1,id2,e1,e2) ->
+    LetImmutAddPtrExp(id1, id2, exp_subst subst e1, exp_subst subst e2)
   | Let _ ->
     err ("exp_subst Error: If this error occurs, the elaborate module is wrong.")
   | IfExp (e1,e2,e3) ->
@@ -730,7 +742,7 @@ let find_idx_vars_be varown_count fun_num =
 let rec ret_of_exp cond exp = 
   match exp with
   | LetIntExp (_,_,e) | LetDerefExp (_,_,e) | LetAllocExp (_,_,_,e) | Assign (_,_,e) 
-  | AssignInt (_,_,e) | LetAddPtrExp (_,_,_,e) | AssignPtr (_,_,e) | AliasAddPtr (_,_,_,e)
+  | AssignInt (_,_,e) | LetAddPtrExp (_,_,_,e) | LetImmutAddPtrExp (_,_,_,e) | AssignPtr (_,_,e) | AliasAddPtr (_,_,_,e)
   | AliasDeref (_,_,e) | Assert (_,e) | Assume (_,e) | Seq (_,e) -> 
     ret_of_exp cond e
   | IfExp (e1,e2,e3) ->
