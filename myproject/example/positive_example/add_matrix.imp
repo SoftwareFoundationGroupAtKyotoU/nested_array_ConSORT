@@ -94,8 +94,28 @@ addmatrix(n1, n2, pp, qq, rr)
 }
 
 /* 
-fv fin iter: 40 sat time: 137.443342s
+--- Executing for: ./example/much_time_example/add_matrix.imp ---
+int fin 
+fv fin iter: 0 unsat time: 0.125526s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.750256s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.945514s
+cex fin int fin 
+fv fin iter: 3 unsat time: 4.688715s
+cex fin int fin 
+fv fin iter: 4 unsat time: 6.625811s
+cex fin int fin 
+fv fin iter: 5 unsat time: 8.635965s
+cex fin int fin 
+fv fin iter: 6 unsat time: 12.130006s
+cex fin int fin 
+fv fin iter: 7 unsat time: 13.892004s
+cex fin int fin 
+fv fin iter: 8 unsat time: 16.614640s
+cex fin int fin 
+fv fin iter: 9 sat time: 20.134300s
 ownership: sat
 refinement: sat
-total time: 882.087093s
+total time: 10982.251744s
 */
