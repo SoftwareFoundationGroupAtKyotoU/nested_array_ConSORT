@@ -599,6 +599,11 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
             asprintf "%s\n%s%s" id2_outer id2_eq0 id2_non0
           else find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
       asprintf "%s%s%s" s res1 res2
+    | CLetImmutAddPtr (id1, id2, _, pos) ->
+      let s = cons_to_program cons in
+      let res1 = find_own_res fun_num id1 pos branch_trace z3res ty_env fvs in
+      let res2 = find_own_res fun_num id2 pos branch_trace z3res ty_env fvs in
+      asprintf "%s%s%s" s res1 res2
     | CLetUndet(id, cs) ->
       let s1 = String.concat "" (List.map (print_body_own (branch_trace) (id::fvs)) cs ) in
       asprintf "let %s = _ in \n%s\n" id s1

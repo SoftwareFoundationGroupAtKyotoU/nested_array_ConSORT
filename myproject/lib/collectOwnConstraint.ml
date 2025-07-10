@@ -36,6 +36,10 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CLetAddPtr(id1, id2, elim_int_var env fun_name args exp1, position) :: c1 @ c2
+  | LetImmutAddPtrExp (id1,id2,exp1,exp2) ->
+    let c1 = collect_exp env fun_name args position exp1 in
+    let c2 = collect_exp env fun_name args (position+1) exp2 in
+    CLetImmutAddPtr(id1, id2, elim_int_var env fun_name args exp1, position) :: c1 @ c2
   (* | ELetSubPtr (id1,id2,exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
