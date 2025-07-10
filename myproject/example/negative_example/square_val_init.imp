@@ -19,9 +19,9 @@ init(n1, val, p1)
   let unde = _ : (unde >= 2) in
   let p = alloc unde : int ref in
   let unde2 = _ : (unde >= 2) in
-  let v = unde2 * unde2 in
+  let squale = unde2 * unde2 in
   let d = init(unde, unde2, p) in
   let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
-  assert(p[ind1] = 1);
+  assert(p[ind1] = squale);
   ()
 }
