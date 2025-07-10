@@ -1,0 +1,10 @@
+{
+  let p = alloc 10 : int ref in
+  p := 1;
+  let immut q = p + 0 in
+  let qin = *q in
+  let pin = *p in
+  assert(qin = 1);
+  assert(pin = 1);
+  ()
+}
