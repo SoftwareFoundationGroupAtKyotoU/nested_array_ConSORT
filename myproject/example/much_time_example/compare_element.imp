@@ -79,9 +79,72 @@ q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
     
     let ind1 = _ : (ind1 >= 0 && ind1 <= 2) in
     let ind2 = _ : (ind2 >= 0 && ind2 < three) in
-    /*assert(p1[ind1][ind2] = three - ind2);
-    assert(q1[ind1][ind2] = four - ind2);*/
+    /*assert(p1[ind1][ind2] = three - ind2);*/
+    assert(q1[ind1][ind2] = four - ind2);
     assert(p1[ind1][ind2] < q1[ind1][ind2]);
     /*let d3 = verifyM(three, three, p, qq) in*/
     ()
 }
+
+/*
+assert(p1[ind1][ind2] = three - ind2);
+assert(q1[ind1][ind2] = four - ind2);
+なし
+int fin                              
+fv fin iter: 0 unsat time: 0.098082s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.527039s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.996563s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.385004s
+cex fin int fin 
+fv fin iter: 4 sat time: 1.693143s
+ownership: sat
+refinement: sat
+total time: 49537.362392s
+
+
+あり
+int fin                               
+fv fin iter: 0 unsat time: 0.097149s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.524942s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.996414s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.383704s
+cex fin int fin 
+fv fin iter: 4 sat time: 1.691083s
+ownership: sat
+refinement: sat
+total time: 30.033053s
+
+assert(p1[ind1][ind2] = three - ind2);のみ
+fv fin iter: 0 unsat time: 0.045870s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.463618s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.931065s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.320482s
+cex fin int fin 
+fv fin iter: 4 sat time: 1.634324s
+ownership: sat
+refinement: sat
+total time: 16.408691s
+
+assert(q1[ind1][ind2] = four - ind2);のみ
+fv fin iter: 0 unsat time: 0.046953s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.467471s
+cex fin int fin 
+fv fin iter: 2 unsat time: 1.016776s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.416641s
+cex fin int fin 
+fv fin iter: 4 sat time: 1.723308s
+ownership: sat
+refinement: sat
+total time: 133.670171s
+*/
