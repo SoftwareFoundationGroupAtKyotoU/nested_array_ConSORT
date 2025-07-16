@@ -42,6 +42,7 @@ trace(n1, n2, q)
     let m = n1 - n2 in
     let qinShift = qin + m in
     let s = *qinShift in
+    assert(s>=0);
     alias(qinShift = qin + m);
     alias(qin = *q);
     let q2 = q + 1 in
@@ -56,15 +57,61 @@ trace(n1, n2, q)
 }
 
 {
-  let mat1 = alloc 4 : int ref ref in
-  let ten = 4 in
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
   let d1 = initMatrix(ten, ten, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  assert(mat1[ind1][ind1] >= 0);
   let d2 = trace(ten, ten, mat1) in
   assert(d2 >= 0);
   1
 }
 
 /*
+int fin 
+fv fin iter: 0 unsat time: 0.070803s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.705202s
+cex fin int fin 
+fv fin iter: 2 unsat time: 1.575829s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.162006s
+cex fin int fin 
+fv fin iter: 4 unsat time: 4.158517s
+cex fin int fin 
+fv fin iter: 5 unsat time: 5.335974s
+cex fin int fin 
+fv fin iter: 6 unsat time: 5.945228s
+cex fin int fin 
+fv fin iter: 7 unsat time: 6.569959s
+cex fin int fin 
+fv fin iter: 8 unsat time: 7.779595s
+cex fin int fin 
+fv fin iter: 9 unsat time: 8.529613s
+cex fin int fin 
+fv fin iter: 10 unsat time: 9.216159s
+cex fin int fin 
+fv fin iter: 11 unsat time: 10.058680s
+cex fin int fin 
+fv fin iter: 12 unsat time: 10.854100s
+cex fin int fin 
+fv fin iter: 13 unsat time: 11.819021s
+cex fin int fin 
+fv fin iter: 14 unsat time: 12.673118s
+cex fin int fin 
+fv fin iter: 15 unsat time: 13.572240s
+cex fin (incomplete quantifiers)
+iter: 16 unknown time: 13.803041s
+(incomplete quantifiers)
+iter: 17 unknown time: 14.150513s
+(incomplete quantifiers)
+iter: 18 unknown time: 14.254674s
+int fin 
+fv fin iter: 19 sat time: 14.984886s
+ownership: sat
+refinement: sat
+total time: 39136.364596s
+
 int fin                               
 fv fin iter: 0 unsat time: 0.137690s
 cex fin int fin 
@@ -116,4 +163,29 @@ fv fin iter: 23 sat time: 24.779702s
 ownership: sat
 refinement: sat
 total time: 1649.154658s
+
+アノテーションあり
+int fin                               
+fv fin iter: 0 unsat time: 0.074463s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.174792s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.689022s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.408668s
+cex fin int fin 
+fv fin iter: 4 unsat time: 4.221103s
+cex fin int fin 
+fv fin iter: 5 unsat time: 4.916245s
+cex fin int fin 
+fv fin iter: 6 unsat time: 5.921300s
+cex fin int fin 
+fv fin iter: 7 unsat time: 6.752213s
+cex fin int fin 
+fv fin iter: 8 unsat time: 7.703614s
+cex fin int fin 
+fv fin iter: 9 sat time: 8.906468s
+ownership: sat
+refinement: sat
+total time: 29.228732s
 */
