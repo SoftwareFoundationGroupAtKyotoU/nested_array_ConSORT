@@ -1,6 +1,6 @@
 sum(n, p) 
-[ <#n: int, p: int ref> -> 
-  <#n: int, p: int ref | int> ]
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
 {
   if n <= 0 then {
     0
@@ -24,20 +24,10 @@ sum(n, p)
   }
 }
 
-abs(m)
-[ <#m: int> -> <#m: int | int> ]
-{
-  if m >= 0 then {
-    m
-  } else {
-    let k = -m in
-    k
-  }
-}
 
 initx(n, x, p) 
 [ <#n: int, x: int, p: int ref> -> 
-  <#n: int, x: int, p: int ref | int> ]
+  <#n: int, x: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = x))} ref(0, n - 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
@@ -52,12 +42,25 @@ initx(n, x, p)
 }
 
 {
-  let p = alloc 1000 : int ref in
-  let m = 1000 in
-  let rand = _ in
-  let z = abs(rand) in
-  let d = initx(m, z, p) in
+  let p = alloc 100000 : int ref in
+  let m = 100000 in
+  let rand = _ : (rand >= 0) in
+  let d = initx(m, rand, p) in
   let x = sum(m, p) in
   assert(x >= 0);
   ()
 }
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.028993s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.072590s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.121259s
+cex fin int fin 
+fv fin iter: 3 sat time: 0.179861s
+ownership: sat
+refinement: sat
+total time: 0.330386s
+*/
