@@ -147,7 +147,7 @@ IfExpr :
 LetExpr :
   | LET x=ID EQ e1 = Expr IN e2 = Expr { Let (x, e1, e2) }
   | LET IMMUT x=ID EQ y=ID PLUS e1=Expr IN e2 = Expr { LetImmutAddPtrExp (x, y, e1, e2) }
-  | LET x=ID EQ ALLOC e1=Expr COLON ty=SimpleTyExpr REF IN e2=Expr { LetAllocExp(x, e1, SRef ( ty ), e2) }
+  | LET x=ID EQ ALLOC e1=Expr COLON ty=Ftype IN e2=Expr { LetAllocExp(x, e1, ty, e2) }
 
 SimpleTyExpr :
     INT { SInt }
