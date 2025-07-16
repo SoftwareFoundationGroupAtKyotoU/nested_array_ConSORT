@@ -30,7 +30,7 @@ abs(m)
 
 initx(n, x, p) 
 [ <#n: int, x: int, p: int ref> -> 
-  <#n: int, x: int, p: int ref | int> ]
+  <#n: int, x: int, p: {v:int | (=> ((0 <= i1) and (i1 < n)) (v = x))} ref(0, n - 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
@@ -72,3 +72,36 @@ verify(n, p)
   let d3 = verify(m, q) in
   ()
 }
+
+/*
+
+int fin                               
+fv fin iter: 0 unsat time: 0.037553s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.091488s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.146064s
+cex fin int fin 
+fv fin iter: 3 unsat time: 0.202889s
+cex fin int fin 
+fv fin iter: 4 unsat time: 0.259413s
+cex fin int fin 
+fv fin iter: 5 unsat time: 0.317331s
+cex fin int fin 
+fv fin iter: 6 unsat time: 0.378202s
+cex fin int fin 
+fv fin iter: 7 unsat time: 0.435391s
+cex fin int fin 
+fv fin iter: 8 unsat time: 0.492840s
+cex fin int fin 
+fv fin iter: 9 unsat time: 0.554730s
+cex fin int fin 
+fv fin iter: 10 unsat time: 0.619786s
+cex fin int fin 
+fv fin iter: 11 unsat time: 0.681634s
+cex fin int fin 
+fv fin iter: 12 sat time: 0.748772s
+ownership: sat
+refinement: sat
+total time: 19.261823s
+*/
