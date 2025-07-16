@@ -44,9 +44,17 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CLetSubPtr(id1, id2, elim_v env fun_name args exp1, l) :: c1 @ c2 *)
-  | LetAllocExp (id,exp1,simpleTy,exp2) ->
+  | LetAllocExp (id,exp1,ftype,exp2) ->
     let c = collect_exp env fun_name args (position+1) exp2 in
-    CMkArray(id, elim_int_var env fun_name args exp1, simpleTy, position) :: c
+    let rec elim_int_var_from_ftype ftype =
+      match ftype with
+      | FTRef (ftype', el, eh, f) ->
+        FTRef (elim_int_var_from_ftype ftype', 
+              elim_int_var env fun_name args el, 
+              elim_int_var env fun_name args eh, 
+              f)
+      | FTInt _ -> ftype in
+    CMkArray(id, elim_int_var env fun_name args exp1, elim_int_var_from_ftype ftype, position) :: c
   | AssignInt (id,exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
