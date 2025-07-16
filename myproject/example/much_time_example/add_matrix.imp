@@ -16,7 +16,8 @@ init(pin, p)
 
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -82,40 +83,57 @@ addmatrix(n1, n2, pp, qq, rr)
 }
 
 {
-  let mat1 = alloc 4 : int ref ref in
-  let mat2 = alloc 4 : int ref ref in
-  let mat3 = alloc 4 : int ref ref in
-  let ten = 4 in
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let mat2 = alloc ten : int ref ref in
+  let mat3 = alloc ten : int ref ref in
   let z1 = initMatrix(ten, ten, mat1) in
   let z2 = initMatrix(ten, ten, mat2) in
   let z3 = addmatrix(ten, ten, mat1, mat2, mat3) in
-  assert(mat3[0][0] = 2);
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < ten) in
+  assert(mat1[ind1][ind2] = 1);
+  assert(mat2[ind1][ind2] = 1);
+  assert(mat3[ind1][ind2] = 2);
   1
 }
 
 /* 
---- Executing for: ./example/much_time_example/add_matrix.imp ---
-int fin 
-fv fin iter: 0 unsat time: 0.125526s
+int fin                               
+fv fin iter: 0 unsat time: 0.131887s
 cex fin int fin 
-fv fin iter: 1 unsat time: 1.750256s
+fv fin iter: 1 unsat time: 0.504528s
 cex fin int fin 
-fv fin iter: 2 unsat time: 2.945514s
+fv fin iter: 2 unsat time: 2.905604s
 cex fin int fin 
-fv fin iter: 3 unsat time: 4.688715s
+fv fin iter: 3 unsat time: 4.405318s
 cex fin int fin 
-fv fin iter: 4 unsat time: 6.625811s
+fv fin iter: 4 unsat time: 5.632223s
 cex fin int fin 
-fv fin iter: 5 unsat time: 8.635965s
+fv fin iter: 5 unsat time: 6.946045s
 cex fin int fin 
-fv fin iter: 6 unsat time: 12.130006s
+fv fin iter: 6 unsat time: 10.509757s
 cex fin int fin 
-fv fin iter: 7 unsat time: 13.892004s
+fv fin iter: 7 unsat time: 15.911687s
 cex fin int fin 
-fv fin iter: 8 unsat time: 16.614640s
+fv fin iter: 8 unsat time: 30.970881s
 cex fin int fin 
-fv fin iter: 9 sat time: 20.134300s
+fv fin iter: 9 unsat time: 36.152568s
+cex fin int fin 
+fv fin iter: 10 unsat time: 39.039751s
+cex fin int fin 
+fv fin iter: 11 unsat time: 44.273608s
+cex fin int fin 
+fv fin iter: 12 unsat time: 47.799610s
+cex fin int fin 
+fv fin iter: 13 unsat time: 52.326540s
+cex fin int fin 
+fv fin iter: 14 unsat time: 55.420190s
+cex fin int fin 
+fv fin iter: 15 unsat time: 59.613515s
+cex fin int fin 
+fv fin iter: 16 sat time: 63.840306s
 ownership: sat
 refinement: sat
-total time: 10982.251744s
+total time: 119.131083s
 */
