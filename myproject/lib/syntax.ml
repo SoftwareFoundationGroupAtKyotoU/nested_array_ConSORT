@@ -94,7 +94,18 @@ let rec ftype_to_simplety ftype =
   | FTInt _ -> SInt
   | FTRef (innerty,_,_,_) -> SRef (ftype_to_simplety innerty)
 
+let rec print_ftype ftype =
+  match ftype with
+  | FTInt _ -> print_string "Int"
+  | FTRef (innerty,_,_,_) -> 
+    (print_string "Ref ";
+    print_ftype innerty)
 
+  let rec pp_ftype fmt ftype =
+    match ftype with
+    | FTInt _ -> Format.fprintf fmt "int"
+    | FTRef (innerty,_,_,_) -> 
+      Format.fprintf fmt "%a ref" pp_ftype innerty
 
 let rec map_exp f exp =
   match exp with
