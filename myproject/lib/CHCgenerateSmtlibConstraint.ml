@@ -79,8 +79,7 @@ let ptrpred_p id i_sl ifel ?(val_name = "v") () =
 (* #付きの変数名の抽出 *)
 let find_subst ftid_ft e = 
   match ftid_ft with
-  | (RawId _, FTInt _) -> []
-  | (HashId id, FTInt _) -> [(id, e)]
+  | (RawId id, FTInt _) | (HashId id, FTInt _) -> [(id, e)]
   | (RawId _, FTRef _) -> []
   | _ -> raise (Error "find_subst")
 
@@ -140,14 +139,8 @@ let rec emit_chc fvs fun_num ifel c =
     let ss2 = List.concat (List.map (emit_chc fvs fun_num ("else" :: ifel)) cs2) in
     (* 条件式が成り立たないならばelse節の制約が成り立つ，という形に変更 *)
     let ss2' = List.map (fun s -> Imply(Not(exp_to_smtlib e), s)) ss2 in
-    (* then評価後の参照変数リスト *)
-    let ids_post_if = find_id_count ("then" :: ifel) !id_count_chc in
-    (* else評価後の参照変数リスト *)
-    let ids_post_el = find_id_count ("else" :: ifel) !id_count_chc in
-    (* then節，else節評価後の変数名のリストを結合 *)
-    let ids_post = union_list ids_post_if ids_post_el in
     (* 変数名のリストをもとにif式評価後のid_count_chcの更新（プログラムを表す位置の変化を反映） *)
-    List.iter (fun (id, depth) -> new_id id (pos+1) ifel depth fvs) ids_post; 
+    List.iter (fun (id, depth) -> new_id id (pos+1) ifel depth fvs) ids_pre; 
     (* 条件節が成り立つならば(then節ならば，if節前)という制約リスト？ *)
     let ss_post_if = 
       List.map 
@@ -156,7 +149,7 @@ let rec emit_chc fvs fun_num ifel c =
           (fun (id, depth) -> 
             let idx_list = make_idx_list depth in
             Imply(ptrpred id idx_list ("then" :: ifel) (), ptrpred id idx_list ifel ())
-          ) ids_post_if) in
+          ) ids_pre) in
     (* 条件節が成り立たないならば(else節ならば，if節前)という制約リスト？ *)
     let ss_post_el = 
       List.map 
@@ -165,7 +158,7 @@ let rec emit_chc fvs fun_num ifel c =
           (fun (id, depth) -> 
             let idx_list = make_idx_list depth in
             Imply(ptrpred id idx_list ("else" :: ifel) (), ptrpred id idx_list ifel ())
-          ) ids_post_el) in
+          ) ids_pre) in
     (* 制約の結合 *)
     ss_pre @ ss1' @ ss2' @ ss_post_if @ ss_post_el
   | CHCLetInt (id,e, c_lis, pos) -> 
@@ -421,12 +414,19 @@ let rec emit_chc fvs fun_num ifel c =
       ptrpred id1 (make_idx_list (depth-1)) ifel ());
     Imply(ptrpred_p id2 (make_idx_list depth) ifel (),
       ptrpred id2 (make_idx_list depth) ifel ())]
-  | CHCAlloc (id,_,simplety,l) -> (*　let id = alloc e in ... *)
-    let depth = ref_depth simplety in
+  | CHCAlloc (id,_,ftype,l) -> (*　let id = alloc e in ... *)
+    let depth = ref_depth (ftype_to_simplety ftype) in
     new_id id l ifel depth fvs;
+    let rec find_refinement ftype =
+      match ftype with
+      | FTInt sl -> sl
+      | FTRef (ftype', _, _, _) -> find_refinement ftype' in
+    let refinement = find_refinement ftype in
       (* 真　ならば　新たに定義された参照の述語
        どんな述語も許容？ *)
-    if depth > 1 then
+    if refinement <> VarPred then
+      [Imply(refinement, ptrpred id (make_idx_list depth) ifel ())]
+    else if depth > 1 then
       [Imply(Id "true", ptrpred id (make_idx_list depth) ifel ())]
     else
       [Imply(Eq(Id("v"), Id "0"),ptrpred id (make_idx_list depth) ifel ())]
