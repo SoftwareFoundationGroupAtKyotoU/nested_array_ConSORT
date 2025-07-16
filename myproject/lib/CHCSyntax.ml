@@ -17,7 +17,7 @@ type chc =
   | CHCLetInt of id * exp * chc list * pos
   | CHCLetDeref of id * id * pos
   | CHCLetAddPtr of id * id * exp * pos
-  | CHCAlloc of id * exp * simpleTy * pos
+  | CHCAlloc of id * exp * ftype * pos
   | CHCAssignInt of id * exp * pos
   | CHCAssignRef of id * id * pos
   | CHCAlias of id * id * pos
