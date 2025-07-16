@@ -62,7 +62,7 @@ type exp =
   | MultExp of exp * exp
   | IfnpExp of id * exp * exp
   | IfExp of exp * exp * exp
-  | LetAllocExp of id * exp * simpleTy * exp
+  | LetAllocExp of id * exp * ftype * exp
   | LetIntExp of id * exp * exp
   | LetAddPtrExp of id * id * exp * exp
   | LetImmutAddPtrExp of id * id * exp * exp
@@ -83,6 +83,18 @@ type exp =
   | Unit
   | ENull
   | ConstRandInt of exp
+and
+(* 篩型と所有権付きの型 *)
+  ftype =
+  | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
+  | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
+
+let rec ftype_to_simplety ftype =
+  match ftype with
+  | FTInt _ -> SInt
+  | FTRef (innerty,_,_,_) -> SRef (ftype_to_simplety innerty)
+
+
 
 let rec map_exp f exp =
   match exp with
@@ -91,47 +103,43 @@ let rec map_exp f exp =
   | LetIntExp _ | LetAddPtrExp _ | LetImmutAddPtrExp _| LetDerefExp _ | AssignInt _ | AssignPtr _ 
   | AliasAddPtr _ | AliasDeref _ -> f exp
   | Seq (exp1, exp2) ->
-    Seq (map_exp f exp1, map_exp f exp2)
+    Seq (f exp1,f exp2)
   | Assert(exp1, exp2) ->
-    Assert (map_exp f exp1, map_exp f exp2)
+    Assert (f exp1,f exp2)
   | Assume(exp1, exp2) ->
-    Assume (map_exp f exp1, map_exp f exp2)
+    Assume (f exp1,f exp2)
   | OrExp (exp1, exp2)  -> 
-    OrExp (map_exp f exp1, map_exp f exp2)
+    OrExp (f exp1,f exp2)
   | AndExp(exp1, exp2) ->
-    AndExp(map_exp f exp1, map_exp f exp2)
+    AndExp(f exp1,f exp2)
   | NotExp exp ->
-    NotExp(map_exp f exp)
+    NotExp(f exp)
   | EqExp (exp1, exp2) ->
-    EqExp(map_exp f exp1, map_exp f exp2)
+    EqExp(f exp1,f exp2)
   | LtExp (exp1, exp2) ->
-    LtExp(map_exp f exp1, map_exp f exp2)
+    LtExp(f exp1,f exp2)
   | GtExp (exp1, exp2) ->
-    GtExp(map_exp f exp1, map_exp f exp2)
+    GtExp(f exp1,f exp2)
   | LeqExp (exp1, exp2) ->
-    LeqExp(map_exp f exp1, map_exp f exp2)
+    LeqExp(f exp1,f exp2)
   | GeqExp (exp1, exp2) ->
-    GeqExp(map_exp f exp1, map_exp f exp2)
+    GeqExp(f exp1, f exp2)
   | NeqExp (exp1, exp2) ->
-    NeqExp(map_exp f exp1, map_exp f exp2)
+    NeqExp(f exp1,f exp2)
   | PlusExp (exp1, exp2) ->
-    PlusExp(map_exp f exp1, map_exp f exp2)
+    PlusExp(f exp1,f exp2)
   | MinusExp (exp1, exp2) ->
-    MinusExp(map_exp f exp1, map_exp f exp2)
+    MinusExp(f exp1,f exp2)
   | MultExp (exp1, exp2) ->
-    MultExp(map_exp f exp1, map_exp f exp2)
+    MultExp(f exp1,f exp2)
   | IfExp (exp1, exp2, exp3) ->
-    IfExp (map_exp f exp1, map_exp f exp2, map_exp f exp3)
+    IfExp (f exp1,f exp2,f exp3)
   | Alias(exp1, exp2, exp3) ->
-    Alias (map_exp f exp1, map_exp f exp2, map_exp f exp3)
+    Alias (f exp1,f exp2,f exp3)
   | ConstRandInt exp ->
-    ConstRandInt (map_exp f exp)
+    ConstRandInt (f exp)
 
 
-(* 篩型と所有権付きの型 *)
-type ftype =
-  | FTInt of smtlib (** Refinement predicats are described usign the SMT-LIB language *)
-  | FTRef of ftype * exp * exp * float  (** Ownership functions are restricted to the form \[l, u\] |-> o, where l : exp, u : exp and o : float *)
 
 let ftref_depth ftype = 
   let rec iterative_ftref_depth ftype depth =
