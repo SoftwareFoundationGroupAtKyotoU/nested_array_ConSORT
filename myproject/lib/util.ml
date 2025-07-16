@@ -78,11 +78,11 @@ let rec print_exp exp =
       print_string ", ";
       print_exp e2;
       print_string ")")
-  | LetAllocExp (id,e1,simpleTy,e2) ->
+  | LetAllocExp (id,e1,ftype,e2) ->
     (print_string ("LetAllocExp( \"" ^ id ^ "\", ");
       print_exp e1;
       print_string ", ";
-      print_simplety simpleTy;
+      print_ftype ftype;
       print_string ", ";
       print_exp e2;
       print_string ")")
@@ -407,6 +407,69 @@ let rec exp_to_smtlib exp =
   | MultExp (e1,e2) -> 
     let s1 = exp_to_smtlib e1 in
     let s2 = exp_to_smtlib e2 in
+    Mul(s1, s2)
+  (* | EDiv (e1,e2) -> 
+    let s1 = exp_to_smtlib e1 in
+    let s2 = exp_to_smtlib e2 in
+    Div(s1, s2) *)
+  | ILit i ->
+    if Z.geq i Z.zero then 
+      Id (sprintf "%s" (Z.to_string i)) 
+    else 
+      Id(sprintf "(- %s)" (Z.to_string @@ Z.neg @@ i))
+  | Var x -> FV x
+  (* | ConstRandInt _ -> raise (Error "exp_to_smtlib error") *)
+  | _ -> 
+    raise (Error "exp_to_smtlib error")
+
+let rec exp_to_smtlib_for_assert exp = 
+  match exp with 
+  | EqExp (e1,e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Eq(s1, s2)
+  | LtExp (e1, e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Lt(s1, s2)
+  | GtExp (e1, e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Gt(s1, s2)
+  | LeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Leq(s1, s2)
+  | GeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Geq(s1, s2)
+  | NeqExp (e1, e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Not(Eq(s1, s2))
+  | AndExp (e1,e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    And(s1, s2)
+  | OrExp (e1,e2) ->
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Or(s1, s2)
+  | NotExp e ->
+    let s = exp_to_smtlib_for_assert e in
+    Not s
+  | PlusExp (e1,e2) -> 
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Add(s1, s2)
+  | MinusExp (e1,e2) -> 
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
+    Sub(s1, s2)
+  | MultExp (e1,e2) -> 
+    let s1 = exp_to_smtlib_for_assert e1 in
+    let s2 = exp_to_smtlib_for_assert e2 in
     Mul(s1, s2)
   (* | EDiv (e1,e2) -> 
     let s1 = exp_to_smtlib e1 in
