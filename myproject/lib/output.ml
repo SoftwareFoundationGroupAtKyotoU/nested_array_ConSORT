@@ -231,6 +231,12 @@ let rec main_chc_sub oc z3res all_chcs unsat_core_flag n =
     let own_sls = List.concat_map (fun x -> outer_constrs id z3res n fvs x) chcs in 
     let own_sls = List.map (fun sl -> make_imply sl n fvs) own_sls in
 
+    (* let sls = [SmtlibSyntax.Ands (sls)] in
+    let args_own_sls = [SmtlibSyntax.Ands (ownexp_to_ownchc varpred_count n fvs)] in
+    let (id, chcs, _) = (List.nth all_chcs n) in
+    let own_sls = List.concat_map (fun x -> outer_constrs id z3res n fvs x) chcs in 
+    let own_sls = [SmtlibSyntax.Ands (List.map (fun sl -> make_imply sl n fvs) own_sls)] in *)
+
     (* 制約をファイルに書き出し　assert部分 *)
     print_smtlibs oc sls true unsat_core_flag n; 
     output_string oc "\n";
