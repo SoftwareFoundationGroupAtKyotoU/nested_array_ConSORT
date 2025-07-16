@@ -1,0 +1,94 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1)) (v = 1))} ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let d = init(m, val, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+sum(n, p) 
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = n - 1 in
+    let s = sum(m, q) in
+    alias(q = p + 1);
+    let y = x + s in
+    y
+  }
+}
+
+sumback(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let m = n - 1 in
+    let q = p + m in
+    let y = *q in
+    assert(y >= 0);
+    let s = sumback(m, p) in
+    alias(q=p+m);
+    let z = y + s in
+    z
+  } 
+}
+
+{
+  let unde = _ : (unde >= 1) in
+  let p = alloc unde : int ref in
+  let unde2 = 1 in
+  let d = init(unde, unde2, p) in
+  let x = sum(unde, p) in
+  let y = sumback(unde, p) in
+  let t = unde * unde2 in
+  assert(x = y);
+  ()
+}
+
+/*
+長さ10
+int fin                               
+fv fin iter: 0 unsat time: 0.031158s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.073824s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.119661s
+cex fin int fin 
+fv fin iter: 3 unsat time: 0.184082s
+cex fin int fin 
+fv fin iter: 4 sat time: 0.241290s
+ownership: sat
+refinement: sat
+total time: 193.240845s
+
+長さ不定値
+int fin                               
+fv fin iter: 0 unsat time: 0.032192s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.075886s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.126061s
+cex fin int fin 
+fv fin iter: 3 unsat time: 0.179115s
+cex fin int fin 
+fv fin iter: 4 sat time: 0.248508s
+ownership: sat
+refinement: sat
+total time: 0.568323s
+*/

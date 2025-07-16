@@ -1,0 +1,93 @@
+
+trace(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let qin = *q in
+    let m = n1 - n2 in
+    let qinShift = qin + m in
+    let s = *qinShift in
+    assert(s>=0);
+    alias(qinShift = qin + m);
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m2 = n2 - 1 in
+    let y = trace(n1, m2, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+traceback(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let shift = n2 - 1 in
+    let qshift = q + shift in
+    let qin = *qshift in
+    let qinShift = qin + shift in
+    let s = *qinShift in
+    assert(s>=0);
+    alias(qinShift = qin + shift);
+    alias(qin = *qshift);
+    let y = traceback(n1, shift, q) in
+    alias(qshift = q + shift);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : {v:int| (v = 1)} ref(0, ten - 1, 1.) ref(0, ten - 1, 1.) in
+  let immut mat2 = mat1 + 0 in
+  let d1 = trace(ten, ten, mat1) in
+  let d2 = traceback(ten, ten, mat2) in
+  assert(d1 > 0);
+  assert(d2 > 0);
+  assert(d1 = d2);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.079482s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.973492s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.087388s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.669322s
+cex fin int fin 
+fv fin iter: 4 unsat time: 5.330462s
+cex fin int fin 
+fv fin iter: 5 unsat time: 6.555625s
+cex fin int fin 
+fv fin iter: 6 unsat time: 7.300366s
+cex fin int fin 
+fv fin iter: 7 unsat time: 8.269690s
+cex fin int fin 
+fv fin iter: 8 unsat time: 9.092692s
+cex fin int fin 
+fv fin iter: 9 unsat time: 10.268760s
+cex fin int fin 
+fv fin iter: 10 unsat time: 11.312924s
+cex fin int fin 
+fv fin iter: 11 unsat time: 12.482087s
+cex fin int fin 
+fv fin iter: 12 unsat time: 13.345423s
+cex fin int fin 
+fv fin iter: 13 unsat time: 14.524019s
+cex fin int fin 
+fv fin iter: 14 sat time: 15.691392s
+ownership: sat
+refinement: sat
+total time: 29.678957s
+*/
