@@ -1,6 +1,6 @@
 init(n1, val, p1) 
-[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
-  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+[ <#n1: int, val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1) ) (v = val))} ref(0, n1- 1, 1.) | int> ]
 {
   if n1 <= 0 then {
     1
@@ -40,3 +40,15 @@ sum(n, p)
   assert(x = 10);
   ()
 }
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.024898s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.067807s
+cex fin int fin 
+fv fin iter: 2 sat time: 0.110879s
+ownership: sat
+refinement: sat
+total time: 15.946469s
+*/
