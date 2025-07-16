@@ -283,6 +283,24 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth exp =
     | _ -> [And(Eq(Id var_name_l, Id "0"), Eq(Id var_name_h, Id "0"))] in
   own_sl @ coeff_sl @ intercept_sl @ (make_mkarray_sub (depth - 1)) 
 
+let make_annotated_mkarray_smtlib fvs id fun_num branch_trace depth ftype exp =
+  let rec make_annotated_mkarray_sub ftype depth =
+    match ftype with
+    | FTRef (ftype' ,ENull,ENull,_) ->
+      [Eq(make_own_var id fun_num branch_trace depth, Id "0.");
+      Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, Id "0");
+      Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, Id "0");]
+      @ make_annotated_mkarray_sub ftype' (depth-1)
+    | FTRef (ftype',el,eh,f) ->
+      [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));
+      Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, exp_to_smtlib el);
+      Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, exp_to_smtlib eh);]
+      @ make_annotated_mkarray_sub ftype' (depth-1)
+    | FTInt _ -> [] in
+  [Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, Id "0");
+  Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, exp_to_smtlib (MinusExp(exp, ILit Z.one)));] @
+  make_annotated_mkarray_sub ftype depth
+
 (* let id1 = id2(ref) + sl(int) in ...
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
 let make_letAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl depth =
@@ -706,8 +724,8 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
       let fvs2'_non0 = idx2_non0::fvs2_non0 in
       let sl1 = 
         [
-        Eq(make_bound_exp fvs id2_non0 "_l" fun_num branch_trace depth, make_bound_exp fvs id2 "_l" fun_num branch_trace depth);
-        Eq(make_bound_exp fvs id2_non0 "_h" fun_num branch_trace depth, make_bound_exp fvs id2 "_h" fun_num branch_trace depth);
+        Eq(make_bound_exp fvs2_non0 id2_non0 "_l" fun_num branch_trace depth, make_bound_exp fvs2 id2 "_l" fun_num branch_trace depth);
+        Eq(make_bound_exp fvs2_non0 id2_non0 "_h" fun_num branch_trace depth, make_bound_exp fvs2 id2 "_h" fun_num branch_trace depth);
         ] in
       let sl2 = make_aliasDeref_smtlib_same_range_post fvs2' fvs2'_non0 (depth-1) in
       sl1 @ 
@@ -720,7 +738,7 @@ let make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 depth =
   let idx2 = make_idx_id fun_num id2 depth in
   let fvs2 = idx2::fvs in
   let idx2_non0 = make_idx_id fun_num id2_non0 depth in
-  let fvs2_non0 = idx2_non0::fvs in
+  let fvs2_non0 = idx2_non0::(lookup_fvs id2_non0 branch_trace !var_locations depth fun_num) in
   common (depth-1) 
   @ (List.map 
     (fun x -> Imply(Eq(Sub(Id "0", Id "1"), Id idx2_non0), x)) 
@@ -866,16 +884,22 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
     make_letImmutAddPtr_smtlib fvs fun_num branch_trace id1 id2 sl1 depth  
   | CLetUndet(id, cs) ->
     List.concat (List.map (constr_to_smtlib (id::fvs) fun_num funnames_numberings branch_trace ty_env) cs) 
-  | CMkArray (id,e, simpleTy,pos) -> 
+  | CMkArray (id,e, ftype,pos) -> 
     (* let x = alloc e in ... *)
     (* xに対応するvar_locationsを追加 *)
-    new_id id pos branch_trace simpleTy fvs;
+    new_id id pos branch_trace (ftype_to_simplety ftype) fvs;
     (* 
     xの所有権は1;
     xの所有範囲の下限は0;
     xの所有範囲の上限はe-1 *)
     let depth = ref_depth (lookup id ty_env) in
-    make_mkarray_smtlib fvs id fun_num branch_trace depth e
+    (match ftype with
+    | FTRef(_, ENull, ENull, _) ->
+      make_mkarray_smtlib fvs id fun_num branch_trace depth e
+    | FTRef _ ->
+      make_annotated_mkarray_smtlib fvs id fun_num branch_trace depth ftype e
+    | FTInt _ ->
+      raise (Error "mkarray annotation error")  )
   | CAssignInt (id,pos) -> 
     (* x := num; ... *)
     (* 
@@ -1457,7 +1481,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           make_own_var id2_non0 fun_num branch_trace id2_depth);
         Eq(make_bound_exp fvs id2 "_l" fun_num branch_trace id2_depth, Id "0");
         Eq(make_bound_exp fvs id2 "_h" fun_num branch_trace id2_depth, 
-          Add(make_bound_exp fvs id2_non0 "_h" fun_num branch_trace id2_depth, Id "1"));
+          Add(make_bound_exp (lookup_fvs id2_non0 branch_trace !var_locations id2_depth fun_num) id2_non0 "_h" fun_num branch_trace id2_depth, Id "1"));
         ] in
       let sl2 = make_aliasDeref_smtlib fvs fun_num branch_trace id1 id2 id2_depth in
       sl1 @ sl2
