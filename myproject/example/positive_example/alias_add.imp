@@ -1,0 +1,77 @@
+init(n1, valu, p1) 
+[ <#n1: int, #valu: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #valu: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := valu;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let nextValu = valu + 1 in
+    let d = init(m, nextValu, q) in
+    alias(q = p1 + 1);
+    let ind2 = _ : (ind2 >= 0 && ind2 < n1) in
+    assert(p1[ind2] = valu + ind2);
+    1
+  }
+}
+
+addarray(n, val, p, q, r) 
+[ <#n: int, val: int, p: int ref(0, n - 1, 0.1), q: int ref(0, n - 1, 0.1), r: int ref(0, n - 1, 1.)> -> 
+  <#n: int, val: int, p: int ref(0, n - 1, 0.1), q: int ref(0, n - 1, 0.1), r: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    assert(x = y);
+    let z = x + y in
+    r := z;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let r1 = r + 1 in
+    let m = n - 1 in
+    let nextVal = val + 1 in
+    let d = addarray(m, nextVal, p1, q1, r1) in
+    alias(p1 = p + 1);
+    alias(q1 = q + 1);
+    alias(r1 = r + 1);
+    let ind = _ : (ind >= 0 && ind < n) in
+    assert(p[ind] = val + ind);
+    assert(r[ind] = 2 * val + 2 * ind);
+    1
+  }
+}
+
+{
+  let zero = 0 in
+  let ten = _ : (ten > 0) in
+  let p = alloc ten : int ref(0, ten - 1, 1.) in
+  let d = init(ten, zero, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  assert(p[ind1] = ind1);
+  let immut q = p + 0 in
+  let r = alloc ten : int ref in
+  let d2 = addarray(ten, zero, p, q, r) in
+  /*let ind1 = _ : (ind1 >= 0 && ind1 < ten) in*/
+  assert(p[ind1] = ind1);
+  assert(r[ind1] = 2 * ind1);
+  ()
+}
+
+/*
+fv fin iter: 0 unsat time: 0.038123s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.089273s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.142431s
+cex fin int fin 
+fv fin iter: 3 unsat time: 0.204807s
+cex fin int fin 
+fv fin iter: 4 sat time: 0.284424s
+ownership: sat
+refinement: sat
+total time: 4.354396s
+*/
