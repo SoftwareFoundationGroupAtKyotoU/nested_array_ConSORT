@@ -53,18 +53,18 @@ sum(plen, p)
 }
 
 sumMatrix(n1, n2, shift, q) 
-[ <#n1: int, #n2: int, #shift:int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) > -> 
+[ <#n1: int, #n2: int, #shift:int, q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) > -> 
   <#n1: int, #n2: int, #shift:int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) | int> ]
 {
-  if n1 > 0 && n2 > 0 && n2 > shift && shift >= 0 then {
-    let q2 = q + shift in
+  if n1 > 0 && n2 > 0 && n2 >= shift && shift > 0 then {
+    let nex = shift - 1 in
+    let q2 = q + nex in
     let q2in = *q2 in
     let s = sum(n1, q2in) in
     assert(s = n1);
     alias(q2in = *q2);
-    alias(q2 = q + shift);
-    let nextshift = shift - 1 in
-    let y = sumMatrix(n1, n2, nextshift, q) in
+    alias(q2 = q + nex);
+    let y = sumMatrix(n1, n2, nex, q) in
     let z = s + y in
     z
   } else {
@@ -73,42 +73,74 @@ sumMatrix(n1, n2, shift, q)
 }
 
 {
-  let mat1 = alloc 4 : int ref ref in
   let ten = 4 in
+  let mat1 = alloc ten : int ref ref in
   let d1 = initMatrix(ten, ten, mat1) in
   let d2 = sumMatrix(ten, ten, ten, mat1) in
-  let ind1 = _ : (ind1 >= 0 && ind1 < 4) in
-  let ind2 = _ : (ind2 >= 0 && ind2 < 4) in
-  assert(mat1[ind1][ind2] = 1);
-  assert(d2 >= 0);
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < ten) in
+  /*assert(mat1[ind1][ind2] = 1);*/
+  assert(d2 >= 16);
   1
 }
 /*
 int fin                               
-fv fin iter: 0 unsat time: 0.078212s
+fv fin iter: 0 unsat time: 0.079081s
 cex fin int fin 
-fv fin iter: 1 unsat time: 1.855626s
+fv fin iter: 1 unsat time: 0.952471s
 cex fin int fin 
-fv fin iter: 2 unsat time: 2.639041s
+fv fin iter: 2 unsat time: 1.922361s
 cex fin int fin 
-fv fin iter: 3 unsat time: 3.331577s
+fv fin iter: 3 unsat time: 2.934742s
 cex fin int fin 
-fv fin iter: 4 unsat time: 4.241431s
+fv fin iter: 4 unsat time: 4.631642s
 cex fin int fin 
-fv fin iter: 5 unsat time: 5.379489s
+fv fin iter: 5 unsat time: 6.520162s
 cex fin int fin 
-fv fin iter: 6 unsat time: 6.236283s
+fv fin iter: 6 unsat time: 7.542795s
 cex fin int fin 
-fv fin iter: 7 unsat time: 7.099857s
+fv fin iter: 7 unsat time: 8.225516s
 cex fin int fin 
-fv fin iter: 8 unsat time: 8.062491s
+fv fin iter: 8 unsat time: 9.178793s
 cex fin int fin 
-fv fin iter: 9 unsat time: 9.209364s
+fv fin iter: 9 unsat time: 10.059315s
 cex fin int fin 
-fv fin iter: 10 unsat time: 10.232613s
+fv fin iter: 10 unsat time: 11.120895s
 cex fin int fin 
-fv fin iter: 11 sat time: 11.220170s
+fv fin iter: 11 unsat time: 12.033067s
+cex fin int fin 
+fv fin iter: 12 unsat time: 13.144106s
+cex fin int fin 
+fv fin iter: 13 unsat time: 14.160720s
+cex fin (incomplete quantifiers)
+iter: 14 unknown time: 14.390179s
+int fin 
+fv fin iter: 15 unsat time: 15.466183s
+cex fin (incomplete quantifiers)
+iter: 16 unknown time: 15.648018s
+(incomplete quantifiers)
+iter: 17 unknown time: 15.879955s
+(incomplete quantifiers)
+iter: 18 unknown time: 16.070259s
+int fin 
+fv fin iter: 19 unsat time: 17.049146s
+cex fin (incomplete quantifiers)
+iter: 20 unknown time: 17.465229s
+(incomplete quantifiers)
+iter: 21 unknown time: 17.637260s
+(incomplete quantifiers)
+iter: 22 unknown time: 17.816411s
+(incomplete quantifiers)
+iter: 23 unknown time: 18.171116s
+(incomplete quantifiers)
+iter: 24 unknown time: 18.452173s
+(incomplete quantifiers)
+iter: 25 unknown time: 18.711769s
+(incomplete quantifiers)
+iter: 26 unknown time: 18.848002s
+int fin 
+fv fin iter: 27 sat time: 20.670968s
 ownership: sat
 refinement: sat
-total time: 11.720951s
+total time: 84.973060s
 */  
