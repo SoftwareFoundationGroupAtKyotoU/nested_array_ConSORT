@@ -12,11 +12,29 @@
     dune exec --build-dir="_tmp" myproject ./example/negative_example/indexed_value.imp 
     ```
 
+    - すでに所有権の検査を終えていて篩型(assert)のみの検査を行いたい場合
+    ```
+    dune exec --build-dir="_tmp" myproject ./example/negative_example/indexed_value.imp refinement 
+    ```
+
 - dune exec myproject ファイルのパス print_program でファイル中のプログラム全体の構文木を文字列化したものを標準出力
 
     ```  
     dune exec myproject ./example/positive_example/init_10.imp print_program 
     ```
 
+- 特定のディレクトリにある全てのimpファイルの検査をしたい時
+    ```  
+    make run DIR=./example/...
+    ```
+- ./example以下の/positive_exampleと/negative_exampleと/much_time_exampleにある全てのimpファイルの検査をしたい時
+    ```  
+    make run_all
+    ```
+
 ## その他
 - example内に検証できるプログラム例をいくつか置いておいます．パス名を変えて遊んでみて下さい．
+- 篩型検査にエルダリカを用いる場合mainのhoice部分を以下で書き換え  
+<エルダリカのパス> -hsmt ./experiment/out_chc.smt2 > experiment/chc_result  
+例  
+~/Downloads/eldarica-2.2/eld -hsmt ./experiment/out_chc.smt2
