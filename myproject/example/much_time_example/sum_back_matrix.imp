@@ -1,11 +1,11 @@
 init(pin, p) 
 [ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
-  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+  <#pin: int, p: {v:int| (=> ((i1 >= 0) and (i1 < pin) ) (v = 1))} ref (0, pin - 1, 1.) | int> ]
 {
   if pin <= 0 then {
     1
   } else {
-    p := 0;
+    p := 1;
     let q = p + 1 in
     let m1 = pin - 1 in
     let d = init(m1, q) in
@@ -16,7 +16,8 @@ init(pin, p)
 
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, pp: 
+    {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -40,11 +41,13 @@ sum(plen, p)
     0
   } else {
     let x = *p in
+    assert(x = 1);
     let q = p + 1 in
     let m = plen - 1 in
     let s = sum(m, q) in
     let y = x + s in
     alias(q = p + 1);
+    assert(y = plen);
     y
   }
 }
@@ -58,6 +61,7 @@ sumMatrix(n1, n2, q)
     let q2 = q + m in
     let q2in = *q2 in
     let s = sum(n1, q2in) in
+    assert(s = n1);
     alias(q2in = *q2);
     alias(q2 = q + m);
     let q3 = q + 1 in
@@ -75,12 +79,49 @@ sumMatrix(n1, n2, q)
   let mat1 = alloc 4 : int ref ref in
   let ten = 4 in
   let d1 = initMatrix(ten, ten, mat1) in
+  /*let ind1 = _ : (ind1 >= 0 && ind1 < 4) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < 4) in
+  assert(mat1[ind1][ind2] = 1);*/
   let d2 = sumMatrix(ten, ten, mat1) in
   assert(d2 >= 0);
   1
 }
 /*
+int fin                               
+fv fin iter: 0 unsat time: 0.080353s
+cex fin int fin 
+fv fin iter: 1 unsat time: 2.143070s
+cex fin int fin 
+fv fin iter: 2 unsat time: 3.317877s
+cex fin int fin 
+fv fin iter: 3 unsat time: 4.253461s
+cex fin int fin 
+fv fin iter: 4 unsat time: 5.038131s
+cex fin int fin 
+fv fin iter: 5 unsat time: 6.008878s
+cex fin int fin 
+fv fin iter: 6 unsat time: 7.107733s
+cex fin int fin 
+fv fin iter: 7 unsat time: 8.015123s
+cex fin int fin 
+fv fin iter: 8 unsat time: 9.185173s
+cex fin int fin 
+fv fin iter: 9 unsat time: 10.083121s
+cex fin int fin 
+fv fin iter: 10 unsat time: 10.985280s
+cex fin int fin 
+fv fin iter: 11 unsat time: 12.071185s
+cex fin int fin 
+fv fin iter: 12 unsat time: 13.061538s
+cex fin int fin 
+fv fin iter: 13 unsat time: 14.024796s
+cex fin int fin 
+fv fin iter: 14 unsat time: 15.356499s
+cex fin (incomplete quantifiers)
+iter: 15 unknown time: 15.675004s
+int fin 
+fv fin iter: 16 sat time: 16.846609s
 ownership: sat
 refinement: sat
-total time: 901.972486s
+total time: 68.086253s
 */  
