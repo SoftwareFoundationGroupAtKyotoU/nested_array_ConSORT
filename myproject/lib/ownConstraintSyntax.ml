@@ -15,7 +15,7 @@ type constr =
   | CLetAddPtr of id * id * exp * pos
   | CLetImmutAddPtr of id * id * exp * pos
   (* | CLetSubPtr of id * id * exp * pos *)
-  | CMkArray of id * exp * simpleTy * pos
+  | CMkArray of id * exp * ftype * pos
   | CAssignInt of id * pos
   | CAssignRef of id * id * pos
   (* | CAlias of id * id * pos *)
@@ -39,7 +39,7 @@ let rec cons_to_program constr =
     asprintf "  let immut %s = %s + %s in\n" id1 id2 s_exp
   | CMkArray (id, exp, simpleTy, _) ->
     let s_exp = exp_to_program exp in
-    asprintf "  let %s = alloc %s : %a in\n" id s_exp pp_simpleTy simpleTy
+    asprintf "  let %s = alloc %s : %a in\n" id s_exp pp_ftype simpleTy
   | CAssignInt (id, _) ->
     asprintf "  %s := (int);\n" id
   | CAssignRef (id1, id2, _) ->
