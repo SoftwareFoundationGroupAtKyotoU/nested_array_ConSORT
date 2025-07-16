@@ -16,7 +16,7 @@ init(pin, p)
 
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -75,6 +75,11 @@ addmatrix(n1, n2, pp, qq, rr)
     alias(rr1 = rr + 1);
     alias(qq1 = qq + 1);
     alias(pp1 = pp + 1);
+    /*let in1 = _ : (in1 >= 0 && in1 < n2) in
+    let in2 = _ : (in2 >= 0 && in2 < n1) in
+    assert(pp[in1][in2] = 1);
+    assert(qq[in1][in2] = 1);
+    assert(rr[in1][in2] = 2);*/
     1
   } else {
     1
@@ -99,208 +104,123 @@ addmatrix(n1, n2, pp, qq, rr)
 
 /*
 int fin                               
-fv fin iter: 0 unsat time: 0.132875s
+fv fin iter: 0 unsat time: 0.132536s
 cex fin int fin 
-fv fin iter: 1 unsat time: 2.243255s
-cex fin int fin 
-fv fin iter: 2 unsat time: 3.973941s
-cex fin int fin 
-fv fin iter: 3 unsat time: 6.355082s
-cex fin int fin 
-fv fin iter: 4 unsat time: 7.725016s
-cex fin int fin 
-fv fin iter: 5 unsat time: 9.001573s
-cex fin int fin 
-fv fin iter: 6 unsat time: 15.836596s
-cex fin int fin 
-fv fin iter: 7 unsat time: 20.234718s
-cex fin int fin 
-fv fin iter: 8 unsat time: 36.848955s
+fv fin iter: 1 unsat time: 1.289288s
 cex fin (incomplete quantifiers)
-iter: 9 unknown time: 37.197761s
-int fin 
-fv fin iter: 10 unsat time: 49.995171s
-cex fin int fin 
-fv fin iter: 11 unsat time: 52.517096s
-cex fin int fin 
-fv fin iter: 12 unsat time: 56.162988s
-cex fin int fin 
-fv fin iter: 13 unsat time: 60.212117s
-cex fin int fin 
-fv fin iter: 14 unsat time: 64.528535s
-cex fin int fin 
-fv fin iter: 15 unsat time: 67.406556s
-cex fin (incomplete quantifiers)
-iter: 16 unknown time: 67.930222s
-int fin 
-fv fin iter: 17 unsat time: 71.550301s
-cex fin int fin 
-fv fin iter: 18 unsat time: 74.574411s
-cex fin int fin 
-fv fin iter: 19 unsat time: 77.333491s
-cex fin int fin 
-fv fin iter: 20 unsat time: 80.385289s
-cex fin (incomplete quantifiers)
-iter: 21 unknown time: 81.194930s
-int fin 
-fv fin iter: 22 unsat time: 86.984085s
-cex fin int fin 
-fv fin iter: 23 unsat time: 92.937768s
-cex fin (incomplete quantifiers)
-iter: 24 unknown time: 93.277862s
+iter: 2 unknown time: 1.661064s
 (incomplete quantifiers)
-iter: 25 unknown time: 93.812771s
+iter: 3 unknown time: 2.000973s
+(incomplete quantifiers)
+iter: 4 unknown time: 2.406445s
+(incomplete quantifiers)
+iter: 5 unknown time: 2.674586s
+(incomplete quantifiers)
+iter: 6 unknown time: 2.938479s
 int fin 
-fv fin iter: 26 unsat time: 98.613656s
+fv fin iter: 7 unsat time: 5.835892s
+cex fin (incomplete quantifiers)
+iter: 8 unknown time: 6.118467s
+(incomplete quantifiers)
+iter: 9 unknown time: 6.400483s
+(incomplete quantifiers)
+iter: 10 unknown time: 6.662534s
+(incomplete quantifiers)
+iter: 11 unknown time: 6.914720s
+(incomplete quantifiers)
+iter: 12 unknown time: 7.162084s
+(incomplete quantifiers)
+iter: 13 unknown time: 7.480009s
+(incomplete quantifiers)
+iter: 14 unknown time: 7.717627s
+(incomplete quantifiers)
+iter: 15 unknown time: 8.063906s
+int fin 
+fv fin iter: 16 unsat time: 12.228818s
+cex fin (incomplete quantifiers)
+iter: 17 unknown time: 12.577429s
+(incomplete quantifiers)
+iter: 18 unknown time: 12.920865s
+int fin 
+fv fin iter: 19 unsat time: 16.849924s
+cex fin (incomplete quantifiers)
+iter: 20 unknown time: 17.061809s
+(incomplete quantifiers)
+iter: 21 unknown time: 17.384680s
+int fin 
+fv fin iter: 22 unsat time: 21.643416s
+cex fin (incomplete quantifiers)
+iter: 23 unknown time: 21.974357s
+(incomplete quantifiers)
+iter: 24 unknown time: 22.214617s
+(incomplete quantifiers)
+iter: 25 unknown time: 22.510620s
+(incomplete quantifiers)
+iter: 26 unknown time: 22.754374s
+(incomplete quantifiers)
+iter: 27 unknown time: 23.021381s
+(incomplete quantifiers)
+iter: 28 unknown time: 23.306606s
+(incomplete quantifiers)
+iter: 29 unknown time: 23.576740s
+(incomplete quantifiers)
+iter: 30 unknown time: 23.853430s
+(incomplete quantifiers)
+iter: 31 unknown time: 24.112301s
+int fin 
+fv fin iter: 32 unsat time: 31.561524s
+cex fin (incomplete quantifiers)
+iter: 33 unknown time: 31.917745s
+(incomplete quantifiers)
+iter: 34 unknown time: 32.179993s
+(incomplete quantifiers)
+iter: 35 unknown time: 32.528300s
+(incomplete quantifiers)
+iter: 36 unknown time: 32.697027s
+(incomplete quantifiers)
+iter: 37 unknown time: 32.969694s
+(incomplete quantifiers)
+iter: 38 unknown time: 33.230634s
+int fin 
+fv fin iter: 39 unsat time: 48.952245s
+cex fin (incomplete quantifiers)
+iter: 40 unknown time: 49.516402s
+(incomplete quantifiers)
+iter: 41 unknown time: 49.669730s
+int fin 
+fv fin iter: 42 unsat time: 54.519900s
 cex fin int fin 
-fv fin iter: 27 unsat time: 107.950282s
+fv fin iter: 43 unsat time: 59.886294s
+cex fin (incomplete quantifiers)
+iter: 44 unknown time: 60.624451s
+(incomplete quantifiers)
+iter: 45 unknown time: 61.031236s
+int fin 
+fv fin iter: 46 unsat time: 65.116000s
 cex fin int fin 
-fv fin iter: 28 unsat time: 112.156733s
+fv fin iter: 47 unsat time: 69.774363s
 cex fin int fin 
-fv fin iter: 29 sat time: 115.523590s
+fv fin iter: 48 unsat time: 74.494686s
+cex fin int fin 
+fv fin iter: 49 unsat time: 80.376154s
+cex fin (incomplete quantifiers)
+iter: 50 unknown time: 80.796669s
+(incomplete quantifiers)
+iter: 51 unknown time: 81.199670s
+(incomplete quantifiers)
+iter: 52 unknown time: 81.583833s
+(incomplete quantifiers)
+iter: 53 unknown time: 82.151819s
+int fin 
+fv fin iter: 54 unsat time: 85.781643s
+cex fin (incomplete quantifiers)
+iter: 55 unknown time: 86.227011s
+(incomplete quantifiers)
+iter: 56 unknown time: 86.690493s
+int fin 
+fv fin iter: 57 sat time: 90.938955s
 ownership: sat
 refinement: sat
-total time: 10123.862718s
-
-int fin                               
-fv fin iter: 0 unsat time: 0.242108s
-cex fin int fin 
-fv fin iter: 1 unsat time: 5.150995s
-cex fin int fin 
-fv fin iter: 2 unsat time: 15.085769s
-cex fin int fin 
-fv fin iter: 3 unsat time: 24.164100s
-cex fin int fin 
-fv fin iter: 4 unsat time: 30.092368s
-cex fin int fin 
-fv fin iter: 5 unsat time: 35.976387s
-cex fin int fin 
-fv fin iter: 6 unsat time: 42.287407s
-cex fin int fin 
-fv fin iter: 7 unsat time: 46.289918s
-cex fin int fin 
-fv fin iter: 8 unsat time: 53.361582s
-cex fin int fin 
-fv fin iter: 9 unsat time: 56.064521s
-cex fin int fin 
-fv fin iter: 10 unsat time: 59.552344s
-cex fin int fin 
-fv fin iter: 11 unsat time: 63.374692s
-cex fin int fin 
-fv fin iter: 12 unsat time: 67.246461s
-cex fin int fin 
-fv fin iter: 13 unsat time: 70.076142s
-cex fin int fin 
-fv fin iter: 14 unsat time: 73.663871s
-cex fin int fin 
-fv fin iter: 15 unsat time: 78.420938s
-cex fin (incomplete quantifiers)
-iter: 16 unknown time: 78.905117s
-int fin 
-fv fin iter: 17 unsat time: 81.812377s
-cex fin int fin 
-fv fin iter: 18 unsat time: 84.335146s
-cex fin int fin 
-fv fin iter: 19 unsat time: 88.530202s
-cex fin int fin 
-fv fin iter: 20 unsat time: 92.912322s
-cex fin (incomplete quantifiers)
-iter: 21 unknown time: 93.324033s
-int fin 
-fv fin iter: 22 unsat time: 96.294342s
-cex fin (incomplete quantifiers)
-iter: 23 unknown time: 96.863087s
-int fin 
-fv fin iter: 24 unsat time: 100.336078s
-cex fin int fin 
-fv fin iter: 25 unsat time: 104.548713s
-cex fin int fin 
-fv fin iter: 26 unsat time: 107.830583s
-cex fin (incomplete quantifiers)
-iter: 27 unknown time: 108.230939s
-(incomplete quantifiers)
-iter: 28 unknown time: 108.607552s
-int fin 
-fv fin iter: 29 unsat time: 112.317712s
-cex fin int fin 
-fv fin iter: 30 unsat time: 117.562667s
-cex fin (incomplete quantifiers)
-iter: 31 unknown time: 117.978258s
-int fin 
-fv fin iter: 32 unsat time: 122.000417s
-cex fin (incomplete quantifiers)
-iter: 33 unknown time: 122.636644s
-(incomplete quantifiers)
-iter: 34 unknown time: 122.970395s
-int fin 
-fv fin iter: 35 sat time: 127.192979s
-ownership: sat
-refinement: sat
-total time: 175.674960s
-
-制約減らすと時間が増える？
-int fin                               
-fv fin iter: 0 unsat time: 0.158357s
-cex fin int fin 
-fv fin iter: 1 unsat time: 2.313955s
-cex fin int fin 
-fv fin iter: 2 unsat time: 4.057364s
-cex fin int fin 
-fv fin iter: 3 unsat time: 6.441261s
-cex fin int fin 
-fv fin iter: 4 unsat time: 7.798861s
-cex fin int fin 
-fv fin iter: 5 unsat time: 9.081419s
-cex fin int fin 
-fv fin iter: 6 unsat time: 15.900748s
-cex fin int fin 
-fv fin iter: 7 unsat time: 20.252834s
-cex fin int fin 
-fv fin iter: 8 unsat time: 36.854600s
-cex fin (incomplete quantifiers)
-iter: 9 unknown time: 37.203808s
-int fin 
-fv fin iter: 10 unsat time: 48.638841s
-cex fin int fin 
-fv fin iter: 11 unsat time: 50.865976s
-cex fin int fin 
-fv fin iter: 12 unsat time: 54.077681s
-cex fin int fin 
-fv fin iter: 13 unsat time: 57.471738s
-cex fin int fin 
-fv fin iter: 14 unsat time: 60.989498s
-cex fin int fin 
-fv fin iter: 15 unsat time: 63.515674s
-cex fin (incomplete quantifiers)
-iter: 16 unknown time: 64.004868s
-int fin 
-fv fin iter: 17 unsat time: 67.342824s
-cex fin int fin 
-fv fin iter: 18 unsat time: 70.433064s
-cex fin int fin 
-fv fin iter: 19 unsat time: 73.227399s
-cex fin int fin 
-fv fin iter: 20 unsat time: 76.369265s
-cex fin (incomplete quantifiers)
-iter: 21 unknown time: 77.173360s
-int fin 
-fv fin iter: 22 unsat time: 83.055656s
-cex fin int fin 
-fv fin iter: 23 unsat time: 89.122503s
-cex fin (incomplete quantifiers)
-iter: 24 unknown time: 89.466650s
-(incomplete quantifiers)
-iter: 25 unknown time: 90.004088s
-int fin 
-fv fin iter: 26 unsat time: 94.643213s
-cex fin int fin 
-fv fin iter: 27 unsat time: 103.386872s
-cex fin int fin 
-fv fin iter: 28 unsat time: 107.482667s
-cex fin int fin 
-fv fin iter: 29 sat time: 110.914562s
-ownership: sat
-refinement: sat
-total time: 9571.936535s
+total time: 146.198694s
 */
 
