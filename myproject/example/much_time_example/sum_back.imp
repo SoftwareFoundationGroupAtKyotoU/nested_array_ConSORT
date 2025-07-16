@@ -1,6 +1,6 @@
 initx(n, x, p) 
 [ <#n: int, #x: int, p: int ref(0, n - 1, 1.)> -> 
-  <#n: int, #x: int, p: int ref(0, n - 1, 1.) | int> ]
+  <#n: int, #x: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = x))} ref(0, n - 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
@@ -24,6 +24,7 @@ sum(n, p)
     let m = n - 1 in
     let q = p + m in
     let y = *q in
+    assert(y >= 0);
     let s = sum(m, p) in
     alias(q=p+m);
     let z = y + s in
@@ -34,30 +35,21 @@ sum(n, p)
 {
   let p = alloc 10 : int ref in
   let m = 10 in
-  let rand = _ in
-  assume(rand >= 0);
-  /*let z = abs(rand) in*/
+  let rand = _ : (rand >= 0) in
   let d = initx(m, rand, p) in
   let x = sum(m, p) in
   assert(x >= 0);
   ()
 }
 
-/*abs(m)
-[ <#m: int> -> <#m: int | int> ]
-{
-  if m >= 0 then {
-    m
-  } else {
-    let k = -m in
-    k
-  }
-}*/
-
 /* 
-refinementに時間がかかる
+int fin                               
+fv fin iter: 0 unsat time: 0.026170s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.067809s
+cex fin int fin 
+fv fin iter: 2 sat time: 0.118821s
 ownership: sat
-refinement: unsat
-total time: 1485.582157s
-係数を-1,0,1のどれかにする？
+refinement: sat
+total time: 237.071894s
 */
