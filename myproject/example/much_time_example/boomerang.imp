@@ -1,4 +1,4 @@
-/*init(n, x, p) 
+init(n, x, p) 
 [ <#n: int, x: int, p: int ref (0, n - 1, 1.) > -> 
   <#n: int, x: int, p: int ref (0, n - 1, 1.) | int> ]
 {
@@ -8,46 +8,40 @@
     p := x;
     let q = p + 1 in
     let m = n - 1 in
-    let d = init(m, x, q) in
+    let nextx = x + 1 in
+    let d = init(m, nextx, q) in
     alias(q=p+1);
     1
   }
 }
-*/
 
 
-easyMatrix(l, k, pp)
-[ <#l: int, #k: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+easyMatrix(l, k, val, pp)
+[ <#l: int, #k: int, val: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, val: int,
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = (i1 + val)))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
-    let zero = 1 in
-    /*let d = init(l, zero, r) in*/
-    /*assert(r[0] = 0);*/
+    let d = init(l, val, r) in
     pp := r;
     let q = pp + 1 in
     let m = k - 1 in
-    let d2 = easyMatrix(l, m, q) in
-    /*assert(pp[0][0] = 0);*/
+    let d2 = easyMatrix(l, m, val, q) in
     alias(q=pp+1);
     0
   } else {
     0
   }
 }
-/* 同じ初期化の方法でもsatにならない */
+
+
 boomerang(b1, b2, r)
 [ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.)> ->
     <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
 {
   if b2 > 0 && b1 > 0 then {
     let t = *r in
-    let n = *t in
-    assert(n = 0);
-    /*assert(n = 0);*/
-    /*let f = init(b1, n, t) in*/
-    /*t := n;*/
     alias(t = *r);
     let b3 = b2 - 1 in
     let t2 = r+ 1 in
@@ -59,33 +53,15 @@ boomerang(b1, b2, r)
   }
 }
 
-/*verify(s, s2, q)
-[ <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.)> ->
-    <#s: int, #s2: int, q: int ref(0, s - 1, 1.) ref(0, s - 1, 1.) | int> ]
-{
-  if s > 0 then { 
-    let ind1 = _ : (ind1 >= 0 && ind1 < s) in
-    let ind2 = _ : (ind2 >= 0 && ind2 < s) in
-    assert(q[ind1][ind2] = 1);
-    1
-  } else {
-    0
-  }
-}*/
-
-
 {
   let ten = _ : (ten >= 1) in
   let kp = alloc ten : int ref ref in
-  let zero = 0 in
-  /*let one = _ : (one >= 0 && one < ten) in
-  let two = _ : (two >= 0 && two < ten) in*/
-  let d = easyMatrix(ten, ten, kp) in
+  let value = 1 in
+  let d = easyMatrix(ten, ten, value, kp) in
   let d2 = boomerang(ten, ten, kp) in
-  /*let d3 = verify(ten, ten, kp) in*/
   let one = _ : (one >= 0 && one < ten) in
   let two = _ : (two >= 0 && two < ten) in
-  assert(kp[one][two] = 0);
+  assert(kp[one][two] = two + value);
   ()
 }
 
@@ -128,6 +104,42 @@ fv fin iter: 16 sat time: 26.359921s
 ownership: sat
 refinement: sat
 total time: 23347.173572s
+
+int fin 
+fv fin iter: 0 unsat time: 0.063968s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.504726s
+cex fin int fin 
+fv fin iter: 2 unsat time: 0.958595s
+cex fin int fin 
+fv fin iter: 3 unsat time: 1.516669s
+cex fin int fin 
+fv fin iter: 4 unsat time: 2.407845s
+cex fin int fin 
+fv fin iter: 5 unsat time: 3.058951s
+cex fin int fin 
+fv fin iter: 6 unsat time: 3.832573s
+cex fin int fin 
+fv fin iter: 7 unsat time: 4.629609s
+cex fin int fin 
+fv fin iter: 8 unsat time: 5.496561s
+cex fin int fin 
+fv fin iter: 9 unsat time: 6.280529s
+cex fin int fin 
+fv fin iter: 10 unsat time: 7.327441s
+cex fin (incomplete quantifiers)
+iter: 11 unknown time: 7.562388s
+int fin 
+fv fin iter: 12 unsat time: 8.430116s
+cex fin int fin 
+fv fin iter: 13 unsat time: 9.536008s
+cex fin int fin 
+fv fin iter: 14 unsat time: 10.126321s
+cex fin int fin 
+fv fin iter: 15 sat time: 11.264582s
+ownership: sat
+refinement: sat
+total time: 391.173512s
 */
 
 
