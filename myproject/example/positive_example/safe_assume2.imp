@@ -1,3 +1,7 @@
+/*
+assume(x>0)の過程のもとでassert(x > 0);を判断するので
+satになる
+*/
 verify(x)
 [<x:int> -> <x:int|int>]
 {
