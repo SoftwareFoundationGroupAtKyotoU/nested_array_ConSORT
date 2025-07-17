@@ -309,7 +309,7 @@ let rec emit_chc fvs fun_num ifel c =
          | (HashId _, FTInt _), Var x | (RawId _, FTInt _), Var x -> [x]
          | _ -> []
        in
-       (* #付きの仮引数に対応する実引数名のリスト *)
+       (* 整数の仮引数に対応する実引数名のリスト *)
        let fvs' = List.concat (List.map2 find_fv' ftid_fts1 es) in
        let sl_ret = 
          match ft_r with (* 返り値の型で分類 *)
@@ -329,9 +329,9 @@ let rec emit_chc fvs fun_num ifel c =
            Imply(Ands(IntVarPred(num, "ret", id :: fvs') :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs')), IntPred(id, id::ids_depended)) 
          | FTInt sl -> (* 篩型指定あり整数 *)
          (* 返り値を受け取る変数の篩型を追加？ *)
-           intpred_env := (id, []) :: !intpred_env; 
+           intpred_env := (id, ids_depended) :: !intpred_env; 
         (* 関数の返り値の篩型の述語ならば返り値を受け取る変数の述語 *)
-           Imply(sl, IntPred(id, [id])) 
+           Imply(smtlib_subst subst sl, IntPred(id, "v"::(lookup id !intpred_env))) 
          | _ -> raise (Error "sl_ret")
        in
        (* 制約の結合 *)
@@ -726,7 +726,7 @@ let ics_to_smtlib ics fun_num =
       | FTInt sl, FV id_e -> (*　指定の返り値が整数で篩型があり，実際評価する式が変数の場合*)
         let fvs_int = lookup id_e !intpred_env in 
         (* 条件節の条件を全て満たす　ならば　(実際評価する式の篩型　ならば　指定の返り値の篩型)  *)
-        [Imply(cond_sl, Imply(IntPred(id_e, id_e :: fvs_int), sl))]
+        [Imply(cond_sl, Imply(IntPred(id_e, "v" :: fvs_int), sl))]
       | FTInt sl, Id i -> (*　指定の返り値が整数で篩型があり，実際評価する式が定数の場合*)
         (* 条件節の条件を全て満たす　ならば　(最後に評価される参照の篩型　ならば　指定の返り値の篩型)  *)
         [Imply(cond_sl, Imply(Eq(FV "v", Id i), sl))] 
