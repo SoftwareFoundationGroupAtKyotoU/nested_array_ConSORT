@@ -1,0 +1,121 @@
+
+sum(plen, p) 
+[ <#plen: int, p: {v:int| (=> ((i1 >= 0) and (i1 < plen) ) (v = 1))} ref(0, plen - 1, 0.1)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 0.1) 
+  | {v:int | ((=> (plen > 0) (v = plen)) and (=> (plen <= 0) (v = 0)))}> ]
+{
+  if plen <= 0 then { 0 } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    alias(q = p + 1);
+    y
+  }
+}
+
+/*sumback(n, p) 
+[ <#n: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = 1))} ref(0, n - 1, 0.1)> -> 
+  <#n: int, p: int ref(0, n - 1, 0.1) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let m = n - 1 in
+    let q = p + m in
+    let y = *q in
+    let s = sumback(m, p) in
+    alias(q=p+m);
+    let z = y + s in
+    z
+  } 
+}*/
+
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
+  | {v:int | ((=> ((n1 > 0) and (n2 > 0)) (v = (n1 * n2))) and (=> (not ((n1 > 0) and (n2 > 0))) (v = 0)))}> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sum(n1, qin) in
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+sumBackMatrix(n1, n2, shift, q) 
+[ <#n1: int, #n2: int, #shift:int, 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, #shift:int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
+  | {v:int | ((=> ((((n1 > 0) and (n2 > 0)) and (n2 >= shift)) and (shift > 0)) (v = (n1 * shift))) 
+  and (=> (not ((((n1 > 0) and (n2 > 0)) and (n2 >= shift)) and (shift > 0))) (v = 0)))}> ]
+{
+  if n1 > 0 && n2 > 0 && n2 >= shift && shift > 0 then {
+    let nex = shift - 1 in
+    let q2 = q + nex in
+    let q2in = *q2 in
+    let s = sum(n1, q2in) in
+    alias(q2in = *q2);
+    alias(q2 = q + nex);
+    let y = sumBackMatrix(n1, n2, nex, q) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = 1)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let immut mat2 = mat1 + 0 in
+  let d2 = sumMatrix(unde, unde, mat1) in
+  let d3 = sumBackMatrix(unde, unde, unde, mat2) in
+  assert(d2 = d3);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.084761s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.112836s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.449144s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.555994s
+cex fin int fin 
+fv fin iter: 4 unsat time: 4.514482s
+cex fin int fin 
+fv fin iter: 5 unsat time: 7.271350s
+cex fin int fin 
+fv fin iter: 6 unsat time: 8.262282s
+cex fin int fin 
+fv fin iter: 7 unsat time: 9.644117s
+cex fin int fin 
+fv fin iter: 8 unsat time: 10.931304s
+cex fin int fin 
+fv fin iter: 9 unsat time: 12.655537s
+cex fin int fin 
+fv fin iter: 10 unsat time: 13.847836s
+cex fin int fin 
+fv fin iter: 11 unsat time: 17.344551s
+cex fin (incomplete quantifiers)
+iter: 12 unknown time: 17.615654s
+(incomplete quantifiers)
+iter: 13 unknown time: 18.087486s
+int fin 
+fv fin iter: 14 sat time: 19.827471s
+ownership: sat
+refinement: sat
+total time: 20.019286s
+*/
