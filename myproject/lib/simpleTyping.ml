@@ -228,7 +228,8 @@ let subst_arg_name program =
       args_before_eval, 
       List.map 
       (fun (arg, ftype) -> (subst_arg arg, subst_ftype subst ftype)) 
-      args_after_eval, return_type) in
+      args_after_eval, 
+      subst_ftype subst return_type) in
     let new_fun_body = subst_id subst fun_body in
     (fun_name, new_args, new_annotation, new_fun_body) in
   let (fdefs, exp) = program in
