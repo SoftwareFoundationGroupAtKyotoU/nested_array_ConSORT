@@ -56,7 +56,8 @@ addarray(n, p, q, r)
 }
 
 addmatrix(n1, n2, pp, qq, rr) 
-[ <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+[ <#n1: int, #n2: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), 
+qq: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
   <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.) | int> ]
 {
   if n1 > 0 && n2 > 0 then {
