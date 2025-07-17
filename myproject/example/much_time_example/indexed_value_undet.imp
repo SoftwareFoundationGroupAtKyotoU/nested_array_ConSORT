@@ -1,6 +1,6 @@
 init(n1, val, p1) 
-[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
-  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+[ <#n1: int, val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1) ) (v = val))} ref(0, n1- 1, 1.) | int> ]
 {
   if n1 <= 0 then {
     1
@@ -17,7 +17,7 @@ init(n1, val, p1)
 
 easyMatrix(l, k,  pp)
 [ <#l: int, #k: int,  pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = (k - i2)))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -50,7 +50,7 @@ verify(s, s2, q)
   let d2 = verify(ten, ten, pp) in
   ()
 }
-
+/*
 int fin                               
 fv fin iter: 0 unsat time: 0.049156s
 cex fin int fin 
@@ -84,3 +84,4 @@ fv fin iter: 14 sat time: 204.651219s
 ownership: sat
 refinement: sat
 total time: 3049.522209s
+*/
