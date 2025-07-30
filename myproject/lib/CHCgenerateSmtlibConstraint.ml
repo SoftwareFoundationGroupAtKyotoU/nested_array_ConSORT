@@ -251,8 +251,10 @@ let rec emit_chc fvs fun_num ifel c =
           | FV id_e -> 
             (* 篩型で依存できる変数 *)
             let fvs_int = lookup id_e !intpred_env in 
+            let n_sl = smtlib_subst subst sl in
             (* 実引数の述語ならば篩型指定の述語 *)
-            [Imply(IntPred(id_e, "v" :: fvs_int), sl)]
+            [Imply(Ands(IntPred(id_e, "v" :: fvs_int) :: 
+            (List.map (fun id -> IntPred(id, id::(lookup id !intpred_env))) fvs_int)), n_sl)]
           | _ -> raise (Error "CHC AppExp error"))
          | _ -> raise (Error "CHC AppExp error")
        in
