@@ -1,0 +1,179 @@
+init(n, m, len, ph, q)
+[ <#n: int, #len: int, #m: int, ph: int ref(0, n- 1, 1.), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((len - n) + i2)))} ref(0, len - 1, 1.) ref(0, n - 1, 1.) > -> 
+  <#n: int, #len: int, #m: int, 
+  ph: 
+  int
+  /*{v:int| (=> ((((m >= 0) and (m < len)) and (i1 >= 0)) and (i1 < n)) (v = ((len - n) + i1)))} */
+  ref(0, n- 1, 1.), 
+  q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((len - n) + i2)))} ref(0, len - 1, 1.) ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 || m >= len then {
+    1
+  } else {
+    let qin = *q in
+    let qinShift = qin + m in
+    let x = *qinShift in
+    ph := x;
+    alias(qinShift = qin + m);
+    alias(qin = *q);
+    let phShift = ph + 1 in
+    let qShift = q + 1 in
+    let nextn = n - 1 in
+    let d = init(nextn, len, m, phShift, qShift) in
+    alias(qShift = q + 1);
+    alias(phShift = ph + 1);
+    1
+  }
+}
+
+trans(n1, n2, pp, qq)
+[ <#n1: int, #n2: int,  
+pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n1)) (v = i2))} ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
+qq: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, 
+pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n1)) (v = i2))} ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
+qq: {v:int| (=> (((((n1 >= n2) and (i1 >= 0)) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = i1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+{
+  if n2 <= 0 then {
+    1
+  } else {
+    let arr = alloc n1 : int ref in
+    let shift = n1 - n2 in
+    let d = init(n1, n1, shift, arr, pp) in
+    qq := arr;
+    let qqShift = qq + 1 in
+    let m = n2 - 1 in
+    let d2 = trans(n1, m, pp, qqShift) in
+    alias(qqShift = qq + 1);
+    1
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = i2)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let mat2 = alloc unde : int ref ref in
+  let d = trans(unde, unde, mat1, mat2) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < unde) in
+  /*assert(0 = 0);*/
+  assert(mat1[ind1][ind2] = mat2[ind2][ind1]);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.096448s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.707837s
+cex fin int fin 
+fv fin iter: 2 unsat time: 3.465464s
+cex fin int fin 
+fv fin iter: 3 unsat time: 4.175598s
+cex fin int fin 
+fv fin iter: 4 unsat time: 6.295339s
+cex fin int fin 
+fv fin iter: 5 unsat time: 7.911830s
+cex fin int fin 
+fv fin iter: 6 unsat time: 9.211598s
+cex fin int fin 
+fv fin iter: 7 unsat time: 10.711613s
+cex fin int fin 
+fv fin iter: 8 unsat time: 12.589668s
+cex fin (incomplete quantifiers)
+iter: 9 unknown time: 12.916056s
+int fin 
+fv fin iter: 10 unsat time: 15.170979s
+cex fin (incomplete quantifiers)
+iter: 11 unknown time: 15.420999s
+(incomplete quantifiers)
+iter: 12 unknown time: 15.619070s
+int fin 
+fv fin iter: 13 unsat time: 17.635646s
+cex fin int fin 
+fv fin iter: 14 unsat time: 19.921857s
+cex fin (incomplete quantifiers)
+iter: 15 unknown time: 20.272560s
+(incomplete quantifiers)
+iter: 16 unknown time: 20.448673s
+int fin 
+fv fin iter: 17 unsat time: 24.493898s
+cex fin (incomplete quantifiers)
+iter: 18 unknown time: 24.745212s
+(incomplete quantifiers)
+iter: 19 unknown time: 24.913084s
+(incomplete quantifiers)
+iter: 20 unknown time: 25.186086s
+int fin 
+fv fin iter: 21 unsat time: 26.672996s
+cex fin int fin 
+fv fin iter: 22 unsat time: 28.084766s
+cex fin (incomplete quantifiers)
+iter: 23 unknown time: 28.382512s
+(incomplete quantifiers)
+iter: 24 unknown time: 28.584233s
+(incomplete quantifiers)
+iter: 25 unknown time: 28.860625s
+(incomplete quantifiers)
+iter: 26 unknown time: 29.008211s
+(incomplete quantifiers)
+iter: 27 unknown time: 29.228277s
+int fin 
+fv fin iter: 28 unsat time: 31.356621s
+cex fin int fin 
+fv fin iter: 29 unsat time: 34.470174s
+cex fin int fin 
+fv fin iter: 30 unsat time: 36.333876s
+cex fin int fin 
+fv fin iter: 31 unsat time: 39.428757s
+cex fin (incomplete quantifiers)
+iter: 32 unknown time: 39.844749s
+int fin 
+fv fin iter: 33 unsat time: 41.661290s
+cex fin (incomplete quantifiers)
+iter: 34 unknown time: 41.925811s
+int fin 
+fv fin iter: 35 unsat time: 44.395007s
+cex fin (incomplete quantifiers)
+iter: 36 unknown time: 44.663364s
+(incomplete quantifiers)
+iter: 37 unknown time: 44.989244s
+(incomplete quantifiers)
+iter: 38 unknown time: 45.291699s
+int fin 
+fv fin iter: 39 unsat time: 49.355986s
+cex fin int fin 
+fv fin iter: 40 unsat time: 51.979753s
+cex fin int fin 
+fv fin iter: 41 unsat time: 55.707093s
+cex fin (incomplete quantifiers)
+iter: 42 unknown time: 55.914601s
+int fin 
+fv fin iter: 43 unsat time: 61.314821s
+cex fin (incomplete quantifiers)
+iter: 44 unknown time: 61.748890s
+(incomplete quantifiers)
+iter: 45 unknown time: 61.974728s
+(incomplete quantifiers)
+iter: 46 unknown time: 62.204022s
+(incomplete quantifiers)
+iter: 47 unknown time: 62.393316s
+(incomplete quantifiers)
+iter: 48 unknown time: 62.674629s
+(incomplete quantifiers)
+iter: 49 unknown time: 63.015808s
+int fin 
+fv fin iter: 50 unsat time: 67.860029s
+cex fin int fin 
+fv fin iter: 51 unsat time: 76.579479s
+cex fin (incomplete quantifiers)
+iter: 52 unknown time: 77.021263s
+int fin 
+fv fin iter: 53 unsat time: 80.431197s
+cex fin int fin 
+fv fin iter: 54 sat time: 86.260563s
+ownership: sat
+refinement: sat
+total time: 107.817930s
+*/

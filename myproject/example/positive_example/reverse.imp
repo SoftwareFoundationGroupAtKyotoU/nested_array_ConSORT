@@ -1,0 +1,63 @@
+
+reverse(n, ph, q)
+[ <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) > -> 
+  <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let l = n - 1 in
+    let qShift = q + l in
+    let x = *qShift in
+    ph := x;
+    let phShift = ph + 1 in
+    let d = reverse(l, phShift, q) in
+    alias(qShift = q + l);
+    alias(phShift = ph + 1);
+    1
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = i1)} ref(0, unde - 1, 1.) in
+  let mat2 = alloc unde : int ref in
+  let d = reverse(unde, mat2, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat2[ind1] = unde - ind1 - 1);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.084682s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.091819s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.396924s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.087659s
+cex fin int fin 
+fv fin iter: 4 unsat time: 3.788744s
+cex fin int fin 
+fv fin iter: 5 unsat time: 4.717897s
+cex fin int fin 
+fv fin iter: 6 unsat time: 5.812205s
+cex fin int fin 
+fv fin iter: 7 unsat time: 6.864388s
+cex fin int fin 
+fv fin iter: 8 unsat time: 7.934786s
+cex fin int fin 
+fv fin iter: 9 unsat time: 8.943434s
+cex fin int fin 
+fv fin iter: 10 unsat time: 9.849324s
+cex fin (incomplete quantifiers)
+iter: 11 unknown time: 10.189835s
+(incomplete quantifiers)
+iter: 12 unknown time: 10.460470s
+int fin 
+fv fin iter: 13 sat time: 11.426890s
+ownership: sat
+refinement: sat
+total time: 11.633386s
+*/

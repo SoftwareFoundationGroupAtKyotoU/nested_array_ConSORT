@@ -1,6 +1,6 @@
 init(n1, val, p1) 
 [ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
-  <#n1: int, #val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1)) (v = 1))} ref(0, n1- 1, 1.) | int> ]
+  <#n1: int, #val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1)) (v = val))} ref(0, n1- 1, 1.) | int> ]
 {
   if n1 <= 0 then {
     1
