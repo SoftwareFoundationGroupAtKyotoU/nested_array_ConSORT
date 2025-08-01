@@ -1,0 +1,55 @@
+addarray(n, dum, p, q) 
+[ <#n: int, dum: int, 
+p: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = dum))} ref(0, n- 1, 1.), 
+q: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = 1))} ref(0, n- 1, 1.)> -> 
+  <#n: int, dum: int, 
+p: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = (dum + 1)))} ref(0, n- 1, 1.), 
+q: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = 1))} ref(0, n- 1, 1.)| int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    let z = x + y in
+    p := z;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = addarray(m, dum, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+sumrow(n1, n2, pp, q) 
+[ <#n1: int, #n2: int, 
+pp: {v:int | (=> (((i1 >= 0) and (i1 < n1)) and ((i2 >= 0) and (i2 < n2))) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.) > -> 
+  <#n1: int, #n2: int, 
+pp: {v:int | (=> (((i1 >= 0) and (i1 < n1)) and ((i2 >= 0) and (i2 < n2))) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.)| int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let ppin = *pp in
+    let dum = n1 - n2 in
+    let d = addarray(n1, dum, q, ppin) in
+    alias(ppin = *pp);
+    let ppp = pp + 1 in
+    let m1 = n2 - 1 in
+    let d2 = sumrow(n1, m1, ppp, q) in
+    alias(ppp = pp + 1);
+    1
+  } else {
+    1
+  }
+}
+
+{
+  let unde = _ : (unde >= 1) in
+  let mat1 = alloc unde : {v:int| (v = 1)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let mat2 = alloc unde : int ref in
+  let k = sumrow(unde, unde, mat1, mat2) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat2[ind1] = unde);
+  1
+}

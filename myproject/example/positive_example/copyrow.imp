@@ -1,0 +1,47 @@
+copyarray(n, p, q)
+[ <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+copyrow(n1, pp)
+[ <#n1: int,  
+pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.)> -> 
+  <#n1: int, 
+pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.)| int> ]
+{
+  if n1 > 1 then {
+    let ppshift = pp + 1 in
+    let ppin = *ppshift in
+    let r = alloc n1 : int ref in
+    let d = copyarray(n1, ppin, r) in
+    alias(ppin = *ppshift);
+    alias(ppshift = pp + 1);
+    let g = *pp in
+    let d2 = copyarray(n1, r, g) in
+    alias(g = *pp);
+    1
+  } else { 0 }
+}
+
+{
+  let unde = _ : (unde > 2) in
+  let mat1 = alloc unde : {v:int| (=> (i2 = 1) (v = 1))} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let d = copyrow(unde, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[0][ind1] = 1);
+  1
+}
