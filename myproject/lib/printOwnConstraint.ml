@@ -191,22 +191,21 @@ match smtlib with
 (* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
   slはsmtlibの制約
 mapは自由変数から整数への割り当て
-bool_idは使われていない？
 numは篩型の識別番号？
 *)
-let rec print_smtlib oc sl bool_id map num = 
+let rec print_smtlib oc sl map num = 
   match sl with 
   | Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
   | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
     (output_string oc "(";
      binop_smtlib_to_string oc sl;
-     print_smtlib oc s1 bool_id map num;
+     print_smtlib oc s1 map num;
      output_string oc " ";
-     print_smtlib oc s2 bool_id map num;
+     print_smtlib oc s2 map num;
      output_string oc ")")
   | Not s -> 
     (output_string oc "(not ";
-     print_smtlib oc s bool_id map num;
+     print_smtlib oc s map num;
      output_string oc ")")
   | FV id | Id id-> 
     (try
@@ -227,7 +226,7 @@ let rec print_smtlib oc sl bool_id map num =
     output_string oc ")")
   | PtrPred (id,l,i_sl,ids, var_name) -> 
     (output_string oc ("(P" ^ (string_of_int num) ^ "_" ^ id ^ "_" ^ l ^ " ");
-     List.iter (fun i -> print_smtlib oc i bool_id map num; output_string oc " ") i_sl;
+     List.iter (fun i -> print_smtlib oc i map num; output_string oc " ") i_sl;
      output_string oc var_name;
      List.iter
        (fun id -> 
@@ -235,7 +234,7 @@ let rec print_smtlib oc sl bool_id map num =
      output_string oc ")")
   | PtrVarPred (num',id,be,i_sl,ids) -> 
     (output_string oc ("(P" ^ (string_of_int num') ^ "_" ^ id ^ "_" ^ be ^ " ");
-     List.iter (fun i -> print_smtlib oc i bool_id map num; output_string oc " ") i_sl;
+     List.iter (fun i -> print_smtlib oc i map num; output_string oc " ") i_sl;
      output_string oc " v";
      List.iter
        (fun id -> 
@@ -248,29 +247,29 @@ let rec print_smtlib oc sl bool_id map num =
   | Ands smtlibs -> 
     match smtlibs with
     | [] -> output_string oc "true"
-    | sl :: [] -> print_smtlib oc sl bool_id map num
+    | sl :: [] -> print_smtlib oc sl map num
     | _ -> 
       (output_string oc "(and";
        List.iter 
          (fun sl ->
             output_string oc " ";
-            print_smtlib oc sl bool_id map num) smtlibs;
+            print_smtlib oc sl map num) smtlibs;
        output_string oc ")")
 
 (* 反例出力に使うsmtlibの出力関数 *)
-let rec print_smtlib' oc sl bool_id map num z3_res = 
+let rec print_smtlib' oc sl map num z3_res = 
 match sl with 
 | Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
 | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
   (output_string oc "(";
   binop_smtlib_to_string oc sl;
-  print_smtlib' oc s1 bool_id map num z3_res;
+  print_smtlib' oc s1 map num z3_res;
   output_string oc " ";
-  print_smtlib' oc s2 bool_id map num z3_res;
+  print_smtlib' oc s2 map num z3_res;
   output_string oc ")")
 | Not s -> 
   (output_string oc "(not ";
-    print_smtlib' oc s bool_id map num z3_res;
+    print_smtlib' oc s map num z3_res;
     output_string oc ")")
 | FV fv -> 
   (try
@@ -284,13 +283,13 @@ match sl with
 | Ands smtlibs -> 
   (match smtlibs with
   | [] -> output_string oc "true"
-  | sl :: [] -> print_smtlib' oc sl bool_id map num z3_res
+  | sl :: [] -> print_smtlib' oc sl map num z3_res
   | _ -> 
     (output_string oc "(and";
       List.iter 
         (fun sl ->
           output_string oc " ";
-          print_smtlib' oc sl bool_id map num z3_res) smtlibs;
+          print_smtlib' oc sl map num z3_res) smtlibs;
       output_string oc ")"))
 | _ -> ()
 
@@ -345,7 +344,7 @@ let rec print_smtlibs oc smtlibs is_unconcrete unsat_core_flag num =
         let fvs = list_to_set (fvs_of_smtlib sl @ idxs) [] in
         if fvs = [] then
           (output_string oc "(assert ";
-          print_smtlib oc sl false [] num; 
+          print_smtlib oc sl [] num; 
           output_string oc ")\n")
         else
           (output_string oc "(assert (forall (";
@@ -356,7 +355,7 @@ let rec print_smtlibs oc smtlibs is_unconcrete unsat_core_flag num =
             output_string oc "(=> ";
             print_concrete oc fv)
           fvs;
-          print_smtlib oc sl false [] num; 
+          print_smtlib oc sl [] num; 
           List.iter 
           (* (fun _ -> output_string oc (asprintf "))" )) *)
 
@@ -393,7 +392,7 @@ and print_smtlibs_sub oc unsat_core_flag num sl =
   if unsat_core_flag then
     (if fvs = [] then
       (output_string oc "(assert (! ";
-      print_smtlib oc sl true [] num; 
+      print_smtlib oc sl [] num; 
       output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
       serial_num := !serial_num + 1)
     else 
@@ -401,21 +400,21 @@ and print_smtlibs_sub oc unsat_core_flag num sl =
       (output_string oc "(assert (! (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
-      print_smtlib oc sl true [] num; 
+      print_smtlib oc sl [] num; 
       output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
       serial_num := !serial_num + 1))
   else 
     (if fvs = [] then
       (output_string oc "(assert ";
       (* smtlibの制約部分の記述 *)
-      print_smtlib oc sl true [] num; 
+      print_smtlib oc sl [] num; 
       output_string oc (")\n");)
     else 
       (* smtlibの制約内に自由変数が存在する場合はfor allを挿入して制約を記述 *)
       (output_string oc "(assert (forall (";
       output_string oc (make_args fvs);
       output_string oc ") ";
-      print_smtlib oc sl true [] num; 
+      print_smtlib oc sl [] num; 
       output_string oc ("))\n");))
   and make_args fvs = 
     match fvs with
@@ -530,7 +529,7 @@ let print_cexample oc smtlibs z3_res =
     if fvs = [] then print_cexample_sub left
     else
       (output_string oc "(or (not ";
-      print_smtlib' oc sl false [] (-1) z3_res;
+      print_smtlib' oc sl [] (-1) z3_res;
       output_string oc ")\n";
       print_cexample_sub left;
       output_string oc ")")
