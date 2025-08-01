@@ -284,22 +284,46 @@ let make_mkarray_smtlib fvs id fun_num branch_trace depth exp =
   own_sl @ coeff_sl @ intercept_sl @ (make_mkarray_sub (depth - 1)) 
 
 let make_annotated_mkarray_smtlib fvs id fun_num branch_trace depth ftype exp =
-  let rec make_annotated_mkarray_sub ftype depth =
+  let rec make_annotated_mkarray_sub ftype fvs depth =
+    let idx = make_idx_id fun_num id depth in
+    let fvs' = idx::fvs in
     match ftype with
     | FTRef (ftype' ,ENull,ENull,_) ->
       [Eq(make_own_var id fun_num branch_trace depth, Id "0.");
       Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, Id "0");
       Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, Id "0");]
-      @ make_annotated_mkarray_sub ftype' (depth-1)
+      @ make_annotated_mkarray_sub ftype' fvs' (depth-1)
     | FTRef (ftype',el,eh,f) ->
+      let template = asprintf "i_%d_%s_%dth" fun_num id in
+      let el = subst_idx_name el template in
+      let eh = subst_idx_name eh template in
+      let coeff_map_h = coeffs eh in
+      let coeff_map_l = coeffs el in
+      let find_coeff h_or_l coeff_map = 
+        let look_up' var_name fv =
+        try
+          let coeff = lookup fv coeff_map in
+          Eq(Id var_name, coeff)
+        with 
+        | _ -> Eq(Id var_name, Id "0")  in
+        let id_pos = lookup_pos id branch_trace !var_locations in
+        let var_name_d = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace depth in
+        (look_up' var_name_d "") ::
+        List.map
+        (fun fv ->
+          let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
+          look_up' var_name fv) fvs in
+      find_coeff "_h" coeff_map_h @
+      find_coeff "_l" coeff_map_l @ 
       [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));
-      Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, exp_to_smtlib el);
-      Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, exp_to_smtlib eh);]
-      @ make_annotated_mkarray_sub ftype' (depth-1)
+      (* Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, exp_to_smtlib el);
+      Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, exp_to_smtlib eh); *)
+      ]
+      @ make_annotated_mkarray_sub ftype' fvs' (depth-1)
     | FTInt _ -> [] in
   [Eq(make_bound_exp fvs id "_l" fun_num branch_trace depth, Id "0");
   Eq(make_bound_exp fvs id "_h" fun_num branch_trace depth, exp_to_smtlib (MinusExp(exp, ILit Z.one)));] @
-  make_annotated_mkarray_sub ftype depth
+  make_annotated_mkarray_sub ftype fvs depth
 
 (* let id1 = id2(ref) + sl(int) in ...
 完全な表現力は持っていない　所有範囲が分割→分割か共有→共有 *)
