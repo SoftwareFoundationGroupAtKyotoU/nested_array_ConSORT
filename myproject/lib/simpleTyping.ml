@@ -212,6 +212,8 @@ let subst_arg_name program =
       AppExp(find_name subst id, List.map (subst_id subst) exps)
     | DerefBracketExp (id, exps) ->
       DerefBracketExp (find_name subst id, List.map (subst_id subst) exps)
+    | LetImmutAddPtrExp (id1, id2, exp1, exp2) ->
+      LetImmutAddPtrExp (id1, find_name subst id2, subst_id subst exp1, subst_id subst exp2)
     | _ -> err("subst_arg_name Error: If this error occurs, the parser is wrong.") in
   let subst_arg_name_sub fdef = 
     let (fun_name, args, annotation, fun_body) = fdef in
