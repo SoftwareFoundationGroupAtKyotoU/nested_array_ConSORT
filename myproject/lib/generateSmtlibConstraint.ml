@@ -130,6 +130,17 @@ let rec make_bound_exp fvs id h_or_l fun_num branch_trace depth =
     let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
     Add( Mul(Id(var_name), FV(fv)), make_bound_exp fvs' id h_or_l fun_num branch_trace depth)
 
+(* 境界が0の時の制約，全ての係数を0にする *)
+let rec bound_0_exp fvs id h_or_l fun_num branch_trace depth = 
+  let id_pos = lookup_pos id branch_trace !var_locations in
+  match fvs with
+  | [] -> 
+    let var_name = asprintf "d_%d_%s_%s_%d%a_%d" fun_num h_or_l id id_pos pp_branch_trace branch_trace depth in
+    [Eq(Id(var_name), Id "0")]
+  | fv :: fvs' ->
+    let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
+    Eq(Id(var_name), Id "0") :: bound_0_exp fvs' id h_or_l fun_num branch_trace depth
+
 (*直前の所有範囲の下限,または上限を環境変数の一次式で表す *)
 let make_pre_bound_exp fvs id h_or_l fun_num branch_trace depth =
   let id_pre_pos = lookup_pre_pos id branch_trace !var_locations in 
@@ -1251,11 +1262,11 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
         make_own_var id2_0 fun_num branch_trace id2_depth);
      Eq(make_pre_own_var id2 fun_num branch_trace id2_depth, 
         make_own_var id2_non0 fun_num branch_trace id2_depth);
-     Eq(make_bound_exp fvs id2_0 "_l" fun_num branch_trace id2_depth, Id "0");
-     Eq(make_bound_exp fvs id2_0 "_h" fun_num branch_trace id2_depth, Id "0");
-     Eq(make_bound_exp fvs id2_non0 "_l" fun_num branch_trace id2_depth, Id "0");
      Eq(make_bound_exp fvs id2_non0 "_h" fun_num branch_trace id2_depth,
-        Sub(make_pre_bound_exp fvs id2 "_h" fun_num branch_trace id2_depth, Id "1"))] in
+        Sub(make_pre_bound_exp fvs id2 "_h" fun_num branch_trace id2_depth, Id "1"))]
+      @ bound_0_exp fvs id2_non0 "_l" fun_num branch_trace id2_depth 
+      @ bound_0_exp fvs id2_0 "_l" fun_num branch_trace id2_depth 
+      @ bound_0_exp fvs id2_0 "_h" fun_num branch_trace id2_depth in
      let sl2 = make_letDeref_smtlib fvs fun_num branch_trace id1 id2 id1_depth in
     sl1 @ sl2
     (* [] *)
