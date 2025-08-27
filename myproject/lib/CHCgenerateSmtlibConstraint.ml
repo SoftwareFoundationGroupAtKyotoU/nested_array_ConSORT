@@ -108,6 +108,20 @@ let rec union_list ls1 ls2 =
   | [] -> ls2
   | x :: ls1' -> if List.mem x ls2 then union_list ls1' ls2 else union_list ls1' (x :: ls2)
 
+let rec fvs_of_smtlib sl =
+  match sl with 
+  | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
+  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+    (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
+  | Not s -> fvs_of_smtlib s
+  | FV fv -> 
+    if fv <> "v" then
+      (try Scanf.sscanf fv "i%d" (fun _ -> []) with 
+      | Scanf.Scan_failure _ | End_of_file -> [fv]) else []
+  | IntPred _ | IntVarPred _ | PtrPred _ | PtrVarPred _ |VarPred | True | Id _-> []
+  | Ands ss ->
+    List.concat (List.map fvs_of_smtlib ss)
+
 (* リストの差集合を求める
   ls1 - ls2 *)
 let rec except_list ls1 ls2 = 
@@ -222,6 +236,7 @@ let rec emit_chc fvs fun_num ifel c =
             let depth = ref_depth' @@ snd ftid_ft in
             (* 仮引数の篩型の変数部分を実引数で置き換える *)
             let n_sl = smtlib_subst subst sl in
+            let ids_depended' = union_list (fvs_of_smtlib n_sl) ids_depended in
             (* 
             　　　　実引数の述語
             　　かつ
@@ -230,7 +245,7 @@ let rec emit_chc fvs fun_num ifel c =
               　仮引数の指定の篩型の述語
             *)
             [Imply(Ands((ptrpred fv (make_idx_list depth) ifel ()) 
-              :: List.map (fun id -> IntPred(id, id::(lookup id !intpred_env))) ids_depended),
+              :: List.map (fun id -> IntPred(id, id::(lookup id !intpred_env))) ids_depended'),
              n_sl)]
            | _ -> raise (Error "CHC AppExp error"))
         | (HashId id_arg, FTInt VarPred) | (RawId id_arg, FTInt VarPred) -> 
@@ -287,6 +302,7 @@ let rec emit_chc fvs fun_num ifel c =
           | FV id_e, sl -> 
             let n_sl = smtlib_subst subst sl in
             let depth = ref_depth' @@ snd ftid_ft in
+            let ids_depended' = union_list (fvs_of_smtlib n_sl) ids_depended in
             new_id id_e pos ifel depth fvs;
               (* 
             　　　　仮引数の指定の篩型の述語
@@ -296,7 +312,7 @@ let rec emit_chc fvs fun_num ifel c =
             　　実引数の述語
             *)
             [Imply(Ands(n_sl :: List.map 
-            (fun id -> IntPred(id, id::(lookup id !intpred_env))) ids_depended), 
+            (fun id -> IntPred(id, id::(lookup id !intpred_env))) ids_depended'), 
             ptrpred id_e (make_idx_list depth) ifel ())] 
           | _ -> raise (Error "CHC AppExp error"))
          | (RawId _, FTInt _) | (HashId _, FTInt _) -> 
@@ -362,7 +378,10 @@ let rec emit_chc fvs fun_num ifel c =
           *)
        (* [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) fvs)), IntPred(id, "v" :: fvs))]) *)
        [Imply(Ands(Eq(Id("v"), exp_to_smtlib e) :: 
-       (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) (union_list (seek_depends fvs') depend_fvs))), IntPred(id, "v" :: depend_fvs))]) in
+       (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) (union_list (seek_depends fvs') depend_fvs))), IntPred(id, "v" :: depend_fvs));
+       (* Imply(Ands(IntPred(id, "v" :: depend_fvs) :: 
+       (List.map (fun fv -> IntPred(fv, fv :: (lookup fv !intpred_env))) (union_list (seek_depends fvs') depend_fvs))), Eq(Id("v"), exp_to_smtlib e)) *)
+       ]) in
     let ss_body = 
     match e with 
     | ConstRandInt _ -> List.concat_map 
@@ -427,7 +446,9 @@ let rec emit_chc fvs fun_num ifel c =
       (* 真　ならば　新たに定義された参照の述語
        どんな述語も許容？ *)
     if refinement <> VarPred then
-      [Imply(refinement, ptrpred id (make_idx_list depth) ifel ())]
+      let fvs = fvs_of_smtlib refinement in
+      [
+        Imply(Ands(List.map (fun fv -> let vars = lookup fv !intpred_env in IntPred(fv, fv :: vars)) fvs @ [refinement]), ptrpred id (make_idx_list depth) ifel ())]
     else if depth > 1 then
       [Imply(Id "true", ptrpred id (make_idx_list depth) ifel ())]
     else
@@ -496,12 +517,13 @@ let rec emit_chc fvs fun_num ifel c =
           ptrpred id2 (make_idx_list depth) ifel ());
         Imply(And(ptrpred_p id2 (make_idx_list depth) ifel (), 
         ptrpred_p id1 (Sub((FV (Format.sprintf "i%n" depth)), (Id (my_string_of_int i)))::(make_idx_list (depth-1))) ifel ()) , 
-          ptrpred id1 (Sub((FV (Format.sprintf "i%n" depth)), (Id (my_string_of_int i)))::(make_idx_list (depth-1))) ifel ())]   
+          ptrpred id1 (Sub((FV (Format.sprintf "i%n" depth)), (Id (my_string_of_int i)))::(make_idx_list (depth-1))) ifel ())
+            ]   
      | Var x -> (*　alias(id1 = id2 + x(変数)); ... *)
        (* 
           zの篩型の述語
        ならば
-          (評価前のyの篩型の述語　かつ　評価前のxの篩型の述語のvをv-iにしたもの) ならば 評価後のyの篩型の述語;
+          (評価前のyの篩型の述語　かつ　評価前のxの篩型の述語vをv-iにしたもの) ならば 評価後のyの篩型の述語;
           zの篩型の述語
        ならば
           (評価前のyの篩型の述語　かつ　評価前のxの篩型の述語vをv-iにしたもの) ならば 評価後のxの篩型の述語vをv-iにしたもの *)
@@ -509,9 +531,10 @@ let rec emit_chc fvs fun_num ifel c =
        Imply(And(ptrpred_p id2 (make_idx_list depth) ifel (), 
         ptrpred_p id1 (Sub((FV (Format.sprintf "i%n" depth)), (FV x))::(make_idx_list (depth-1))) ifel ()), ptrpred id2 (make_idx_list depth) ifel ()));
         Imply(IntPred(x, x::(lookup x !intpred_env)), 
-       Imply(And(And(ptrpred_p id2 (make_idx_list depth) ifel (), 
-        ptrpred_p id1 (Sub((FV (Format.sprintf "i%n" depth)), (FV x))::(make_idx_list (depth-1))) ifel ()), IntPred(x, x::(lookup x !intpred_env))), 
-        ptrpred id1 (Sub((FV (Format.sprintf "i%n" depth)), (FV x))::(make_idx_list (depth-1))) ifel ()))] 
+       Imply(And(ptrpred_p id2 (make_idx_list depth) ifel (), 
+        ptrpred_p id1 (Sub((FV (Format.sprintf "i%n" depth)), (FV x))::(make_idx_list (depth-1))) ifel ()), 
+        ptrpred id1 (Sub((FV (Format.sprintf "i%n" depth)), (FV x))::(make_idx_list (depth-1))) ifel ()))
+          ] 
      | _ -> raise (Error "CHCAliasAddPtr error")
     )
   | CHCAliasDeref (id1, id2, pos) -> (* alias(id1 = *id2);... *)
@@ -673,7 +696,7 @@ let ics_to_smtlib ics fun_num =
       intpred_env := (id, [id]) :: !intpred_env;
       (* 指定の篩型の述語　ならば　関数評価はじめの篩型の述語 *)
       []
-      (* [Imply(sl, IntPred(id, ["v"; id]))] *)
+      (* [Imply(sl, IntPred(id, ["v"; "v"]))] *)
   in
   (* 引数変数の篩型に関する制約 *)
   let s1 = List.concat (List.map g1 ids) in
