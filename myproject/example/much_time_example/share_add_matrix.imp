@@ -94,7 +94,7 @@ addmatrix(n1, n2, pp, qq, rr)
 
 {
   let undet = _ : (undet > 0) in
-  let mat1 = alloc undet : int ref ref in
+  let mat1 = alloc undet : {v:int| (v = 1)} ref(0, undet - 1, 1.) ref(0, undet - 1, 1.) in
   let mat3 = alloc undet : int ref ref in
   let z1 = initMatrix(undet, undet, mat1) in
   let immut mat2 = mat1 + 0 in
