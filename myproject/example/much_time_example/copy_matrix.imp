@@ -16,7 +16,8 @@ init(pin, p)
 
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 0))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -76,12 +77,15 @@ pp: int ref(0, n1 - 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n
 }
 
 {
-  let mat1 = alloc 3 : int ref ref in
-  let mat2 = alloc 3 : int ref ref in
-  let ten = 3 in
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let mat2 = alloc ten : int ref ref in
   let d1 = initMatrix(ten, ten, mat1) in
-  assert(mat1[0][0] = 0);
+  /*assert(mat1[0][0] = 0);*/
   let d2 = copymatrix(ten, ten, mat1, mat2) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < ten) in
+  assert(mat2[ind2][ind1] = 0);
   /*assert(mat1[0][0] = 0);*/
   1
 }

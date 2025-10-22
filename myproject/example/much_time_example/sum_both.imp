@@ -42,8 +42,8 @@ initx(n, x, p)
 }
 
 {
-  let p = alloc 100000 : int ref in
-  let m = 100000 in
+  let p = alloc 1000 : int ref in
+  let m = 1000 in
   let rand = _ : (rand >= 0) in
   let d = initx(m, rand, p) in
   let x = sum(m, p) in

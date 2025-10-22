@@ -46,12 +46,10 @@ traceback(n1, n2, q)
 
 {
   let ten = _ : (ten > 0) in
-  let mat1 = alloc ten : {v:int | (v = i1)} ref(0, ten - 1, 1.) ref(0, ten - 1, 1.) in
+  let mat1 = alloc ten : {v:int | (v = 0)} ref(0, ten - 1, 1.) ref(0, ten - 1, 1.) in
   let immut mat2 = mat1 + 0 in
   let d1 = trace(ten, ten, mat1) in
   let d2 = traceback(ten, ten, mat2) in
-  assert(d1 > 0);
-  assert(d2 > 0);
   assert(d1 = d2);
   1
 }

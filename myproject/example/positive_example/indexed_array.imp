@@ -58,7 +58,8 @@ easyMatrix(k, pp)
   let p = alloc 10 : int ref ref in
   let ten = 10 in
   let d = easyMatrix(ten, p) in
-  let pp = alloc 10 : int ref in
-  assert(p[0][0] = 0);
+  let ind1 = _ : (ind1 >= 0 && ind1 < 10) in
+  let ind2 = 9 - ind1 in
+  assert(p[ind1][ind2] = 0);
   ()
 }

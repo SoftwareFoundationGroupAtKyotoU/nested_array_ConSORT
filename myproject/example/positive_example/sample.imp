@@ -1,0 +1,219 @@
+copyarray(n, val, p, q)
+[ <#n: int, val: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, val: int, p: int ref(0, n - 1, 1.), q: 
+  int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, val, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+swaprow(l, n1, n2, pp)
+[ <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)> -> 
+  <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)| int> ]
+{
+  if l > 0 && n1 >= 0 && n1 < l && n2 >= 0 && n2 < l then {
+    let ppShift1 = pp + n1 in
+    let row1 = *ppShift1 in
+    let dummy1 = alloc l : int ref in
+    let d = copyarray(l, n1, row1, dummy1) in
+    alias(row1 = *ppShift1);
+    alias(ppShift1 = pp + n1);
+
+    let ppShift2 = pp + n2 in
+    let row2 = *ppShift2 in
+    let dummy2 = alloc l : int ref in
+    let d2 = copyarray(l, n2, row2, dummy2) in
+    let d3 = copyarray(l, n1, dummy1, row2) in
+    alias(row2 = *ppShift2);
+    alias(ppShift2 = pp + n2);
+
+    let ppShift3 = pp + n1 in
+    let row3 = *ppShift3 in
+    let d4 = copyarray(l, n2, dummy2, row3) in
+    alias(row3 = *ppShift3);
+    alias(ppShift3 = pp + n1);
+    1
+
+  } else { 0 }
+}
+
+
+{
+  let unde = _ : (unde >= 2) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let d = swaprow(unde, zero, one, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 0);
+  assert(mat1[0][ind1] = 1);
+  1
+}
+
+/*{
+  let unde = _ : (unde > 5) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 1);
+  assert(mat1[0][ind1] = 0);
+  1
+}*/
+
+/*
+int fin                              
+fv fin iter: 0 unsat time: 0.113861s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.767799s
+cex fin int fin 
+fv fin iter: 2 unsat time: 7.492050s
+cex fin (incomplete quantifiers)
+iter: 3 unknown time: 7.980679s
+(incomplete quantifiers)
+iter: 4 unknown time: 8.151364s
+(incomplete quantifiers)
+iter: 5 unknown time: 8.256562s
+iter: 6 unknown time: 133.270276s
+(incomplete quantifiers)
+iter: 7 unknown time: 133.460147s
+(incomplete quantifiers)
+iter: 8 unknown time: 133.685295s
+(incomplete quantifiers)
+iter: 9 unknown time: 133.843279s
+(incomplete quantifiers)
+iter: 10 unknown time: 133.964221s
+int fin 
+fv fin iter: 11 unsat time: 168.910586s
+cex fin (incomplete quantifiers)
+iter: 12 unknown time: 169.087669s
+(incomplete quantifiers)
+iter: 13 unknown time: 169.190949s
+(incomplete quantifiers)
+iter: 14 unknown time: 169.302338s
+(incomplete quantifiers)
+iter: 15 unknown time: 169.387641s
+int fin 
+fv fin iter: 16 unsat time: 198.682375s
+cex fin (incomplete quantifiers)
+iter: 17 unknown time: 198.847011s
+(incomplete quantifiers)
+iter: 18 unknown time: 198.995620s
+(incomplete quantifiers)
+iter: 19 unknown time: 199.111980s
+(incomplete quantifiers)
+iter: 20 unknown time: 199.197300s
+(incomplete quantifiers)
+iter: 21 unknown time: 199.282143s
+(incomplete quantifiers)
+iter: 22 unknown time: 199.436710s
+(incomplete quantifiers)
+iter: 23 unknown time: 199.613376s
+(incomplete quantifiers)
+iter: 24 unknown time: 199.719699s
+(incomplete quantifiers)
+iter: 25 unknown time: 199.832020s
+(incomplete quantifiers)
+iter: 26 unknown time: 199.968956s
+(incomplete quantifiers)
+iter: 27 unknown time: 200.058844s
+(incomplete quantifiers)
+iter: 28 unknown time: 200.191183s
+(incomplete quantifiers)
+iter: 29 unknown time: 200.355046s
+(incomplete quantifiers)
+iter: 30 unknown time: 200.443790s
+(incomplete quantifiers)
+iter: 31 unknown time: 200.555252s
+(incomplete quantifiers)
+iter: 32 unknown time: 200.657196s
+(incomplete quantifiers)
+iter: 33 unknown time: 200.795675s
+(incomplete quantifiers)
+iter: 34 unknown time: 200.910101s
+(incomplete quantifiers)
+iter: 35 unknown time: 201.153943s
+(incomplete quantifiers)
+iter: 36 unknown time: 201.253123s
+(incomplete quantifiers)
+iter: 37 unknown time: 201.392287s
+(incomplete quantifiers)
+iter: 38 unknown time: 201.572183s
+(incomplete quantifiers)
+iter: 39 unknown time: 201.691066s
+(incomplete quantifiers)
+iter: 40 unknown time: 201.826689s
+(incomplete quantifiers)
+iter: 41 unknown time: 201.927382s
+(incomplete quantifiers)
+iter: 42 unknown time: 202.027287s
+(incomplete quantifiers)
+iter: 43 unknown time: 202.130049s
+int fin 
+fv fin iter: 44 unsat time: 237.557855s
+cex fin int fin 
+fv fin iter: 45 unsat time: 354.201666s
+cex fin (incomplete quantifiers)
+iter: 46 unknown time: 354.492768s
+(incomplete quantifiers)
+iter: 47 unknown time: 354.626632s
+(incomplete quantifiers)
+iter: 48 unknown time: 354.870727s
+(incomplete quantifiers)
+iter: 49 unknown time: 355.079018s
+(incomplete quantifiers)
+iter: 50 unknown time: 355.334348s
+(incomplete quantifiers)
+iter: 51 unknown time: 355.537292s
+(incomplete quantifiers)
+iter: 52 unknown time: 370.984243s
+(incomplete quantifiers)
+iter: 53 unknown time: 371.128422s
+(incomplete quantifiers)
+iter: 54 unknown time: 371.279462s
+(incomplete quantifiers)
+iter: 55 unknown time: 371.439369s
+(incomplete quantifiers)
+iter: 56 unknown time: 371.582387s
+(incomplete quantifiers)
+iter: 57 unknown time: 371.696554s
+(incomplete quantifiers)
+iter: 58 unknown time: 371.834548s
+(incomplete quantifiers)
+iter: 59 unknown time: 372.024051s
+(incomplete quantifiers)
+iter: 60 unknown time: 372.161574s
+(incomplete quantifiers)
+iter: 61 unknown time: 372.363746s
+(incomplete quantifiers)
+iter: 62 unknown time: 372.612211s
+(incomplete quantifiers)
+iter: 63 unknown time: 372.763238s
+(incomplete quantifiers)
+iter: 64 unknown time: 372.908745s
+(incomplete quantifiers)
+iter: 65 unknown time: 373.043811s
+(incomplete quantifiers)
+iter: 66 unknown time: 373.185956s
+(incomplete quantifiers)
+iter: 67 unknown time: 373.358743s
+int fin 
+fv fin iter: 68 sat time: 392.743900s
+ownership: sat
+refinement: sat
+total time: 403.860722s
+*/

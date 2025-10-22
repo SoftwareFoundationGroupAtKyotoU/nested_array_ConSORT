@@ -16,7 +16,8 @@ init(pin, p)
 
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    <#l: int, #k: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -35,14 +36,14 @@ initMatrix(l, k, pp)
 
 trace(n1, n2, q)
 [ <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)> -> 
-  <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| { v:int | (v >= 0) } > ]
 {
   if n1 > 0 && n2 > 0 && n1 >= n2 then {
     let qin = *q in
     let m = n1 - n2 in
     let qinShift = qin + m in
     let s = *qinShift in
-    assert(s>=0);
+    /*assert(s>=0);*/
     alias(qinShift = qin + m);
     alias(qin = *q);
     let q2 = q + 1 in
@@ -60,8 +61,8 @@ trace(n1, n2, q)
   let ten = _ : (ten > 0) in
   let mat1 = alloc ten : int ref ref in
   let d1 = initMatrix(ten, ten, mat1) in
-  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
-  assert(mat1[ind1][ind1] >= 0);
+  /*let ind1 = _ : (ind1 >= 0 && ind1 < ten) in*/
+  /*assert(mat1[ind1][ind1] >= 0);*/
   let d2 = trace(ten, ten, mat1) in
   assert(d2 >= 0);
   1

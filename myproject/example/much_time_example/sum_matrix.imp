@@ -86,12 +86,12 @@ sumMatrix(n1, n2, q)
 }*/
 
 {
-  let mat1 = alloc 3 : int ref ref in
-  let ten = 3 in
+  let undet = _ : (undet > 0) in
+  let mat1 = alloc undet : int ref ref in
   let one = 1 in
-  let d1 = initMatrix(ten, ten, one, mat1) in
-  let d2 = sumMatrix(ten, ten, mat1) in
-  assert(d2 >= 9);
+  let d1 = initMatrix(undet, undet, one, mat1) in
+  let d2 = sumMatrix(undet, undet, mat1) in
+  assert(d2 >= 0);
   1
 }
 /* ugoku 

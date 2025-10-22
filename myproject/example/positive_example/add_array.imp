@@ -56,7 +56,7 @@ verify(n, p)
     1
   } else {
     let y = *p in
-    /*assert(y >= 0);*/
+    assert(y >= 0);
     let q = p + 1 in
     let m = n - 1 in
     let d = verify(m, q) in

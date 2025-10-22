@@ -20,9 +20,10 @@ let execute_main file_name unsat_core_enabled =
         let ic = open_in "experiment/result_int" in
         let first_line = input_line ic in
         (if first_line = "unknown" then 
-          (Printf.printf "iter: %d unknown " !iter;
-          let end_time = Unix.gettimeofday () in
-          Printf.printf "time: %fs\n" (end_time -. start_time);
+          (
+            (* Printf.printf "iter: %d unknown " !iter; *)
+          (* let end_time = Unix.gettimeofday () in *)
+          (* Printf.printf "time: %fs\n" (end_time -. start_time); *)
           flush stdout;
           add_sample ()
           )
@@ -35,11 +36,12 @@ let execute_main file_name unsat_core_enabled =
           exit 0;
           )
         else if first_line = "sat" then
-          (Printf.printf "int fin \n";
+          (
+            (* Printf.printf "int fin \n"; *)
           flush stdout;
           main_fv file_name;
           let _ = Sys.command (Format.sprintf "z3 experiment/out_fv.smt2 > %s" result_path) in
-          Printf.printf "fv fin ";
+          (* Printf.printf "fv fin "; *)
           let ic = open_in result_path in
           (* 最初の行を読み取る *)
           let first_line = input_line ic in
@@ -48,19 +50,20 @@ let execute_main file_name unsat_core_enabled =
           (* 比較して結果を出力 *)
           if first_line = "sat" then 
             (let end_time = Unix.gettimeofday () in
-            Printf.printf "iter: %d sat time: %fs\nownership: sat\n" !iter (end_time -. start_time);
+            Printf.printf "iter: %d sat own time: %fs\nownership: sat\n" !iter (end_time -. start_time);
             continue := false) 
           else 
-            (Printf.printf "iter: %d unsat " !iter;
+            (
+              (* Printf.printf "iter: %d unsat " !iter;
             let end_time = Unix.gettimeofday () in
-            Printf.printf "time: %fs\n" (end_time -. start_time);
+            Printf.printf "time: %fs\n" (end_time -. start_time); *)
             main_cexample file_name;
             flush stdout;
             let _ = Sys.command "z3 experiment/out_cexample.smt2 > experiment/result_cexample" in
             flush stdout;
             create_cexapmle ();
             flush stdout;
-            Printf.printf "cex fin ";
+            (* Printf.printf "cex fin "; *)
             ))
           else
             (Printf.printf "implement error\n %s\n" first_line;
@@ -73,13 +76,14 @@ let execute_main file_name unsat_core_enabled =
         flush stdout;
         iter := !iter + 1      
       done;
+      let ref_start = Unix.gettimeofday () in
       (main_sat_ans file_name;
       main_chc file_name result_path true;
       let _ = Sys.command "hoice experiment/out_chc.smt2 > experiment/chc_result" in
       let ic = open_in "experiment/chc_result" in
       (* 最初の行を読み取る *)
       let first_line = input_line ic in
-      Printf.printf "refinement: %s\ntotal time: %fs\n" first_line (Unix.gettimeofday () -. start_time);
+      Printf.printf "ref time %fs\nrefinement: %s\ntotal time: %fs\n" (Unix.gettimeofday () -. ref_start) first_line (Unix.gettimeofday () -. start_time);
       flush stdout;
       (if first_line = "unsat" && unsat_core_enabled then
         (

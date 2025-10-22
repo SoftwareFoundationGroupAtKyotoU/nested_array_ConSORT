@@ -33,8 +33,8 @@ sum(n, p)
 }
 
 {
-  let p = alloc 10 : int ref in
-  let m = 10 in
+  let p = alloc 1000 : int ref in
+  let m = 1000 in
   let rand = _ : (rand >= 0) in
   let d = initx(m, rand, p) in
   let x = sum(m, p) in
