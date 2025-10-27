@@ -185,7 +185,7 @@ match smtlib with
 | Add _ -> output_string oc "+ "
 | Sub _ -> output_string oc "- "
 | Mul _ -> output_string oc "* " 
-| Div _ -> output_string oc "/ " 
+| Div _ -> output_string oc "div " 
 | _ -> raise (Error "binop_smtlib_to_string error") 
 
 (* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
