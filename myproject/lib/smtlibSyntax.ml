@@ -14,6 +14,7 @@ type smtlib =
   | Add of smtlib * smtlib
   | Sub of smtlib * smtlib
   | Mul of smtlib * smtlib
+  | Div of smtlib * smtlib
   (* | Div of smtlib * smtlib *)
   | FV of id
   | Id of id
@@ -43,4 +44,5 @@ let map_smtlib f smtlib =
   | Add(sl1, sl2) -> Add(f sl1, f sl2)
   | Sub(sl1, sl2) -> Sub(f sl1, f sl2)
   | Mul(sl1, sl2) -> Mul(f sl1, f sl2)
+  | Div(sl1, sl2) -> Div(f sl1, f sl2)
   | Ands sls -> Ands (List.map f sls)

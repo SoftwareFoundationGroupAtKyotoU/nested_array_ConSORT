@@ -47,6 +47,10 @@ let rec infer_simple_ty tyenv exp =
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
     let (c2, ty2) = infer_simple_ty tyenv exp2 in
     let c3 = unify ((ty1, SInt) :: (ty2, SInt) :: c1 @ c2) in (c3, SInt)
+  | DivExp (exp1, exp2) ->
+    let (c1, ty1) = infer_simple_ty tyenv exp1 in
+    let (c2, ty2) = infer_simple_ty tyenv exp2 in
+    let c3 = unify ((ty1, SInt) :: (ty2, SInt) :: c1 @ c2) in (c3, SInt)
   | IfnpExp (id, exp1, exp2) ->
     let tycond = lookup id !tyenv in
     let (c1, ty1) = infer_simple_ty tyenv exp1 in
@@ -195,7 +199,7 @@ let subst_arg_name program =
     | Var x -> Var (find_name subst x)
     | ILit _ | BLit _ | Unit | ENull -> exp
     | OrExp _  | AndExp _ | NotExp _ | PlusExp _ | MinusExp _ | ConstRandInt _
-    | EqExp _ | LtExp _ | GtExp _ | MultExp _ | IfExp _ | Assume _
+    | EqExp _ | LtExp _ | GtExp _ | MultExp _ | DivExp _ | IfExp _ | Assume _
     | LeqExp _ | GeqExp _ | NeqExp _ | Alias _ | Seq _ | Assert _-> 
       map_exp (subst_id subst) exp
     | IfnpExp (id, exp1, exp2) ->

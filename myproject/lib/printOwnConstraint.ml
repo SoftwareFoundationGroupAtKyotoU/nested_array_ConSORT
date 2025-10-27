@@ -185,7 +185,7 @@ match smtlib with
 | Add _ -> output_string oc "+ "
 | Sub _ -> output_string oc "- "
 | Mul _ -> output_string oc "* " 
-(* | Div _ -> output_string oc "/ "  *)
+| Div _ -> output_string oc "/ " 
 | _ -> raise (Error "binop_smtlib_to_string error") 
 
 (* 準smtlibの制約をちゃんとしたsmtlibの制約にしてファイルに書き出す関数 
@@ -196,7 +196,7 @@ numは篩型の識別番号？
 let rec print_smtlib oc sl map num = 
   match sl with 
   | Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
-  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
+  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) | Div (s1,s2) -> 
     (output_string oc "(";
      binop_smtlib_to_string oc sl;
      print_smtlib oc s1 map num;
@@ -260,7 +260,7 @@ let rec print_smtlib oc sl map num =
 let rec print_smtlib' oc sl map num z3_res = 
 match sl with 
 | Or (s1,s2) | And (s1,s2) | Imply (s1,s2)| Eq (s1,s2) | Lt (s1,s2) 
-| Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) (*| Div (s1,s2)*) -> 
+| Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2)| Sub (s1,s2) | Mul (s1,s2) | Div (s1,s2) -> 
   (output_string oc "(";
   binop_smtlib_to_string oc sl;
   print_smtlib' oc s1 map num z3_res;
@@ -296,7 +296,7 @@ match sl with
 let rec idx_of_smtlib sl =
   match sl with 
   | Or (s1,s2) | And(s1, s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) 
-  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+  | Gt (s1,s2) | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) | Div (s1,s2) -> 
     (idx_of_smtlib s1) @ (idx_of_smtlib s2)
   | Not s -> 
     idx_of_smtlib s
@@ -425,7 +425,7 @@ and print_smtlibs_sub oc unsat_core_flag num sl =
 and fvs_of_smtlib sl =
   match sl with 
   | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
-  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) | Div (s1, s2) -> 
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
   | Not s -> 
     fvs_of_smtlib s

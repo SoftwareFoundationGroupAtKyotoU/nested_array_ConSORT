@@ -226,12 +226,12 @@ let rec print_exp exp =
       print_string ", ";
       print_exp e2;
       print_string ")")
-  (* | EDiv (e1,e2) -> 
-    (print_string "EDiv(";
+  | DivExp (e1,e2) -> 
+    (print_string "DivExp(";
       print_exp e1;
       print_string ", ";
       print_exp e2;
-      print_string ")") *)
+      print_string ")")
   | Unit -> 
     print_string "Unit"
   (* | EConstFail ->
@@ -327,6 +327,8 @@ let rec elim_int_var env fun_name args exp =
     MinusExp(elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
   | MultExp (exp1,exp2) -> 
     MultExp(elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
+  | DivExp (exp1,exp2) -> 
+    DivExp(elim_int_var env fun_name args exp1, elim_int_var env fun_name args exp2)
   | Var x -> 
     (* 変数が引数由来の場合は具体化しない *)
     if List.mem x args then 
@@ -408,10 +410,10 @@ let rec exp_to_smtlib exp =
     let s1 = exp_to_smtlib e1 in
     let s2 = exp_to_smtlib e2 in
     Mul(s1, s2)
-  (* | EDiv (e1,e2) -> 
+  | DivExp (e1,e2) -> 
     let s1 = exp_to_smtlib e1 in
     let s2 = exp_to_smtlib e2 in
-    Div(s1, s2) *)
+    Div(s1, s2)
   | ILit i ->
     if Z.geq i Z.zero then 
       Id (sprintf "%s" (Z.to_string i)) 
@@ -471,10 +473,10 @@ let rec exp_to_smtlib_for_assert exp =
     let s1 = exp_to_smtlib_for_assert e1 in
     let s2 = exp_to_smtlib_for_assert e2 in
     Mul(s1, s2)
-  (* | EDiv (e1,e2) -> 
+  | DivExp (e1,e2) -> 
     let s1 = exp_to_smtlib e1 in
     let s2 = exp_to_smtlib e2 in
-    Div(s1, s2) *)
+    Div(s1, s2)
   | ILit i ->
     if Z.geq i Z.zero then 
       Id (sprintf "%s" (Z.to_string i)) 
@@ -500,6 +502,10 @@ let rec smtlib_to_exp sl =
     let e1 = smtlib_to_exp s1 in
     let e2 = smtlib_to_exp s2 in
     MultExp(e1, e2)
+  | Div(s1,s2) ->
+    let e1 = smtlib_to_exp s1 in
+    let e2 = smtlib_to_exp s2 in
+    DivExp(e1, e2)
   | Id id ->
     (try
       ILit (Z.of_string id)
@@ -525,6 +531,10 @@ let rec subst_idx sl subst_idx_lis =
     let s1' = subst_idx s1 subst_idx_lis in
     let s2' = subst_idx s2 subst_idx_lis in
     Mul(s1', s2')
+  | Div(s1,s2) ->
+    let s1' = subst_idx s1 subst_idx_lis in
+    let s2' = subst_idx s2 subst_idx_lis in
+    Div(s1', s2')
   | Id id ->
     (try
       Id (lookup id subst_idx_lis)
@@ -568,6 +578,10 @@ let rec subst_idx_name exp template =
     let e1' = subst_idx_name e1 template in
     let e2' = subst_idx_name e2 template in
     MultExp (e1', e2')
+  | DivExp (e1, e2) ->
+    let e1' = subst_idx_name e1 template in
+    let e2' = subst_idx_name e2 template in
+    DivExp (e1', e2')
   | _ -> raise (Error "subst_idx_name error")
 
 (* 一次式から変数とその係数の組のリストを抽出する関数 *)
@@ -664,8 +678,8 @@ let rec smtlib_subst subst st =
     Sub(smtlib_subst subst st1, smtlib_subst subst st2)
   | Mul (st1,st2) ->
     Mul(smtlib_subst subst st1, smtlib_subst subst st2)
-  (* | Div (st1,st2) ->
-    Div(smtlib_subst subst st1, smtlib_subst subst st2) *)
+  | Div (st1,st2) ->
+    Div(smtlib_subst subst st1, smtlib_subst subst st2)
   | FV x -> 
     (try 
        exp_to_smtlib (lookup x subst)
@@ -739,8 +753,8 @@ let rec exp_subst subst exp =
     MinusExp(exp_subst subst e1, exp_subst subst e2)
   | MultExp (e1,e2) -> 
     MultExp(exp_subst subst e1, exp_subst subst e2)
-  (* | EDiv (e1,e2) -> 
-    EDiv(exp_subst subst e1, exp_subst subst e2) *)
+  | DivExp (e1,e2) -> 
+    DivExp(exp_subst subst e1, exp_subst subst e2)
   | Var x -> 
     (try 
         lookup x subst
@@ -819,7 +833,7 @@ let rec fvs_of_exp exp =
   match exp with
   | EqExp (e1,e2) | LtExp (e1, e2) | GtExp (e1, e2) | LeqExp (e1, e2) 
   | GeqExp (e1, e2) | AndExp (e1,e2) | OrExp (e1,e2) | PlusExp (e1,e2) 
-  | MinusExp (e1,e2) | MultExp (e1,e2) | NeqExp (e1,e2) ->
+  | MinusExp (e1,e2) | MultExp (e1,e2) | DivExp(e1, e2) | NeqExp (e1,e2) ->
     let fvs1 = fvs_of_exp e1 in
     let fvs2 = fvs_of_exp e2 in
     fvs1 @ fvs2

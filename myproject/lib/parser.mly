@@ -29,7 +29,7 @@ open SmtlibSyntax
 %token ASSUME
 
 // binary operator
-%token OR AND PLUS MINUS LT GT LEQ GEQ NEQ
+%token OR AND PLUS MINUS LT GT LEQ GEQ NEQ SLASH
 %token STAR // multipul and pointer dereference
 
 // unary operator
@@ -154,12 +154,13 @@ SimpleTyExpr :
   | ty=SimpleTyExpr REF { SRef (ty) }
 
 PlusMinusExpr :
-  | x=PlusMinusExpr PLUS y=MultExpr { PlusExp(x, y) }
-  | x=PlusMinusExpr MINUS y=MultExpr { MinusExp(x, y) }
-  | e=MultExpr { e }
+  | x=PlusMinusExpr PLUS y=MultDivExpr { PlusExp(x, y) }
+  | x=PlusMinusExpr MINUS y=MultDivExpr { MinusExp(x, y) }
+  | e=MultDivExpr { e }
 
-MultExpr :
-  | x=MultExpr STAR y=AExpr { MultExp(x, y) }
+MultDivExpr :
+  | x=MultDivExpr STAR y=AExpr { MultExp(x, y) }
+  | x=MultDivExpr SLASH y=AExpr { DivExp(x, y) }
   | e=AExpr { e }
 
 

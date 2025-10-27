@@ -111,7 +111,7 @@ let rec union_list ls1 ls2 =
 let rec fvs_of_smtlib sl =
   match sl with 
   | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
-  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+  | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) | Div (s1,s2) -> 
     (fvs_of_smtlib s1) @ (fvs_of_smtlib s2)
   | Not s -> fvs_of_smtlib s
   | FV fv -> 

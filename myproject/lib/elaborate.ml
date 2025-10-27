@@ -52,6 +52,7 @@ let rec elaborate_exp fun_name exp =
   | PlusExp (exp1,exp2) -> PlusExp(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | MinusExp (exp1,exp2) -> MinusExp(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | MultExp (exp1,exp2) -> MultExp(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
+  | DivExp (exp1,exp2) -> DivExp(elaborate_exp fun_name exp1,  elaborate_exp fun_name exp2)
   | _ -> exp
 
 let elaborate_prog prog = 

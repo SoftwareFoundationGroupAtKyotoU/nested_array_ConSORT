@@ -276,7 +276,7 @@ let make_imply smtlib num fvs =
   let rec depend_fvs_of_smtlib smtlib =
     match smtlib with 
     | Or (s1,s2) | And (s1,s2) | Imply (s1,s2) | Eq (s1,s2) | Lt (s1,s2) | Gt (s1,s2) 
-    | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) -> 
+    | Leq (s1,s2) | Geq (s1,s2) | Add (s1,s2) | Sub (s1,s2) | Mul (s1,s2) | Div (s1,s2) -> 
      (depend_fvs_of_smtlib s1) @ (depend_fvs_of_smtlib s2)
     | Not s -> 
       depend_fvs_of_smtlib s

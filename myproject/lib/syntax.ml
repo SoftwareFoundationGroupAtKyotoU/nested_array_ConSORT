@@ -60,6 +60,7 @@ type exp =
   | PlusExp of exp * exp
   | MinusExp of exp * exp
   | MultExp of exp * exp
+  | DivExp of exp * exp
   | IfnpExp of id * exp * exp
   | IfExp of exp * exp * exp
   | LetAllocExp of id * exp * ftype * exp
@@ -143,6 +144,8 @@ let rec map_exp f exp =
     MinusExp(f exp1,f exp2)
   | MultExp (exp1, exp2) ->
     MultExp(f exp1,f exp2)
+  | DivExp (exp1, exp2) ->
+    DivExp(f exp1,f exp2)
   | IfExp (exp1, exp2, exp3) ->
     IfExp (f exp1,f exp2,f exp3)
   | Alias(exp1, exp2, exp3) ->

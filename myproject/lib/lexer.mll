@@ -39,6 +39,7 @@ rule main = parse
   | "+" { Parser.PLUS }
   | "-" { Parser.MINUS }
   | "*" { Parser.STAR }
+  | "/" { Parser.SLASH }
   | "<" { Parser.LT }
   | ">" { Parser.GT }
   | "<=" { Parser.LEQ }
