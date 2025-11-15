@@ -8,8 +8,7 @@ init(n, x, p)
     p := x;
     let q = p + 1 in
     let m = n - 1 in
-    let nextx = x + 1 in
-    let d = init(m, nextx, q) in
+    let d = init(m, x, q) in
     alias(q=p+1);
     1
   }
@@ -19,7 +18,7 @@ init(n, x, p)
 easyMatrix(l, k, val, pp)
 [ <#l: int, #k: int, val: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
     <#l: int, #k: int, val: int,
-    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = (i1 + val)))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = val))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -61,7 +60,7 @@ boomerang(b1, b2, r)
   let d2 = boomerang(ten, ten, kp) in
   let one = _ : (one >= 0 && one < ten) in
   let two = _ : (two >= 0 && two < ten) in
-  assert(kp[one][two] = two + value);
+  assert(kp[one][two] = value);
   ()
 }
 

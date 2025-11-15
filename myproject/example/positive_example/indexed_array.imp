@@ -24,7 +24,7 @@ init(n, p)
   if n <= 0 then {
     1
   } else {
-    p := 0;
+    p := 1;
     let q = p + 1 in
     let m = n - 1 in
     let d = init(m, q) in
@@ -60,6 +60,6 @@ easyMatrix(k, pp)
   let d = easyMatrix(ten, p) in
   let ind1 = _ : (ind1 >= 0 && ind1 < 10) in
   let ind2 = 9 - ind1 in
-  assert(p[ind1][ind2] = 0);
+  assert(p[ind1][ind2] = 1);
   ()
 }

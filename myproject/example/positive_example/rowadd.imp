@@ -1,10 +1,10 @@
 addarray(n, dum, p, q) 
 [ <#n: int, dum: int, 
-p: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = dum))} ref(0, n- 1, 1.), 
-q: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = 1))} ref(0, n- 1, 1.)> -> 
+p: int ref(0, n- 1, 1.), 
+q: int ref(0, n- 1, 1.)> -> 
   <#n: int, dum: int, 
-p: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = (dum + 1)))} ref(0, n- 1, 1.), 
-q: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = 1))} ref(0, n- 1, 1.)| int> ]
+p: int ref(0, n- 1, 1.), 
+q: int ref(0, n- 1, 1.)| int> ]
 {
   if n <= 0 then {
     1
@@ -25,9 +25,9 @@ q: {v:int | (=> ((i1 >= 0) and (i1 < n)) (v = 1))} ref(0, n- 1, 1.)| int> ]
 
 sumrow(n1, n2, pp, q) 
 [ <#n1: int, #n2: int, 
-pp: {v:int | (=> (((i1 >= 0) and (i1 < n1)) and ((i2 >= 0) and (i2 < n2))) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.) > -> 
+pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.) > -> 
   <#n1: int, #n2: int, 
-pp: {v:int | (=> (((i1 >= 0) and (i1 < n1)) and ((i2 >= 0) and (i2 < n2))) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.)| int> ]
+pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.)| int> ]
 {
   if n1 > 0 && n2 > 0 then {
     let ppin = *pp in

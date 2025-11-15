@@ -6,7 +6,7 @@ q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((
   int
   /*{v:int| (=> ((((m >= 0) and (m < len)) and (i1 >= 0)) and (i1 < n)) (v = ((len - n) + i1)))} */
   ref(0, n- 1, 1.), 
-  q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((len - n) + i2)))} ref(0, len - 1, 1.) ref(0, n - 1, 1.) | int> ]
+  q: int ref(0, len - 1, 1.) ref(0, n - 1, 1.) | int> ]
 {
   if n <= 0 || m >= len then {
     1
@@ -29,11 +29,11 @@ q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((
 
 trans(n1, n2, pp, qq)
 [ <#n1: int, #n2: int,  
-pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n1)) (v = i2))} ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
+pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
 qq: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
   <#n1: int, #n2: int, 
 pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n1)) (v = i2))} ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
-qq: {v:int| (=> (((((n1 >= n2) and (i1 >= 0)) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = i1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
 {
   if n2 <= 0 then {
     1

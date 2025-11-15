@@ -1,6 +1,6 @@
 init(pin, val, p) 
-[ <#pin: int, #val: int, p: int ref (0, pin - 1, 1.) > -> 
-  <#pin: int, #val: int, p: int ref (0, pin - 1, 1.) | int> ]
+[ <#pin: int, val: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, val: int, p: int ref (0, pin - 1, 1.) | int> ]
 {
   if pin <= 0 then {
     1
@@ -55,7 +55,6 @@ sumMatrix(n1, n2, q)
   if n1 > 0 && n2 > 0 then {
     let qin = *q in
     let s = sum(n1, qin) in
-    assert(0 = 0);
     alias(qin = *q);
     let q2 = q + 1 in
     let m = n2 - 1 in
