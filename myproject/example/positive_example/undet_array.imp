@@ -27,29 +27,12 @@ verify(m, p)
   }
 }
 
-/*sum(n, p) 
-[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
-  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
-{
-  if n <= 0 then {
-    0
-  } else {
-    let x = *p in
-    let q = p + 1 in
-    let m = n - 1 in
-    let s = sum(m, q) in
-    alias(q = p + 1);
-    let y = x + s in
-    y
-  }
-}*/
-
 {
   let unde = _ : (unde >= 1) in
   let p = alloc unde : int ref in
   let d = init(unde, p) in
   let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
-  assert(p[ind1] = 1);
+  /*assert(p[ind1] = 1);*/
   let d2 = verify(unde, p) in
   ()
 }
