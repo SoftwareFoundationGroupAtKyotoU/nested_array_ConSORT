@@ -1,6 +1,6 @@
 copyarray(n, dum, p, q)
-[ <#n: int, dum:int , p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
-  <#n: int, dum:int , p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+[ <#n: int, dum:int , p: int ref(0, n - 1, ), q: int ref(0, n - 1, )> -> 
+  <#n: int, dum:int , p: int ref(0, n - 1, ), q: int ref(0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     1
@@ -20,11 +20,11 @@ copyarray(n, dum, p, q)
 
 rev(n, le, ph, q)
 [ <#n: int, #le: int, 
-ph: int ref(0, n- 1, 0.) ref(0, le- 1, 1.), 
-q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, 1.) ref(0, le- 1, 1.) > -> 
+ph: int ref(0, n- 1, ) ref(0, le- 1, ), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, ) ref(0, le- 1, ) > -> 
   <#n: int, #le: int, 
-ph: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = ((le - i2) - 1)))} ref(0, n- 1, 1.) ref(0, le- 1, 1.), 
-q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, 1.) ref(0, le- 1, 1.) | int> ]
+ph: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = ((le - i2) - 1)))} ref(0, n- 1, ) ref(0, le- 1, ), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, ) ref(0, le- 1, ) | int> ]
 {
   if n <= 0 || le <= 0 then {
     1

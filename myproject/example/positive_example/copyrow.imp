@@ -1,6 +1,6 @@
 copyarray(n, p, q)
-[ <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
-  <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+[ <#n: int, p: int ref(0, n - 1, ), q: int ref(0, n - 1, )> -> 
+  <#n: int, p: int ref(0, n - 1, ), q: int ref(0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     1
@@ -19,9 +19,9 @@ copyarray(n, p, q)
 
 copyrow(n1, pp)
 [ <#n1: int,  
-pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.)> -> 
+pp: int ref(0, n1 - 1, ) ref(0, n1- 1, )> -> 
   <#n1: int, 
-pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.)| int> ]
+pp: int ref(0, n1 - 1, ) ref(0, n1- 1, )| int> ]
 {
   if n1 > 1 then {
     let ppshift = pp + 1 in

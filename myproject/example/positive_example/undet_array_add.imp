@@ -1,6 +1,6 @@
 init(pin, p) 
-[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
-  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+[ <#pin: int, p: int ref (0, pin - 1, ) > -> 
+  <#pin: int, p: int ref (0, pin - 1, ) | int> ]
 {
   if pin <= 0 then {
     1
@@ -15,8 +15,8 @@ init(pin, p)
 }
 
 initMatrix(l, k, pp)
-[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+[ <#l: int, #k: int, pp: int ref(0, 0, ) ref(0, k - 1, )> ->
+    <#l: int, #k: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, ) ref(0, k - 1, ) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in
@@ -33,8 +33,8 @@ initMatrix(l, k, pp)
 }
 
 addarray(n, p, q, r) 
-[ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.)> -> 
-  <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.) | int> ]
+[ <#n: int, p: int ref(0, n- 1, ), q: int ref(0, n- 1, ), r: int ref(0, n- 1, )> -> 
+  <#n: int, p: int ref(0, n- 1, ), q: int ref(0, n- 1, ), r: int ref(0, n- 1, ) | int> ]
 {
   if n <= 0 then {
     1
@@ -56,9 +56,9 @@ addarray(n, p, q, r)
 }
 
 addmatrix(n1, n2, pp, qq, rr) 
-[ <#n1: int, #n2: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), 
-qq: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
-  <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.) | int> ]
+[ <#n1: int, #n2: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, ) ref(0, n2- 1, ), 
+qq: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, ) ref(0, n2- 1, ), rr: int ref(0, 0, ) ref(0, n2- 1, )> -> 
+  <#n1: int, #n2: int, pp: int ref(0, n1- 1, ) ref(0, n2- 1, ), qq: int ref(0, n1- 1, ) ref(0, n2- 1, ), rr: int ref(0, n1- 1, ) ref(0, n2- 1, ) | int> ]
 {
   if n1 > 0 && n2 > 0 then {
     let x = *pp in

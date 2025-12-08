@@ -1,6 +1,6 @@
 init(n, p) 
-[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
-  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+[ <#n: int, p: int ref(0, n - 1, )> -> 
+  <#n: int, p: int ref(0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     1
@@ -15,7 +15,7 @@ init(n, p)
 }
 
 initMatrix(l, k, pp)
-[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+[ <#l: int, #k: int, pp: int ref(0, 0, ) ref(0, k - 1, )> ->
     <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 

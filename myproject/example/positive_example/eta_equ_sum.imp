@@ -1,6 +1,6 @@
 init(n1, val, p1) 
-[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
-  <#n1: int, #val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1)) (v = val))} ref(0, n1- 1, 1.) | int> ]
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, )> -> 
+  <#n1: int, #val: int, p1: {v:int| (=> ((i1 >= 0) and (i1 < n1)) (v = val))} ref(0, n1- 1, ) | int> ]
 {
   if n1 <= 0 then {
     1
@@ -15,8 +15,8 @@ init(n1, val, p1)
 }
 
 sum(n, p) 
-[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
-  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+[ <#n: int, p: int ref(0, n- 1, )> -> 
+  <#n: int, p: int ref(0, n- 1, ) | int> ]
 {
   if n <= 0 then {
     0
@@ -32,8 +32,8 @@ sum(n, p)
 }
 
 sumback(n, p) 
-[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
-  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+[ <#n: int, p: int ref(0, n - 1, )> -> 
+  <#n: int, p: int ref(0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     0

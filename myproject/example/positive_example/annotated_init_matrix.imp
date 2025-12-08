@@ -18,8 +18,8 @@
 }*/
 
 init(n, p) 
-[ <#n: int, p: int ref (0, n - 1, 1.) > -> 
-  <#n: int, p: int ref (0, n - 1, 1.) | int> ]
+[ <#n: int, p: int ref (0, n - 1, ) > -> 
+  <#n: int, p: int ref (0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     1
@@ -36,8 +36,8 @@ init(n, p)
 
 
 easyMatrix(l, k, pp)
-[ <#l: int, #k: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
-    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+[ <#l: int, #k: int, pp: int ref(0, l- 1, ) ref(0, k - 1, )> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, ) ref(0, k - 1, ) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in

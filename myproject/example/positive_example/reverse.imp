@@ -1,7 +1,7 @@
 
 reverse(n, ph, q)
-[ <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) > -> 
-  <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+[ <#n: int, ph: int ref(0, n- 1, ), q: int ref(0, n- 1, ) > -> 
+  <#n: int, ph: int ref(0, n- 1, ), q: int ref(0, n - 1, ) | int> ]
 {
   if n <= 0 then {
     1

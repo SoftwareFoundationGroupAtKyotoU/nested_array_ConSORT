@@ -1,6 +1,6 @@
 verify(q)
-[ <q:{v:int| (v>1)} ref(0, 10, 1.) ref(0, 10, 1.)> ->
-    <q: int ref(0, 10, 1.) ref(0, 10, 1.) | int> ]
+[ <q:{v:int| (v>1)} ref(0, 10, ) ref(0, 10, )> ->
+    <q: int ref(0, 10, ) ref(0, 10, ) | int> ]
 {
   let qq = *q in
   let qqq = *qq in
