@@ -88,6 +88,8 @@ Ftype: // プログラム内に記述する型
   { FTInt(sl) } 
 | inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA fl=FLOATV RPAREN
   { FTRef(inner_type, e1, e2, fl) }
+| inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA RPAREN
+  { FTRef(inner_type, e1, e2, 2.) }
 | INT { FTInt(VarPred) }
 | inner_type = Ftype REF { FTRef(inner_type, ENull, ENull, 0.) }
 

@@ -1332,13 +1332,17 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           let eh = subst_idx_name eh template in
           let scope_low = exp_to_smtlib (exp_subst subst el) in
           let scope_high = exp_to_smtlib (exp_subst subst eh) in
+          let own_value = 
+            if f > 1. then 
+              let num = lookup fun_name funnames_numberings in make_own_var_be id_param num "b" depth 
+            else Id (string_of_float f) in
           (* プログラマ指定の所有権が0　または
           　　　　(実引数の所有権がプログラマ指定の所有権以上　かつ
           　　　　実引数の所有範囲の下限がプログラマ指定の所有範囲の下限以下　かつ
           　　　　実引数の所有範囲の上限がプログラマ指定の所有範囲の上限以上) *)
           if depth <= 1 then
-            [Or(Eq(Id "0.", Id (string_of_float f)),
-            And(Geq(make_own_var id fun_num branch_trace depth, Id (string_of_float f)),
+            [Or(Eq(Id "0.", own_value),
+            And(Geq(make_own_var id fun_num branch_trace depth, own_value),
             And(Leq(make_bound_exp fvs id "_l" fun_num branch_trace depth, scope_low),
                 Geq(make_bound_exp fvs id "_h" fun_num branch_trace depth, scope_high))))]
           else
@@ -1376,8 +1380,8 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
                   And(Leq(Mul(Id var_name, FV fv), Mul(lookup fv coeffs_l, FV fv)), sl)
                 with
                 | Error _ -> Leq(Mul(Id var_name, FV fv), Id "0")) in
-            [Or(Eq(Id "0.", Id (string_of_float f)),
-            And(Geq(make_own_var id fun_num branch_trace depth, Id (string_of_float f)),
+            [Or(Eq(Id "0.", own_value),
+            And(Geq(make_own_var id fun_num branch_trace depth, own_value),
             And(leq "_l" fvs,
             And(geq "_h" fvs,
             Imply(make_idx_bound_smtlib id idx fvs fun_num branch_trace depth,
@@ -1459,6 +1463,10 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
           new_id id pos branch_trace simpleTy fvs;
           let coeff_map_h = coeffs h_arg_exp in
           let coeff_map_l = coeffs l_arg_exp in
+          let own_value = 
+            if f > 1. 
+              then let num = lookup fun_name funnames_numberings in make_own_var_be id_param num "e" depth 
+              else Id (string_of_float f) in
           let find_coeff h_or_l coeff_map = 
             let look_up' var_name fv =
               try
@@ -1473,7 +1481,7 @@ let rec constr_to_smtlib fvs fun_num funnames_numberings branch_trace ty_env c =
             (fun fv ->
               let var_name = asprintf "c_%d_%s_%s_%s_%d%a_%d" fun_num h_or_l fv id id_pos pp_branch_trace branch_trace depth in
               look_up' var_name fv) fvs in
-          let sl1 = [Eq(make_own_var id fun_num branch_trace depth, Id (string_of_float f));]
+          let sl1 = [Eq(make_own_var id fun_num branch_trace depth, own_value);]
           @ find_coeff "_h" coeff_map_h 
           @ find_coeff "_l" coeff_map_l in
           let idx = make_idx_id fun_num id depth in
@@ -1599,6 +1607,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
         let exp_high = subst_idx_name exp_high template in
         let coeff_map_h = coeffs exp_high in
         let coeff_map_l = coeffs exp_low in
+        let own_value = if own > 1. then make_own_var_be id fun_num "b" depth else Id (string_of_float own) in
         let find_coeff h_or_l coeff_map =
           let look_up' var_name fv =
             try
@@ -1616,8 +1625,10 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
         関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい
         関数引数の最初の所有範囲の下限と所有範囲の下限の指定は等しい *)
         let sl1, sl2 = 
-        [Eq(make_own_var id fun_num [] depth, Id (string_of_float own));
-        Eq(make_own_var_be id fun_num "b" depth, Id (string_of_float own));],
+        [Eq(make_own_var id fun_num [] depth, own_value);
+        Eq(make_own_var_be id fun_num "b" depth, own_value);
+        Geq(make_own_var_be id fun_num "b" depth, Id "0.");
+        Leq(make_own_var_be id fun_num "b" depth, Id "1.")],
         [
         Eq(make_bound_exp fvs id "_l" fun_num [] depth, exp_to_smtlib exp_low);
         Eq(make_bound_exp fvs id "_h" fun_num [] depth, exp_to_smtlib exp_high);
@@ -1684,6 +1695,7 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       let eh2 = subst_idx_name eh2 template in
       let coeff_map_h = coeffs eh2 in
       let coeff_map_l = coeffs el2 in
+      let own_value = if f2 > 1. then make_own_var_be id fun_num "e" depth else Id (string_of_float f2) in
       let find_coeff h_or_l coeff_map =
         let look_up' var_name fv =
           try
@@ -1702,9 +1714,11 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       　　　　評価終了時の引数のプログラマ指定の所有範囲の下限がその時の所有範囲の下限以上　かつい
       　　　　評価終了時の引数のプログラマ指定の所有範囲の上限がその時の所有範囲の上限以下) *)
       let sl1, sl2 = 
-      [Or(Eq(Id (string_of_float f2), Id "0."),
-        Leq(Id (string_of_float f2), make_own_var id fun_num [] depth));
-        Eq(make_own_var_be id fun_num "e" depth, Id (string_of_float f2));],
+      [Or(Eq(own_value, Id "0."),
+        Leq(own_value, make_own_var id fun_num [] depth));
+        Eq(make_own_var_be id fun_num "e" depth, own_value);
+        Geq(make_own_var_be id fun_num "e" depth, Id "0.");
+      Leq(make_own_var_be id fun_num "e" depth, Id "1.")],
       [Geq(exp_to_smtlib el2, make_bound_exp fvs id "_l" fun_num [] depth);
       Leq(exp_to_smtlib eh2, make_bound_exp fvs id "_h" fun_num [] depth);
       ]
