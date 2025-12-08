@@ -29,6 +29,9 @@ LOG_FILE := logs/$(DIR_BASENAME).log
 # 'run_all' 用のログファイルリストを生成
 ALL_LOG_FILES := $(patsubst %, logs/%.log, $(notdir $(patsubst %/,%,$(ALL_DIRS))))
 
+# 検証の上限時間
+TIMEOUT_SEC = 1
+
 # .PHONY は、ファイル名とターゲット名が衝突しても正しく動作させるための宣言
 .PHONY: run run_all clean help default
 
@@ -67,8 +70,14 @@ run:
 	    for file in $(DIR)/*.imp; do \
 	        if [ -f "$$file" ]; then \
 	            echo "--- Executing for: $$file ---"; \
-	            dune exec myproject "$$file" unsat-core=false; \
-	            echo ""; \
+	            gtimeout $(TIMEOUT_SEC)s dune exec myproject "$$file" unsat-core=false; \
+	            EXIT_CODE=$$?; \
+                if [ $$EXIT_CODE -eq 124 ]; then \
+                    echo "!!! TIME LIMIT EXCEEDED ($(TIMEOUT_SEC) s) - Skipped !!!"; \
+                elif [ $$EXIT_CODE -ne 0 ]; then \
+                    echo "!!! Process failed with error code $$EXIT_CODE !!!"; \
+                fi; \
+                echo ""; \
 	        fi; \
 	    done \
 	) 2>&1 | tee "$(LOG_FILE)"
