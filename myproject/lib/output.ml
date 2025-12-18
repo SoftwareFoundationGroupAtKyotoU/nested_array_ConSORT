@@ -50,7 +50,7 @@ let main_cexample file =
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   let program = subst_arg_name program in
   (* main_intで得られた所有権関数の係数の候補 *)
-  let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+  let z3res = Z3Parser.results Z3Lexer.read (Lexing.from_channel oc_r2) in
   close_in oc; close_in oc_r2;
   let (fdefs, _) = program in
   let fun_num = List.length fdefs in 
@@ -79,24 +79,24 @@ flag 現状使ってない
 fun_num 関数の通し番号
 iter 変数の具体化の範囲
 *)
-let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num = 
+let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter = 
   if fun_num < 0 then 
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
-    print_smtlibs oc smtlibs is_unconcrete false (-1);
+    print_smtlibs oc smtlibs is_unconcrete false (-1) ;
     print_lim oc var_locations fun_num;
     print_lim_begin_and_end oc varown_count fvs fun_num;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
     (* 次の関数の制約出力へ *)
-    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1))
+    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1) iter)
 
 (** First phase of the ownershipip inference:
     Generates n_1, ..., n_k and checks the validity of \exists y . phi(n_1, y) /\ ... /\ phi(n_k, y) *)
-let generate_constrs file = 
+let generate_constrs file iter = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   let program = subst_arg_name program in 
@@ -114,7 +114,7 @@ let generate_constrs file =
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *) 
-  main_int_smtlibs oc1 all_constrs false false fun_num;
+  main_int_smtlibs oc1 all_constrs false false fun_num iter;
   (* 充足可能か調べる *)
   output_string oc1 "(check-sat-using psmt)\n";
   (* 充足可能な場合に具体的な値を取得 *)
@@ -130,7 +130,7 @@ let main_fv file =
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
   let program = subst_arg_name program in
   (* main_intで得られた所有権関数の係数の候補 *)
-  let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+  let z3res = Z3Parser.results Z3Lexer.read (Lexing.from_channel oc_r2) in
   close_in oc_r1; close_in oc_r2;
   let (fdefs, _) = program in
   let n = List.length fdefs in 
@@ -145,7 +145,7 @@ let main_fv file =
   main_int_declare oc all_constrs n;
   (* 所有権計算に必要なsmtlibでのassert式の書き出し
   ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
-  main_int_smtlibs oc all_constrs true false n;
+  main_int_smtlibs oc all_constrs true false n 0;
   (* main_intで得られた所有権の係数をassert形式で表現 *)
   print_z3result oc z3res;
   output_string oc "\n\n";
@@ -170,12 +170,13 @@ let rec main_sat_ans_sub oc all_cs fun_num z3_res total_fun_num =
 
 let main_sat_ans file =
   let oc_r1 = open_in file  in
-    let oc_r2 = open_in "experiment/result_int" in
+  let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file)) in
+    let oc_r2 = open_in result_path in
     (* プログラムの読み出し *)
     let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
     let program = subst_arg_name program in
     (* main_intで得られた所有権関数の係数の候補 *)
-    let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r2) in
+    let z3res = Z3Parser.results Z3Lexer.read (Lexing.from_channel oc_r2) in
     close_in oc_r1; close_in oc_r2;
     let (fdefs, _) = program in
     let n = List.length fdefs in 
@@ -250,7 +251,7 @@ let rec main_chc_sub oc z3res all_chcs unsat_core_flag n =
 let main_chc file file2 unsat_core_flag =
   let oc_r1 = open_in file  in
   let ic = open_in file2 in
-  let z3res = Z3Parser2.result Z3Lexer2.read (Lexing.from_channel ic) in
+  let z3res = Z3Parser2.results Z3Lexer2.read (Lexing.from_channel ic) in
   close_in ic;
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc_r1) in
   let program = subst_arg_name program in
@@ -287,3 +288,136 @@ let print_program file =
   let (_, elaborate_program) = elaborate_prog program in
   infer_prog_simpleTy program;
   Util.print_exp elaborate_program *)
+
+let rec main_int_declare_annotated all_cs fun_num result_path = 
+  let start_time = Unix.gettimeofday () in
+  if fun_num < 0 then 
+    ()
+  else
+    let continue = ref true in
+    while !continue do
+      (* Unix.sleep 1; *)
+      let oc = open_out "experiment/out_int.smt2" in
+      let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs false fun_num in
+      (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
+      print_declare oc var_locations fun_num;
+      (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
+      print_declare_begin_and_end oc varown_count fvs fun_num;
+      (* 関数ブロックごとに一行区切る *)
+      output_string oc "\n";
+      let smtlibs = [SmtlibSyntax.Ands smtlibs] in
+      print_smtlibs oc smtlibs false false (-1);
+      print_lim oc var_locations fun_num;
+      print_lim_begin_and_end oc varown_count fvs fun_num;
+      (* 関数の制約の間は二行開ける *)
+      output_string oc "\n\n";
+
+      (* 次の関数の所有権をsmtlib形式で宣言 *)
+      output_string oc "(check-sat-using psmt)\n";
+      (* 充足可能な場合に具体的な値を取得 *)
+      output_string oc "(get-model)\n";
+      close_out oc;
+      let _ = Sys.command "z3 parallel.enable=true smt.threads=4 experiment/out_int.smt2 > experiment/result_int" in
+      (* let _ = Sys.command "/usr/bin/time -v z3 experiment/out_int.smt2 > experiment/result_int" in *)
+      let ic = open_in "experiment/result_int" in
+      let first_line = input_line ic in
+      close_in ic;
+      if first_line = "unknown" then 
+          (
+          Printf.printf " unknown ";
+          let end_time = Unix.gettimeofday () in
+          Printf.printf "time: %fs\n\n" (end_time -. start_time);
+          flush stdout;
+          Cexample.add_sample ()
+          )
+      else if first_line = "sat" then
+        (Printf.printf "int fin ";
+        let end_time = Unix.gettimeofday () in
+        Printf.printf "time: %fs\n" (end_time -. start_time);
+        flush stdout;
+        let oc = open_out "experiment/out_fv.smt2" in
+        (* output_string oc "(set-option :produce-unsat-cores true)\n"; *)
+        (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価中の定数係数の宣言 *)
+        print_declare oc var_locations fun_num;
+        (* out_int.smtに所有権計算に必要なsmtlibでの宣言の書き出し，関数評価前，評価後の定数係数の宣言 *)
+        print_declare_begin_and_end oc varown_count fvs fun_num;
+        (* 関数ブロックごとに一行区切る *)
+        output_string oc "\n";
+        print_smtlibs oc smtlibs true false (-1);
+        print_lim oc var_locations fun_num;
+        print_lim_begin_and_end oc varown_count fvs fun_num;
+        (* main_intで得られた所有権の係数をassert形式で表現 *)
+        let oc_r2 = open_in "experiment/result_int" in
+        let z3res = Z3Parser.results Z3Lexer.read (Lexing.from_channel oc_r2) in
+        print_z3result oc z3res;
+        output_string oc "\n\n";
+        (* 充足可能か調べる *)
+        output_string oc "(check-sat)\n";
+        output_string oc "(get-model)\n";
+        close_out oc;
+        (* output_string oc "(get-unsat-core)\n"; *)
+        let _ = Sys.command (Format.sprintf "z3 experiment/out_fv.smt2 > experiment/result") in
+        Printf.printf "fv fin ";
+        let ic = open_in "experiment/result" in
+        (* 最初の行を読み取る *)
+        let first_line = input_line ic in
+        (* ファイルを閉じる *)
+        close_in ic;
+        (* 比較して結果を出力 *)
+        if first_line = "sat" then 
+          (Printf.printf "sat ";
+          let end_time = Unix.gettimeofday () in
+          Printf.printf "time: %fs\n\027[32m%d/%d of the functions finished\027[0m\n\n" (end_time -. start_time) (List.length all_cs - fun_num) (List.length all_cs);
+          let _ = Sys.command (Format.sprintf "cat experiment/result >> %s" result_path) in
+          continue := false)
+        else 
+          (
+          Printf.printf "unsat " ;
+          let end_time = Unix.gettimeofday () in
+          Printf.printf "time: %fs\n\n" (end_time -. start_time);
+          let oc = open_out "experiment/out_cexample.smt2" in
+          print_idx oc fun_num all_cs;
+          printConstrRandInt oc fun_num all_cs;
+          List.iter (fun x -> output_string oc (Format.asprintf "(declare-fun %s () Int)\n" x)) fvs;
+          print_cexample oc smtlibs z3res;
+          output_string oc "(check-sat)\n";
+          (* 充足可能な場合に具体的な値を取得 *)
+          output_string oc "(get-model)\n";
+          close_out oc;
+          flush stdout;
+          let _ = Sys.command "z3 experiment/out_cexample.smt2 > experiment/result_cexample" in
+          Cexample.create_cexapmle ();
+          flush stdout;
+          Printf.printf "cex fin ";
+          ))
+    done;
+    flush stdout;
+    main_int_declare_annotated all_cs (fun_num - 1) result_path
+
+let generate_constrs_annotated file = 
+  let oc = open_in file in
+  let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
+  let program = subst_arg_name program in 
+  close_in oc;
+  let (fdefs, _) = program in
+  let fun_num = List.length fdefs in 
+  infer_prog_simpleTy program;
+  (* ASTの精緻化 *)
+  let elaborate_program = elaborate_prog program in
+  (* 制約収集 *)
+  
+  let all_constrs = collect_program_own_constraints elaborate_program in 
+
+  (* let oc1 = open_out "experiment/out_int.smt2" in *)
+  (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
+  let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file)) in
+  main_int_declare_annotated all_constrs fun_num result_path;
+  (* close_out oc1; *)
+  (* (* 所有権計算に必要なsmtlibでのassert式の書き出しと
+  ヒューリスティクスによるfor all付きの変数の整数値への具体化 *) 
+  main_int_smtlibs oc1 all_constrs false false fun_num iter;
+  (* 充足可能か調べる *)
+  output_string oc1 "(check-sat-using psmt)\n";
+  (* 充足可能な場合に具体的な値を取得 *)
+  output_string oc1 "(get-model)\n";
+  close_out oc1 *)

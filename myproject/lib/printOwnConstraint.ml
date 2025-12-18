@@ -368,7 +368,7 @@ let rec print_smtlibs oc smtlibs is_unconcrete unsat_core_flag num =
         if fvs = [] then
           (output_string oc "(assert (! ";
           (* smtlibの制約部分の記述 *)
-            print_smtlib oc sl true [] num; 
+            print_smtlib oc sl [] num; 
             output_string oc (" :named sl" ^ (string_of_int !serial_num) ^ "))\n");
             serial_num := !serial_num + 1)
         else
@@ -378,12 +378,59 @@ let rec print_smtlibs oc smtlibs is_unconcrete unsat_core_flag num =
           List.iter 
           (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " (iter+1) fv fv (iter+1)))
           fvs;
-          print_smtlib oc sl false [] num; 
+          print_smtlib oc sl [] num; 
           List.iter 
           (fun _ -> output_string oc (asprintf "))" ))
           fvs;
           output_string oc (") :named sl" ^ (string_of_int !serial_num) ^ "))\n");
           serial_num := !serial_num + 1)) *)
+      smtlibs
+and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
+  if is_unconcrete then
+    List.iter (print_smtlibs_sub oc unsat_core_flag num) smtlibs
+  else
+    let rec range m n =
+      if m > n then []
+      else m :: range (m + 1) n
+    in
+    let rec generate_combinations fvs int_range =
+      match fvs with
+      | [] -> [[]]
+      | hd :: tl ->
+        let combinations_hd = List.map (fun x -> (hd, x)) int_range in
+        let combinations_tl = generate_combinations tl int_range in
+        List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
+    in
+    List.iter
+      (fun sl -> 
+        let idxs = list_to_set (idx_of_smtlib sl) [] in
+        let fvs = list_to_set (fvs_of_smtlib sl @ idxs) [] in
+        if fvs = [] then
+          (output_string oc "(assert ";
+          (* smtlibの制約部分の記述 *)
+            print_smtlib oc sl [] num; 
+            output_string oc ( ")\n");)
+        else
+          (* (output_string oc "(assert (forall (";
+          output_string oc (make_args fvs);
+          output_string oc ") ";
+          List.iter 
+          (fun fv -> output_string oc (asprintf "(=> (<= -%d %s) (=> (<= %s %d) " (iter+1) fv fv (iter+1)))
+          fvs;
+          print_smtlib oc sl [] num; 
+          List.iter 
+          (fun _ -> output_string oc (asprintf "))" ))
+          fvs;
+          output_string oc ("))\n");)) *)
+          let comb = generate_combinations fvs (range (-iter) iter) in
+          List.iter (fun map -> 
+          (output_string oc "(assert ";
+          (* smtlibの制約部分の記述 *)
+            print_smtlib oc sl map num; 
+            output_string oc ( ")\n");)
+            )comb;
+            output_string oc "\n";
+            )          
       smtlibs
 and print_smtlibs_sub oc unsat_core_flag num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
