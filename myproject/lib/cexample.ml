@@ -29,7 +29,7 @@ let create_cexapmle () =
   let oc_r = open_in "experiment/result_cexample" in
   let oc_w = open_out_gen [Open_append; Open_creat] 0o666 "experiment/result_cex_all" in
   (* main_intで得られた所有権関数の係数の候補 *)
-  let z3res = Z3Parser.result Z3Lexer.read (Lexing.from_channel oc_r) in
+  let z3res = Z3Parser.results Z3Lexer.read (Lexing.from_channel oc_r) in
   close_in oc_r;
   let rec create_cexapmle_sub z3res =
     match z3res with
