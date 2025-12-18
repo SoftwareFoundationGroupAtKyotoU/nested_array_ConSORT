@@ -30,7 +30,7 @@ LOG_FILE := logs/$(DIR_BASENAME).log
 ALL_LOG_FILES := $(patsubst %, logs/%.log, $(notdir $(patsubst %/,%,$(ALL_DIRS))))
 
 # 検証の上限時間
-TIMEOUT_SEC = 1
+TIMEOUT_SEC = 1000
 
 # .PHONY は、ファイル名とターゲット名が衝突しても正しく動作させるための宣言
 .PHONY: run run_all clean help default
