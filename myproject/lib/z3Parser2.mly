@@ -15,10 +15,20 @@
 %token MINUS DIV UNDER
 %token EQ0 NON0
 %token O C D L H I
+%token EOF
 
-%start result
-%type <Z3Syntax2.result> result
+%start results
+%type <Z3Syntax2.results> results
 %%
+
+results:
+  | list_of_results EOF  { $1 }
+;
+
+list_of_results:
+  | result                { $1 }
+  | result list_of_results { $1 @ $2 }
+;
 
 result:
   | SAT LPAREN defines RPAREN { $3 }

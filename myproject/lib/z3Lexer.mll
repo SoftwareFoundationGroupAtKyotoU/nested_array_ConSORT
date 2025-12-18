@@ -31,4 +31,5 @@ rule read =
   | '-' { MINUS }
   | '/' { DIV }
   | id { ID (Lexing.lexeme lexbuf) }
+  | eof { EOF }
   | _ { failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }

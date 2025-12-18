@@ -20,7 +20,7 @@ type ownership =
   | IHigh of int * id * id * pos * int * value
   | ILow of int * id * id * pos * int * value
 
-type result = ownership list
+type results = ownership list
 
 (* let rec print_ownerships oc ownerships = 
   List.iter (print_ownership oc) ownerships

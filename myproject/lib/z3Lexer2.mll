@@ -36,5 +36,5 @@ rule read =
   | int { let i = Z.of_string @@ Lexing.lexeme lexbuf in  INT i }
   | float { let f = float_of_string @@ Lexing.lexeme lexbuf in FLOAT f }
   | id { ID (Lexing.lexeme lexbuf) }
-  (* | eof { EOF } *)
+  | eof { EOF }
   | _ { failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }

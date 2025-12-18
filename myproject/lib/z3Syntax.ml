@@ -19,7 +19,7 @@ let pp_value fmt value =
 
 type define = id * z3_type * value
 
-type result = define list
+type results = define list
 
 let serial_num = ref 0
 

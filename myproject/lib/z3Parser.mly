@@ -12,10 +12,20 @@
 
 // structure
 %token SAT DEF LPAREN RPAREN
+%token EOF
 
-%start result
-%type <Z3Syntax.result> result
+%start results
+%type <Z3Syntax.results> results
 %%
+
+results:
+  | list_of_results EOF  { $1 }
+;
+
+list_of_results:
+  | result                { $1 }
+  | result list_of_results { $1 @ $2 }
+;
 
 result:
   | SAT LPAREN defines RPAREN { $3 }
