@@ -51,6 +51,9 @@ open SmtlibSyntax
 // others # | (end_of_file)
 %token HASH BAR EOF
 
+%nonassoc IN ELSE
+%right SEMI
+
 %start toplevel
 %type <Syntax.program> toplevel 
 %%(*?*)
@@ -151,10 +154,6 @@ LetExpr :
   | LET IMMUT x=ID EQ y=ID PLUS e1=Expr IN e2 = Expr { LetImmutAddPtrExp (x, y, e1, e2) }
   | LET x=ID EQ ALLOC e1=Expr COLON ty=Ftype IN e2=Expr { LetAllocExp(x, e1, ty, e2) }
 
-SimpleTyExpr :
-    INT { SInt }
-  | ty=SimpleTyExpr REF { SRef (ty) }
-
 PlusMinusExpr :
   | x=PlusMinusExpr PLUS y=MultDivExpr { PlusExp(x, y) }
   | x=PlusMinusExpr MINUS y=MultDivExpr { MinusExp(x, y) }
@@ -218,4 +217,4 @@ DerefExpr :
 
 ID :
   | x=ID_NAME { x }
-  | NU { "v" } 
+  // | NU { "v" } 
