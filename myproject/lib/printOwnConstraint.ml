@@ -8,6 +8,9 @@ open Cexample
 
 (* 代入，読み出しにより変則的な所有権の形をしているidのリスト *)
 let eq0_list : id list ref = ref []
+
+(* z3に書き出す時にassertに名前を付ける用
+unsatの時にどの制約同士が矛盾してるかを出してくれる *)
 let serial_num = ref 0
 
   (* 文字列の末尾の削除 *)
@@ -422,7 +425,7 @@ and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
           (fun _ -> output_string oc (asprintf "))" ))
           fvs;
           output_string oc ("))\n");)) *)
-          let comb = generate_combinations fvs (range (-iter) iter) in
+          let comb = generate_combinations fvs (range (-iter + 1) (iter+1)) in
           List.iter (fun map -> 
           (output_string oc "(assert ";
           (* smtlibの制約部分の記述 *)
