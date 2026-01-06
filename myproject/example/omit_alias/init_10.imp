@@ -1,0 +1,39 @@
+init(n, p) 
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 0;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    1
+  }
+}
+
+verify(m, p)
+[ <#m: int, p: int ref(0, m- 1, 1.)> -> 
+  <#m: int, p: int ref(0, m- 1, 1.) | int> ]
+{
+  if m <= 0 then {
+    1
+  } else {
+    let y = *p in
+    assert(y = 0);
+    let q = p + 1 in
+    let l = m - 1 in
+    let d = verify(l, q) in
+    1
+  }
+}
+
+{
+  let p = alloc 10 : int ref in
+  let m = 10 in
+  let d = init(m, p) in
+  let d2 = verify(m, p) in
+  ()
+}
+/* pass */

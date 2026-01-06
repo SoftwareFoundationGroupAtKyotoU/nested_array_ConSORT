@@ -1,0 +1,73 @@
+copyarray(n, val, p, q)
+[ <#n: int, val: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, val: int, p: int ref(0, n - 1, 1.), q: 
+  int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, val, p1, q1) in
+    1
+  }
+}
+
+swaprow(l, n1, n2, pp)
+[ <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)> -> 
+  <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)| int> ]
+{
+  if l > 0 && n1 >= 0 && n1 < l && n2 >= 0 && n2 < l then {
+    let ppShift1 = pp + n1 in
+    let row1 = *ppShift1 in
+    let dummy1 = alloc l : int ref in
+    let d = copyarray(l, n1, row1, dummy1) in
+
+    let ppShift2 = pp + n2 in
+    let row2 = *ppShift2 in
+    let dummy2 = alloc l : int ref in
+    let d2 = copyarray(l, n2, row2, dummy2) in
+    let d3 = copyarray(l, n1, dummy1, row2) in
+
+    let ppShift3 = pp + n1 in
+    let row3 = *ppShift3 in
+    let d4 = copyarray(l, n2, dummy2, row3) in
+
+    1
+
+  } else { 0 }
+}
+
+
+{
+  let unde = _ : (unde >= 2) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let d = swaprow(unde, zero, one, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 0);
+  assert(mat1[0][ind1] = 1);
+  1
+}
+
+/*{
+  let unde = _ : (unde > 5) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 1);
+  assert(mat1[0][ind1] = 0);
+  1
+}*/
+
+
+/* fail
+*/

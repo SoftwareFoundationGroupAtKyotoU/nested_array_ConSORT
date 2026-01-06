@@ -1,0 +1,62 @@
+init(n, m, len, ph, q)
+[ <#n: int, #len: int, #m: int, ph: int ref(0, n- 1, 1.), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < len)) and (i2 >= 0)) and (i2 < n)) (v = ((len - n) + i2)))} ref(0, len - 1, 1.) ref(0, n - 1, 1.) > -> 
+  <#n: int, #len: int, #m: int, 
+  ph: 
+  int
+  /*{v:int| (=> ((((m >= 0) and (m < len)) and (i1 >= 0)) and (i1 < n)) (v = ((len - n) + i1)))} */
+  ref(0, n- 1, 1.), 
+  q: int ref(0, len - 1, 1.) ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 || m >= len then {
+    1
+  } else {
+    let qin = *q in
+    let qinShift = qin + m in
+    let x = *qinShift in
+    ph := x;
+    let phShift = ph + 1 in
+    let qShift = q + 1 in
+    let nextn = n - 1 in
+    let d = init(nextn, len, m, phShift, qShift) in
+    1
+  }
+}
+
+trans(n1, n2, pp, qq)
+[ <#n1: int, #n2: int,  
+pp: int ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
+qq: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, 
+pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n1)) (v = i2))} ref(0, n1 - 1, 1.) ref(0, n1- 1, 1.), 
+qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+{
+  if n2 <= 0 then {
+    1
+  } else {
+    let arr = alloc n1 : int ref in
+    let shift = n1 - n2 in
+    let d = init(n1, n1, shift, arr, pp) in
+    qq := arr;
+    let qqShift = qq + 1 in
+    let m = n2 - 1 in
+    let d2 = trans(n1, m, pp, qqShift) in
+    1
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = i2)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let mat2 = alloc unde : int ref ref in
+  let d = trans(unde, unde, mat1, mat2) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < unde) in
+  /*assert(0 = 0);*/
+  assert(mat1[ind1][ind2] = mat2[ind2][ind1]);
+  1
+}
+
+/*
+fail
+*/

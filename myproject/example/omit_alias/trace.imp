@@ -1,0 +1,65 @@
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, 
+    pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    0
+  } else {
+    0
+  }
+}
+
+
+trace(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int > ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let qin = *q in
+    let m = n1 - n2 in
+    let qinShift = qin + m in
+    let s = *qinShift in
+    let q2 = q + 1 in
+    let m2 = n2 - 1 in
+    let y = trace(n1, m2, q2) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let d1 = initMatrix(ten, ten, mat1) in
+  let d2 = trace(ten, ten, mat1) in
+  assert(d2 >= 0);
+  1
+}
+
+/*
+fail
+*/

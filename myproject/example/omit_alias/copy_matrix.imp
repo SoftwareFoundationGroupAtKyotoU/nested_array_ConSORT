@@ -1,0 +1,86 @@
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := 0;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 0))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    0
+  } else {
+    0
+  }
+}
+
+copyarray(n, ph, q)
+[ <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) > -> 
+  <#n: int, ph: int ref(0, n- 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *ph in
+    q := x;
+    let p1 = ph + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, p1, q1) in
+    1
+  }
+}
+
+copymatrix(n1, n2, pp, qq)
+[ <#n1: int, #n2: int,  
+pp: int ref(0, n1 - 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, 
+pp: int ref(0, n1 - 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
+{
+  if n2 <= 0 then {
+    1
+  } else {
+    let x = *pp in
+    let y = alloc n1 : int ref in
+    let d = copyarray(n1, x, y) in
+    qq := y;
+    let p1 = pp + 1 in
+    let q1 = qq + 1 in
+    let l = n2 - 1 in
+    let d2 = copymatrix(n1, l, p1, q1) in
+    1
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let mat2 = alloc ten : int ref ref in
+  let d1 = initMatrix(ten, ten, mat1) in
+  /*assert(mat1[0][0] = 0);*/
+  let d2 = copymatrix(ten, ten, mat1, mat2) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < ten) in
+  assert(mat2[ind2][ind1] = 0);
+  /*assert(mat1[0][0] = 0);*/
+  1
+}
+
+/* pass */

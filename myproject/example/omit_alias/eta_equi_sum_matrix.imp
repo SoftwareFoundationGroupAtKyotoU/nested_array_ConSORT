@@ -1,0 +1,81 @@
+
+sum(plen, p) 
+[ <#plen: int, p: int ref(0, plen - 1, 0.1)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 0.1) 
+  | int> ]
+{
+  if plen <= 0 then { 0 } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    y
+  }
+}
+
+sumback(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 0.1)> -> 
+  <#n: int, p: int ref(0, n - 1, 0.1) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let m = n - 1 in
+    let q = p + m in
+    let y = *q in
+    let s = sumback(m, p) in
+    let z = y + s in
+    z
+  } 
+}
+
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
+  | {v:int | ((=> ((n1 > 0) and (n2 > 0)) (v = (n1 * n2))) and (=> (not ((n1 > 0) and (n2 > 0))) (v = 0)))}> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sum(n1, qin) in
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+sumBackMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, 
+q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sumback(n1, qin) in
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = 1)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let immut mat2 = mat1 + 0 in
+  let d2 = sumMatrix(unde, unde, mat1) in
+  let d3 = sumBackMatrix(unde, unde, mat2) in
+  assert(d2 = d3);
+  1
+}
+
+/*
+pass
+*/

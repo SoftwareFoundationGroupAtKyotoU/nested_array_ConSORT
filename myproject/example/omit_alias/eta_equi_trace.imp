@@ -1,0 +1,53 @@
+
+trace(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let qin = *q in
+    let m = n1 - n2 in
+    let qinShift = qin + m in
+    let s = *qinShift in
+    assert(s>=0);
+    let q2 = q + 1 in
+    let m2 = n2 - 1 in
+    let y = trace(n1, m2, q2) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+traceback(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let shift = n2 - 1 in
+    let qshift = q + shift in
+    let qin = *qshift in
+    let qinShift = qin + shift in
+    let s = *qinShift in
+    assert(s>=0);
+    let y = traceback(n1, shift, q) in
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : {v:int | (v = 0)} ref(0, ten - 1, 1.) ref(0, ten - 1, 1.) in
+  let immut mat2 = mat1 + 0 in
+  let d1 = trace(ten, ten, mat1) in
+  let d2 = traceback(ten, ten, mat2) in
+  assert(d1 = d2);
+  1
+}
+
+/*
+fail
+*/

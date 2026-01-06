@@ -1,0 +1,74 @@
+copyarray(n, p, q)
+[ <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, p1, q1) in
+    1
+  }
+}
+
+abs(m)
+[ <#m: int> -> <#m: int | int> ]
+{
+  if m >= 0 then {
+    m
+  } else {
+    let k = -m in
+    k
+  }
+}
+
+initx(n, x, p) 
+[ <#n: int, x: int, p: int ref> -> 
+  <#n: int, x: int, p: {v:int | (=> ((0 <= i1) and (i1 < n)) (v = x))} ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = initx(m, x, q) in
+    1
+  }
+}
+
+verify(n, p)
+[ <#n: int, p: int ref> -> 
+  <#n: int, p: int ref | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let y = *p in
+    assert(y >= 0);
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = verify(m, q) in
+    1
+  }
+}
+
+{
+  let p = alloc 1000 : int ref in
+  let q = alloc 1000 : int ref in
+  let m = 1000 in
+  let rand = _ in
+  let z = abs(rand) in
+  let d1 = initx(m, z, p) in
+  let d2 = copyarray(m, p, q) in
+  let d3 = verify(m, q) in
+  ()
+}
+
+/*
+pass
+*/

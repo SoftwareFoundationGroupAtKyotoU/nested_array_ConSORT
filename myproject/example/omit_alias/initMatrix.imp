@@ -1,0 +1,43 @@
+init(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    0
+  } else {
+    0
+  }
+}
+
+{
+  let x = _ : (x > 0) in
+  let p = alloc x : int ref ref in
+  let d = initMatrix(x, x, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < x) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < x) in
+  assert(p[ind1][ind2] = 1);
+  1
+}
+
+/* pass */
