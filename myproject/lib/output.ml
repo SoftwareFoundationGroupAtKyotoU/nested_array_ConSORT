@@ -44,7 +44,7 @@ let rec main_cexample_declare oc all_cs fun_num z3res=
   print_cexample oc smtlibs z3res;
   output_string oc "\n"
 
-let main_cexample file =
+let main_cexample file insert_alias =
   let oc = open_in file in
   let oc_r2 = open_in "experiment/result_int" in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
@@ -56,7 +56,9 @@ let main_cexample file =
   let fun_num = List.length fdefs in 
   infer_prog_simpleTy program;
   (* ASTの精緻化 *)
-  let elaborate_program = elaborate_prog program in
+  let elaborate_program = 
+    if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+    else elaborate_prog @@ program in
   (* 制約収集 *)
   let all_constrs = collect_program_own_constraints elaborate_program in 
 
@@ -79,24 +81,25 @@ flag 現状使ってない
 fun_num 関数の通し番号
 iter 変数の具体化の範囲
 *)
-let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter = 
+let rec main_int_smtlibs oc all_cs is_unconcrete flag fun_num iter random_assignment= 
   if fun_num < 0 then 
     ()
   else
     (* n番目の関数を表す組，slsは準smtlib形式の制約のリスト，flagは制約の統合の仕方？ *)
     (let (var_locations, varown_count, fvs, smtlibs) = all_cs_to_smtlib all_cs flag fun_num in
     let smtlibs = if is_unconcrete then smtlibs else [SmtlibSyntax.Ands smtlibs] in
-    print_smtlibs oc smtlibs is_unconcrete false (-1) ;
+    (if random_assignment then print_smtlibs_iter oc smtlibs is_unconcrete false (-1) iter
+    else print_smtlibs oc smtlibs is_unconcrete false (-1) );
     print_lim oc var_locations fun_num;
     print_lim_begin_and_end oc varown_count fvs fun_num;
     (* 関数の制約の間は二行開ける *)
     output_string oc "\n\n";
     (* 次の関数の制約出力へ *)
-    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1) iter)
+    main_int_smtlibs oc all_cs is_unconcrete flag (fun_num-1) iter random_assignment)
 
 (** First phase of the ownershipip inference:
     Generates n_1, ..., n_k and checks the validity of \exists y . phi(n_1, y) /\ ... /\ phi(n_k, y) *)
-let generate_constrs file iter = 
+let generate_constrs file iter insert_alias random_assignment= 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   let program = subst_arg_name program in 
@@ -105,7 +108,9 @@ let generate_constrs file iter =
   let fun_num = List.length fdefs in 
   infer_prog_simpleTy program;
   (* ASTの精緻化 *)
-  let elaborate_program = elaborate_prog program in
+  let elaborate_program = 
+    if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+    else elaborate_prog @@ program in
   (* 制約収集 *)
   let all_constrs = collect_program_own_constraints elaborate_program in 
 
@@ -114,7 +119,7 @@ let generate_constrs file iter =
   main_int_declare oc1 all_constrs fun_num;
   (* 所有権計算に必要なsmtlibでのassert式の書き出しと
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *) 
-  main_int_smtlibs oc1 all_constrs false false fun_num iter;
+  main_int_smtlibs oc1 all_constrs false false fun_num iter random_assignment;
   (* 充足可能か調べる *)
   output_string oc1 "(check-sat-using psmt)\n";
   (* 充足可能な場合に具体的な値を取得 *)
@@ -123,7 +128,7 @@ let generate_constrs file iter =
 
 (** Second phase of the ownershipip inference:
     Checks the validity of \forall x phi(x, a), where a is the witeness for \exist y obtasined in the first phase. *)
-let main_fv file =
+let main_fv file insert_alias =
   let oc_r1 = open_in file  in
   let oc_r2 = open_in "experiment/result_int" in
   (* プログラムの読み出し *)
@@ -135,7 +140,9 @@ let main_fv file =
   let (fdefs, _) = program in
   let n = List.length fdefs in 
   infer_prog_simpleTy program;
-  let elaborate_program = elaborate_prog program in
+  let elaborate_program = 
+    if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+    else elaborate_prog @@ program in
   let all_constrs = collect_program_own_constraints elaborate_program in 
   let oc = open_out "experiment/out_fv.smt2" in
 
@@ -145,7 +152,7 @@ let main_fv file =
   main_int_declare oc all_constrs n;
   (* 所有権計算に必要なsmtlibでのassert式の書き出し
   ヒューリスティクスを使わず完全な形の論理式で制約を表す． *)
-  main_int_smtlibs oc all_constrs true false n 0;
+  main_int_smtlibs oc all_constrs true false n 0 false;
   (* main_intで得られた所有権の係数をassert形式で表現 *)
   print_z3result oc z3res;
   output_string oc "\n\n";
@@ -168,7 +175,7 @@ let rec main_sat_ans_sub oc all_cs fun_num z3_res total_fun_num =
     (* 次の関数の所有権をsmtlib形式で宣言 *)
     main_sat_ans_sub oc all_cs (fun_num-1) z3_res total_fun_num)
 
-let main_sat_ans file =
+let main_sat_ans file insert_alias =
   let oc_r1 = open_in file  in
   let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file)) in
     let oc_r2 = open_in result_path in
@@ -181,7 +188,9 @@ let main_sat_ans file =
     let (fdefs, _) = program in
     let n = List.length fdefs in 
     infer_prog_simpleTy program;
-    let elaborate_program = elaborate_prog program in
+    let elaborate_program = 
+      if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+      else elaborate_prog @@ program in
     let all_constrs = collect_program_own_constraints elaborate_program in 
     let oc = open_out "experiment/out_sat_ans.smt2" in
   
@@ -248,7 +257,7 @@ let rec main_chc_sub oc z3res all_chcs unsat_core_flag n =
     main_chc_sub oc z3res all_chcs unsat_core_flag (n-1))
 
 (** Main procedure for the refinement inference *)
-let main_chc file file2 unsat_core_flag =
+let main_chc file file2 unsat_core_flag insert_alias =
   let oc_r1 = open_in file  in
   let ic = open_in file2 in
   let z3res = Z3Parser2.results Z3Lexer2.read (Lexing.from_channel ic) in
@@ -260,8 +269,9 @@ let main_chc file file2 unsat_core_flag =
   let n = List.length fdefs in 
   infer_prog_simpleTy program;
   (* 関数名，CHCの制約を表すデータ型，最後に評価されうる式の組 *)
-  let all_chcs = chc_collect_prog (elaborate_prog program) in 
-
+  let all_chcs = 
+    if insert_alias then chc_collect_prog @@ InsertAlias.insert_alias @@ elaborate_prog @@ program 
+    else chc_collect_prog @@ elaborate_prog @@ program in
   let oc = open_out "experiment/out_chc.smt2" in
   output_string oc "(set-logic HORN)\n\n\n";
   output_string oc "(set-option :produce-unsat-cores true)\n";
@@ -273,13 +283,15 @@ let main_chc file file2 unsat_core_flag =
   close_out oc
   
 
-let print_program file = 
+let print_program file insert_alias = 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   let program = subst_arg_name program in
   close_in oc;
   infer_prog_simpleTy program;
-  let (fdef, main) = elaborate_prog program in
+  let (fdef, main) = 
+      if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+      else elaborate_prog @@ program in
   let _ = List.map (fun (_, _, _, exp) -> Util.print_exp exp; print_string "\n\n") fdef in
   Util.print_exp main
   (* let oc = open_in file in
@@ -289,12 +301,13 @@ let print_program file =
   infer_prog_simpleTy program;
   Util.print_exp elaborate_program *)
 
-let rec main_int_declare_annotated all_cs fun_num result_path = 
+let rec main_int_declare_annotated all_cs fun_num result_path random_assignment= 
   let start_time = Unix.gettimeofday () in
   if fun_num < 0 then 
     ()
   else
     let continue = ref true in
+    let serial_num = ref 1 in
     while !continue do
       (* Unix.sleep 1; *)
       let oc = open_out "experiment/out_int.smt2" in
@@ -306,7 +319,8 @@ let rec main_int_declare_annotated all_cs fun_num result_path =
       (* 関数ブロックごとに一行区切る *)
       output_string oc "\n";
       let smtlibs = [SmtlibSyntax.Ands smtlibs] in
-      print_smtlibs oc smtlibs false false (-1);
+      (if random_assignment then (print_smtlibs_iter oc smtlibs false false (-1) !serial_num; serial_num := !serial_num + 1;) 
+      else print_smtlibs oc smtlibs false false (-1));
       print_lim oc var_locations fun_num;
       print_lim_begin_and_end oc varown_count fvs fun_num;
       (* 関数の制約の間は二行開ける *)
@@ -392,9 +406,9 @@ let rec main_int_declare_annotated all_cs fun_num result_path =
           ))
     done;
     flush stdout;
-    main_int_declare_annotated all_cs (fun_num - 1) result_path
+    main_int_declare_annotated all_cs (fun_num - 1) result_path random_assignment
 
-let generate_constrs_annotated file = 
+let generate_constrs_annotated file insert_alias random_assignment= 
   let oc = open_in file in
   let program = Parser.toplevel Lexer.main (Lexing.from_channel oc) in
   let program = subst_arg_name program in 
@@ -403,7 +417,10 @@ let generate_constrs_annotated file =
   let fun_num = List.length fdefs in 
   infer_prog_simpleTy program;
   (* ASTの精緻化 *)
-  let elaborate_program = elaborate_prog program in
+  
+  let elaborate_program = 
+    if insert_alias then InsertAlias.insert_alias @@ elaborate_prog @@ program 
+    else elaborate_prog @@ program in
   (* 制約収集 *)
   
   let all_constrs = collect_program_own_constraints elaborate_program in 
@@ -411,7 +428,7 @@ let generate_constrs_annotated file =
   (* let oc1 = open_out "experiment/out_int.smt2" in *)
   (* 所有権計算に必要なsmtlibでの変数宣言の書き出し *)
   let result_path = (Format.sprintf "experiment/own_result/result_%s" (Filename.basename file)) in
-  main_int_declare_annotated all_constrs fun_num result_path;
+  main_int_declare_annotated all_constrs fun_num result_path random_assignment;
   (* close_out oc1; *)
   (* (* 所有権計算に必要なsmtlibでのassert式の書き出しと
   ヒューリスティクスによるfor all付きの変数の整数値への具体化 *) 

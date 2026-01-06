@@ -15,13 +15,15 @@
 ALL_DIRS = \
 	./example/positive_example \
 	./example/negative_example \
-	./example/much_time_example
+	./example/much_time_example \
+	./example/omit_alias
 
 # デフォルトで実行するディレクトリ (make run のみの場合)
 DEFAULT_DIR = ./example/positive_example
 DIR ?= $(DEFAULT_DIR)
 
-# ---- 内部変数 (変更不要) ----
+OPTS ?=
+
 # DIRからディレクトリ名を取得し、ログファイル名を生成 (例: ./a/b -> logs/b.log)
 DIR_BASENAME := $(notdir $(patsubst %/,%,$(DIR)))
 LOG_FILE := logs/$(DIR_BASENAME).log
@@ -54,7 +56,7 @@ run_all: $(ALL_LOG_FILES)
 $(ALL_LOG_FILES):
 	@# このルールは 'run_all' ターゲットから呼び出される
 	@# 'make' コマンドを再帰的に呼び出すことで、単一実行のロジックを再利用する
-	$(MAKE) run DIR=./example/$(patsubst %.log,%,$(notdir $@))
+	$(MAKE) run DIR=./example/$(patsubst %.log,%,$(notdir $@)) OPTS="$(OPTS)"
 
 # 単一のディレクトリを実行するターゲット
 run:
@@ -70,7 +72,7 @@ run:
 	    for file in $(DIR)/*.imp; do \
 	        if [ -f "$$file" ]; then \
 	            echo "--- Executing for: $$file ---"; \
-	            gtimeout $(TIMEOUT_SEC)s dune exec myproject "$$file" unsat-core=false; \
+	            gtimeout $(TIMEOUT_SEC)s dune exec myproject -- "$$file" $(OPTS) -unsat-core false; \
 	            EXIT_CODE=$$?; \
                 if [ $$EXIT_CODE -eq 124 ]; then \
                     echo "!!! TIME LIMIT EXCEEDED ($(TIMEOUT_SEC) s) - Skipped !!!"; \
