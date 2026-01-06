@@ -17,7 +17,7 @@ init(pin, p)
 initMatrix(l, k, pp)
 [ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
     <#l: int, #k: int, 
-    pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 0))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
 { 
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in

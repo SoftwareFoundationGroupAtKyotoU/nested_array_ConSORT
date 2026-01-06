@@ -1,7 +1,7 @@
 
 trace(n1, n2, q)
-[ <#n1: int, #n2: int, q: int ref(0, n1- 1, ) ref(0, n2- 1, )> -> 
-  <#n1: int, #n2: int, q: int ref(0, n1- 1, ) ref(0, n2- 1, )| int> ]
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
 {
   if n1 > 0 && n2 > 0 && n1 >= n2 then {
     let qin = *q in
@@ -23,8 +23,8 @@ trace(n1, n2, q)
 }
 
 traceback(n1, n2, q)
-[ <#n1: int, #n2: int, q: int ref(0, n1- 1, ) ref(0, n2- 1, )> -> 
-  <#n1: int, #n2: int, q: int ref(0, n1- 1, ) ref(0, n2- 1, )| int> ]
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 0.1) ref(0, n2- 1, 0.1)| int> ]
 {
   if n1 > 0 && n2 > 0 && n1 >= n2 then {
     let shift = n2 - 1 in

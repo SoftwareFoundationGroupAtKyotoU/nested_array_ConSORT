@@ -41,6 +41,11 @@ addmatrix(n1, n2, pp, qq, rr)
     alias(rr1 = rr + 1);
     alias(qq1 = qq + 1);
     alias(pp1 = pp + 1);
+    let in1 = _ : (in1 >= 0 && in1 < n1) in
+    let in2 = _ : (in2 >= 0 && in2 < n2) in
+    assert(pp[in2][in1] = 1);
+    assert(qq[in2][in1] = 1);
+    assert(rr[in2][in1] = 2);
     1
   } else {
     1

@@ -1,7 +1,7 @@
 
 /*sum(plen, p) 
-[ <#plen: int, p: {v:int| (=> ((i1 >= 0) and (i1 < plen) ) (v = 1))} ref(0, plen - 1, )> -> 
-  <#plen: int, p: int ref(0, plen - 1, ) 
+[ <#plen: int, p: {v:int| (=> ((i1 >= 0) and (i1 < plen) ) (v = 1))} ref(0, plen - 1, 0.1)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 0.1) 
   | {v:int | ((=> (plen > 0) (v = plen)) and (=> (plen <= 0) (v = 0)))}> ]
 {
   if plen <= 0 then { 0 } else {
@@ -16,8 +16,8 @@
 }*/
 
 sumback(n, p) 
-[ <#n: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = 1))} ref(0, n - 1, )> -> 
-  <#n: int, p: int ref(0, n - 1, ) | int> ]
+[ <#n: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = 1))} ref(0, n - 1, 0.1)> -> 
+  <#n: int, p: int ref(0, n - 1, 0.1) | int> ]
 {
   if n <= 0 then {
     0
@@ -33,8 +33,8 @@ sumback(n, p)
 }
 
 sumMatrix(n1, n2, q) 
-[ <#n1: int, #n2: int, q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1,) ref(0, n2 - 1, ) > -> 
-  <#n1: int, #n2: int, q: int ref(0 , n1- 1, ) ref(0, n2 - 1, ) 
+[ <#n1: int, #n2: int, q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
   | {v:int | ((=> ((n1 > 0) and (n2 > 0)) (v = (n1 * n2))) and (=> (not ((n1 > 0) and (n2 > 0))) (v = 0)))}> ]
 {
   if n1 > 0 && n2 > 0 then {
@@ -54,8 +54,8 @@ sumMatrix(n1, n2, q)
 
 sumBackMatrix(n1, n2, shift, q) 
 [ <#n1: int, #n2: int, #shift:int, 
-q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, ) ref(0, n2 - 1, ) > -> 
-  <#n1: int, #n2: int, #shift:int, q: int ref(0 , n1- 1, ) ref(0, n2 - 1, ) 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, #shift:int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
   | {v:int | ((=> ((((n1 > 0) and (n2 > 0)) and (n2 >= shift)) and (shift > 0)) (v = (n1 * shift))) 
   and (=> (not ((((n1 > 0) and (n2 > 0)) and (n2 >= shift)) and (shift > 0))) (v = 0)))}> ]
 {

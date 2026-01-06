@@ -1,6 +1,6 @@
 init(n, p) 
-[ <#n: int, p: int ref(0, n- 1, )> -> 
-  <#n: int, p: int ref(0, n- 1, ) | int> ]
+[ <#n: int, p: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.) | int> ]
 {
   if n <= 0 then {
     1
@@ -15,8 +15,8 @@ init(n, p)
 }
 
 verify(m, p)
-[ <#m: int, p: int ref(0, m- 1, )> -> 
-  <#m: int, p: int ref(0, m- 1, ) | int> ]
+[ <#m: int, p: int ref(0, m- 1, 1.)> -> 
+  <#m: int, p: int ref(0, m- 1, 1.) | int> ]
 {
   if m <= 0 then {
     1
