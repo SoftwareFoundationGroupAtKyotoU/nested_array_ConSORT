@@ -1,3 +1,5 @@
+(** Module for inserting alias based on pointer arithmetics *)
+
 open Syntax
 
 let rec insert_sub alias aliasId exp =
