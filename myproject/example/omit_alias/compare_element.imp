@@ -83,5 +83,5 @@ q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
 }
 
 /*
-pass
+ refinement ga 2 -> 0
 */

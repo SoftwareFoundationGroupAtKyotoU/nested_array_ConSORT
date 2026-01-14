@@ -35,6 +35,9 @@ addmatrix(n1, n2, pp, qq, rr)
     let d2 = addmatrix(n1, m, pp1, qq1, rr1) in
     let in1 = _ : (in1 >= 0 && in1 < n1) in
     let in2 = _ : (in2 >= 0 && in2 < n2) in
+    alias(rr1 = rr + 1);
+    alias(qq1 = qq + 1);
+    alias(pp1 = pp + 1);
     assert(pp[in2][in1] = 1);
     assert(qq[in2][in1] = 1);
     assert(rr[in2][in1] = 2);
@@ -59,4 +62,6 @@ addmatrix(n1, n2, pp, qq, rr)
 /*
 fail
 refinement ha fail
+8 -> 3
+ownershipだけなら8 -> 0にできるがrefinementに通らない
 */

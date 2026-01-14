@@ -25,12 +25,16 @@ swaprow(l, n1, n2, pp)
     let row1 = *ppShift1 in
     let dummy1 = alloc l : int ref in
     let d = copyarray(l, n1, row1, dummy1) in
+    alias(row1 = *ppShift1);
+    alias(ppShift1 = pp + n1);
 
     let ppShift2 = pp + n2 in
     let row2 = *ppShift2 in
     let dummy2 = alloc l : int ref in
     let d2 = copyarray(l, n2, row2, dummy2) in
     let d3 = copyarray(l, n1, dummy1, row2) in
+    alias(row2 = *ppShift2);
+    alias(ppShift2 = pp + n2);
 
     let ppShift3 = pp + n1 in
     let row3 = *ppShift3 in
@@ -69,5 +73,6 @@ swaprow(l, n1, n2, pp)
 }*/
 
 
-/* fail
+/* 
+8 -> 4
 */

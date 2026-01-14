@@ -9,6 +9,7 @@ trace(n1, n2, q)
     let qinShift = qin + m in
     let s = *qinShift in
     assert(s>=0);
+    alias(qinShift = qin + m);
     let q2 = q + 1 in
     let m2 = n2 - 1 in
     let y = trace(n1, m2, q2) in
@@ -30,6 +31,8 @@ traceback(n1, n2, q)
     let qinShift = qin + shift in
     let s = *qinShift in
     assert(s>=0);
+    alias(qinShift = qin + shift);
+    alias(qin = *qshift);
     let y = traceback(n1, shift, q) in
     let z = s + y in
     z
@@ -49,5 +52,5 @@ traceback(n1, n2, q)
 }
 
 /*
-fail
+6 -> 3
 */

@@ -77,5 +77,5 @@ q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > ->
 }
 
 /*
-pass
+refinement ga 6 -> 0
 */

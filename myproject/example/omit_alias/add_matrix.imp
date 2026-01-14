@@ -60,12 +60,15 @@ addmatrix(n1, n2, pp, qq, rr)
     let y = *qq in
     let z = alloc n1 : int ref in
     let d = addarray(n1, x, y, z) in
+    
     rr := z;
+    
     let pp1 = pp + 1 in
     let qq1 = qq + 1 in
     let rr1 = rr + 1 in
     let m = n2 - 1 in
     let d2 = addmatrix(n1, m, pp1, qq1, rr1) in
+    
     1
   } else {
     1
@@ -89,5 +92,5 @@ addmatrix(n1, n2, pp, qq, rr)
 }
 
 /* 
-fail
+alias ga 10 -> 0
 */

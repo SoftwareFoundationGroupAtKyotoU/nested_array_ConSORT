@@ -40,4 +40,4 @@ initMatrix(l, k, pp)
   1
 }
 
-/* pass */
+/* 2 -> 0 */

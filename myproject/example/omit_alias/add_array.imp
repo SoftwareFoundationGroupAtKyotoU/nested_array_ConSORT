@@ -74,4 +74,6 @@ verify(n, p)
   ()
 }
 
-/* refinement ga osoi */
+/* 
+alias ga 4 -> 0
+ */

@@ -36,4 +36,4 @@ verify(m, p)
   let d2 = verify(m, p) in
   ()
 }
-/* pass */
+/* 2 -> 0 */

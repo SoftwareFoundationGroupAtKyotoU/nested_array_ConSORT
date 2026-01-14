@@ -41,6 +41,7 @@ trace(n1, n2, q)
     let m = n1 - n2 in
     let qinShift = qin + m in
     let s = *qinShift in
+    alias(qinShift = qin + m);
     let q2 = q + 1 in
     let m2 = n2 - 1 in
     let y = trace(n1, m2, q2) in
@@ -61,5 +62,5 @@ trace(n1, n2, q)
 }
 
 /*
-fail
+5 -> 1 
 */
