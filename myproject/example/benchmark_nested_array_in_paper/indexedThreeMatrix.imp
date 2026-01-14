@@ -1,0 +1,266 @@
+init(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    /* q : A x1 . int ref [ 0, -2 + 1 * n] -> 1.0 */
+    /* p : A x1 . int ref [ 0, 0] -> 1.0 */
+
+    let m = n - 1 in
+    let d = init(m, q) in
+    /* q : A x1 . int ref [ 0, -2 + 1 * n] -> 1.0 */
+
+    alias(q=p+1);
+    /* q : A x1 . int ref [ 66, 66] -> 0.0 */
+    /* p : A x1 . int ref [ 0, -1 + 1 * n] -> 1.0 */
+
+    1
+  }
+}
+
+
+
+iM(k, pp)
+[ <#k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#k: int, pp: int ref(0 , k- i_2 - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc k : int ref in
+    /* r : A x1. int ref [ 0, -1 + 1 * k] -> 1.0 */
+
+    let d = init(k, r) in
+    /* r : A x1. int ref [ 0, -1 + 1 * k] -> 1.0 */
+
+    pp := r;
+    /* pp : A x2 . A x1 . 
+                  int ref x2 = 0 /\ [ 0, -1 + 1 * k] -> 1.0, x2 != 0 /\ [ 0, 0] -> 0.0
+                      ref [ 0, 0] -> 1.0, [ 1, -1 + 1 * k] -> 1.0 */
+    /* r : A x1 . int ref [ 66, 66] -> 0.0 */
+
+    let q = pp + 1 in
+    /* q : A x2 . A x1 . 
+           int ref [ 0, 0] -> 0.0 
+               ref [ 0, -2 + 1 * k] -> 1.0 */
+    /* pp : A x2 . A x1 . 
+              int ref [ 0, -1 + 1 * x2 + 1 * k] -> 1.0 
+                  ref [ 0, 0] -> 1.0 */
+
+    let m = k - 1 in
+    let d2 = iM(l, m, q) in
+    /* q : A x2 . A x1 . 
+            int ref [ 0, -2 + -1 * x2 + 1 * k] -> 1.0
+                ref [ 0, -2 + 1 * k] -> 1.0 */
+
+    alias(q=pp+1);
+    /* q : A x2 . A x1 . 
+            int ref [ 66, 66] -> 0.0
+                ref [ 2, 66] -> 0.0 */
+    /* pp : A x2 . A x1 . 
+            int ref [ 0, -1 + -1 * x2 + 1 * k] -> 1.0
+                ref [ 0, -1 + 1 * k] -> 1.0 */
+
+    0
+  } else {
+    0
+  }
+}
+
+iTm(m, ppp)
+[ <#m: int, ppp: int ref(0, 0, 0.) ref(0, 0, 0.) ref(0, m - 1, 1.)> ->
+    <#m: int, ppp: int ref(0 , m- i_2 - i_3 - 1, 1.) ref(0 , m- i_3 - 1, 1.) ref(0, m - 1, 1.) | int> ]
+{ 
+  if m > 0 then { 
+    let r = alloc m : int ref ref in
+    /* r : A x2 . A x1 . 
+            int ref [ 0, 0] -> 0.0
+                ref [ 0, -1 + 1 * m] -> 1.0 */
+
+    let d = iM(m, r) in
+    /* r : A x2 . A x1 . 
+            int ref [ 0, -1 + -1 * x2 + 1 * m] -> 1.0
+                ref [ 0, -1 + 1 * m] -> 1.0 */
+
+    ppp := r;
+    /* pp : A x3 . A x2 . A x1 . 
+            int ref x3 = 0 /\ [ 0, -1 + -1 * x2 + 1 * m] -> 1.0, x3 != 0 /\ [ 0, 0] -> 0.0
+                ref x3 = 0 /\ [ 0, -1 + 1 * m] -> 1.0, x3 != 0 /\ [ 0, 0] -> 0.0
+                ref [ 0, 0] -> 1.0, [ 1, -1 + 1 * m] -> 1.0 */
+    /* r : A x2 . A x1 . 
+            int ref [ 66, 66] -> 0.0, ref [ 66 + 1 * m, -136 + 1 * m] -> 0.0 */
+
+    let q = ppp + 1 in
+    /* q : A x3 . A x2 . A x1 .
+            int ref [ 0, 0] -> 0.0
+                ref [ 0, 0] -> 0.0
+                ref [ 0, -2 + 1 * m] -> 1.0 */
+    /* ppp : A x3 . A x2 . A x1 . 
+              int ref [ 0, -1 + -1 * x2 + 1 * m] -> 1.0
+                  ref [ 0, -1 + 1 * x3 + 1 * m] -> 1.0
+                  ref [ 0, 0] -> 1.0 */
+
+    let u = m - 1 in
+    let d2 = iTm(u, q) in
+    /* q : A x3 . A x2 . A x1 .
+            int ref [ 0, -2 + -1 * x2 + -1 * x3 + 1 * m] -> 1.0
+                ref [ 0, -2 + -1 * x3 + 1 * m] -> 1.0
+                ref [ 0, -2 + 1 * m] -> 1.0 */
+
+    alias(q=ppp+1);
+    /* q : A x3 . A x2 . A x1 .
+            int ref [ 66, 66] -> 0.0
+                ref [ 65 + 1 * m, -4] -> 0.0
+                ref [ 10, 66] -> 0.0 */
+    /* ppp : A x3 . A x2 . A x1 .
+            int ref [ 0, -1 + -1 * x2 + -1 * x3 + 1 * m] -> 1.0
+                ref [ 0, -1 + -1 * x3 + 1 * m] -> 1.0
+                ref [ 0, -1 + 1 * m] -> 1.0 */
+
+    0
+  } else {
+    0
+  }
+}
+
+{
+  let p = alloc 10 : int ref ref ref in
+  /* p : A x3 . A x2 . A x1 .
+          int ref [ 0, 0] -> 0.0
+              ref [ 0, 0] -> 0.0
+              ref [ 0, 9] -> 1.0 */
+
+  let ten = 10 in
+  let d = iTm(ten, p) in
+  /* p : A x3 . A x2 . A x1 .
+         int ref [ 0, 9 + -1 * x2 + -1 * x3] -> 1.0
+             ref [ 0, 9 + -1 * x3] -> 1.0
+             ref [ 0, 9] -> 1.0 */
+
+  let ind1 = _ : (ind1 >= 0 && ind1 < 10) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < 9 - ind1) in
+  let ind3 = _ : (ind3 >= 0 && ind3 < 9 - ind1 - ind2) in
+  assert(p[ind1][ind2][ind3] = 1);
+  ()
+}
+
+/*
+以下生データ
+./example/much_time_example/indexedThreeMatrix.imp ->
+fun_name:main 
+ownership
+  let p = alloc 10 : int ref ref ref in
+/* p : ref^3 [ 0, 9] -> 1.000000 */
+/* p : ref^2 [ 0, 0] -> 0.000000 */
+/* p : ref^1 [ 0, 0] -> 0.000000 */
+   let _ = iTm(10, p) in
+/* p : ref^3 [ 0, 9] -> 1.000000 */
+/* p : ref^2 [ 0, 9 + -1 * i_0_p_3th] -> 1.000000 */
+/* p : ref^1 [ 0, 9 + -1 * i_0_p_2th + -1 * i_0_p_3th] -> 1.000000 */
+ let ind1 = _ in 
+let ind2 = _ in 
+let ind3 = _ in 
+
+
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 66, 66] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initn] -> 1.000000 */
+}
+
+fun_name:iM 
+ownership
+iMpp b : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000
+iMpp b : ref^1 [ 0, 0] -> 0.000000
+iMpp e : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000
+iMpp e : ref^1 [ 0, -1 + -1 * i_2_iMpp_2th + 1 * iMk] -> 1.000000
+if exp then {
+    let r = alloc iMk : int ref in
+/* r : ref^1 [ 0, -1 + 1 * iMk] -> 1.000000 */
+  let _ = init(iMk, r) in
+/* r : ref^1 [ 0, -1 + 1 * iMk] -> 1.000000 */
+  iMpp := r;
+/* iMpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* iMpp_eq0 : ref^1 [ 0, -1 + 1 * iMk] -> 1.000000 */
+/* iMpp_non0 : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* iMpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 66, 66] -> 0.000000 */
+  let q = iMpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* iMpp : ref^2 [ 0, 0] -> 1.000000 */
+/* iMpp : ref^1 [ 0, -1 + 1 * i_2_iMpp_2th + 1 * iMk] -> 1.000000 */
+  let _ = iM(not yet implemented, q) in
+/* q : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* q : ref^1 [ 0, -2 + -1 * i_2_q_2th + 1 * iMk] -> 1.000000 */
+  alias(q=iMpp+1);
+/* q : ref^2 [ 2, 66] -> 0.000000 */
+/* q : ref^1 [ 66, 66] -> 0.000000 */
+/* iMpp : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000 */
+/* iMpp : ref^1 [ 0, -1 + -1 * i_2_iMpp_2th + 1 * iMk] -> 1.000000 */
+} else {
+}
+
+fun_name:iTm 
+ownership
+iTmppp b : ref^3 [ 0, -1 + 1 * iTmm] -> 1.000000
+iTmppp b : ref^2 [ 0, 0] -> 0.000000
+iTmppp b : ref^1 [ 0, 0] -> 0.000000
+iTmppp e : ref^3 [ 0, -1 + 1 * iTmm] -> 1.000000
+iTmppp e : ref^2 [ 0, -1 + -1 * i_3_iTmppp_3th + 1 * iTmm] -> 1.000000
+iTmppp e : ref^1 [ 0, -1 + -1 * i_3_iTmppp_2th + -1 * i_3_iTmppp_3th + 1 * iTmm] -> 1.000000
+if exp then {
+    let r = alloc iTmm : int ref ref in
+/* r : ref^2 [ 0, -1 + 1 * iTmm] -> 1.000000 */
+/* r : ref^1 [ 0, 0] -> 0.000000 */
+  let _ = iM(iTmm, r) in
+/* r : ref^2 [ 0, -1 + 1 * iTmm] -> 1.000000 */
+/* r : ref^1 [ 0, -1 + -1 * i_3_r_2th + 1 * iTmm] -> 1.000000 */
+  iTmppp := r;
+/* iTmppp_eq0 : ref^3 [ 0, 0] -> 1.000000 */
+/* iTmppp_eq0 : ref^2 [ 0, -1 + 1 * iTmm] -> 1.000000 */
+/* iTmppp_eq0 : ref^1 [ 0, -1 + -1 * i_3_iTmppp_eq0_2th + 1 * iTmm] -> 1.000000 */
+/* iTmppp_non0 : ref^3 [ 0, -2 + 1 * iTmm] -> 1.000000 */
+/* iTmppp_non0 : ref^2 [ 0, 0] -> 0.000000 */
+/* iTmppp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^2 [ 66 + 1 * iTmm, -136 + 1 * iTmm] -> 0.000000 */
+/* r : ref^1 [ 66, 66] -> 0.000000 */
+  let q = iTmppp + 1 in
+/* q : ref^3 [ 0, -2 + 1 * iTmm] -> 1.000000 */
+/* q : ref^2 [ 0, 0] -> 0.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* iTmppp : ref^3 [ 0, 0] -> 1.000000 */
+/* iTmppp : ref^2 [ 0, -1 + 1 * i_3_iTmppp_3th + 1 * iTmm] -> 1.000000 */
+/* iTmppp : ref^1 [ 0, -1 + -1 * i_3_iTmppp_2th + 1 * iTmm] -> 1.000000 */
+  let _ = iTm(not yet implemented, q) in
+/* q : ref^3 [ 0, -2 + 1 * iTmm] -> 1.000000 */
+/* q : ref^2 [ 0, -2 + -1 * i_3_q_3th + 1 * iTmm] -> 1.000000 */
+/* q : ref^1 [ 0, -2 + -1 * i_3_q_2th + -1 * i_3_q_3th + 1 * iTmm] -> 1.000000 */
+  alias(q=iTmppp+1);
+/* q : ref^3 [ 10, 66] -> 0.000000 */
+/* q : ref^2 [ 65 + 1 * iTmm, -4] -> 0.000000 */
+/* q : ref^1 [ 66, 66] -> 0.000000 */
+/* iTmppp : ref^3 [ 0, -1 + 1 * iTmm] -> 1.000000 */
+/* iTmppp : ref^2 [ 0, -1 + -1 * i_3_iTmppp_3th + 1 * iTmm] -> 1.000000 */
+/* iTmppp : ref^1 [ 0, -1 + -1 * i_3_iTmppp_2th + -1 * i_3_iTmppp_3th + 1 * iTmm] -> 1.000000 */
+} else {
+}
+
+
+
+*/
