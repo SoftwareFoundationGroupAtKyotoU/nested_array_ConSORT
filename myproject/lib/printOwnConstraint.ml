@@ -525,7 +525,7 @@ let find_own_res fun_num id pos branch_trace z3res ty_env fvs =
     find_own_c "_h" depth' !fvs_ref;
     (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
     res := asprintf "%s] -> %a */\n" !res pp_value res1;
-    let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
+    let idx = asprintf "i_%d_%s_%dth" fun_num id depth' in
     fvs_ref := idx::!fvs_ref
   done;
   !res
@@ -619,7 +619,7 @@ let rec print_sat_ans oc varown_count fvs fun_num z3res all_cs =
           print_declare_b_and_e_c formatter !fvs_ref "_h" id b_or_e fun_num z3res depth';
           (* 所有権を表す変数の宣言　o_(関数のシリアル番号)_(参照変数名)_(b(評価前) or e(評価後)) *)
           fprintf formatter "] -> %a\n" pp_value res1;
-          let idx = asprintf "i_%d_%s_%dth" fun_num id depth in
+          let idx = asprintf "i_%d_%s_%dth" fun_num id depth' in
           fvs_ref := idx :: !fvs_ref
         done)
       else 

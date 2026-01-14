@@ -1627,8 +1627,9 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
         let sl1, sl2 = 
         [Eq(make_own_var id fun_num [] depth, own_value);
         Eq(make_own_var_be id fun_num "b" depth, own_value);
-        Geq(make_own_var_be id fun_num "b" depth, Id "0.");
-        Leq(make_own_var_be id fun_num "b" depth, Id "1.")],
+        (* Geq(make_own_var_be id fun_num "b" depth, Id "0.");
+        Leq(make_own_var_be id fun_num "b" depth, Id "1.") *)
+        ],
         [
         Eq(make_bound_exp fvs id "_l" fun_num [] depth, exp_to_smtlib exp_low);
         Eq(make_bound_exp fvs id "_h" fun_num [] depth, exp_to_smtlib exp_high);
@@ -1717,8 +1718,9 @@ let fun_constrs_to_smtlib funname_constrs fun_num funnames_numberings =
       [Or(Eq(own_value, Id "0."),
         Leq(own_value, make_own_var id fun_num [] depth));
         Eq(make_own_var_be id fun_num "e" depth, own_value);
-        Geq(make_own_var_be id fun_num "e" depth, Id "0.");
-      Leq(make_own_var_be id fun_num "e" depth, Id "1.")],
+        (* Geq(make_own_var_be id fun_num "e" depth, Id "0.");
+      Leq(make_own_var_be id fun_num "e" depth, Id "1.") *)
+      ],
       [Geq(exp_to_smtlib el2, make_bound_exp fvs id "_l" fun_num [] depth);
       Leq(exp_to_smtlib eh2, make_bound_exp fvs id "_h" fun_num [] depth);
       ]
