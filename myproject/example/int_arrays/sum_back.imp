@@ -1,0 +1,55 @@
+initx(n, x, p) 
+[ <#n: int, #x: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, #x: int, p: {v:int| (=> ((i1 >= 0) and (i1 < n) ) (v = x))} ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = initx(m, x, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+sum(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let m = n - 1 in
+    let q = p + m in
+    let y = *q in
+    assert(y >= 0);
+    let s = sum(m, p) in
+    alias(q=p+m);
+    let z = y + s in
+    z
+  } 
+}
+
+{
+  let p = alloc 1000 : int ref in
+  let m = 1000 in
+  let rand = _ : (rand >= 0) in
+  let d = initx(m, rand, p) in
+  let x = sum(m, p) in
+  assert(x >= 0);
+  ()
+}
+
+/* 
+int fin                               
+fv fin iter: 0 unsat time: 0.026170s
+cex fin int fin 
+fv fin iter: 1 unsat time: 0.067809s
+cex fin int fin 
+fv fin iter: 2 sat time: 0.118821s
+ownership: sat
+refinement: sat
+total time: 237.071894s
+*/
