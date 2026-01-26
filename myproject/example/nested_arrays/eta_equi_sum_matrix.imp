@@ -1,0 +1,211 @@
+
+sum(plen, p) 
+[ <#plen: int, p: int ref(0, plen - 1, 0.1)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 0.1) 
+  | int> ]
+{
+  if plen <= 0 then { 0 } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    alias(q = p + 1);
+    y
+  }
+}
+
+sumback(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 0.1)> -> 
+  <#n: int, p: int ref(0, n - 1, 0.1) | int> ]
+{
+  if n <= 0 then {
+    0
+  } else {
+    let m = n - 1 in
+    let q = p + m in
+    let y = *q in
+    let s = sumback(m, p) in
+    alias(q=p+m);
+    let z = y + s in
+    z
+  } 
+}
+
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) 
+  | {v:int | ((=> ((n1 > 0) and (n2 > 0)) (v = (n1 * n2))) and (=> (not ((n1 > 0) and (n2 > 0))) (v = 0)))}> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sum(n1, qin) in
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+sumBackMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, 
+q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 0.1) ref(0, n2 - 1, 0.1) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sumback(n1, qin) in
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = 1)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let immut mat2 = mat1 + 0 in
+  let d2 = sumMatrix(unde, unde, mat1) in
+  let d3 = sumBackMatrix(unde, unde, mat2) in
+  assert(d2 = d3);
+  1
+}
+
+/*
+./example/positive_example/eta_equi_sum_matrix.imp ->
+fun_name:main 
+ownership
+let unde = _ in 
+  let mat1 = alloc unde : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+  let immut mat2 = mat1 + 0 in
+/* mat2 : ref^2 [ 0, -1 + 1 * unde] -> 9.000000/10.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * unde] -> 9.000000/10.000000 */
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+  let _ = sumMatrix(unde, unde, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+  let _ = sumBackMatrix(unde, unde, mat2) in
+/* mat2 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000/10.000000 */
+
+
+fun_name:sum 
+ownership
+sump b : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000/10.000000
+sump e : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000/10.000000
+if exp then {
+  } else {
+  let _ = *sump in
+  let q = sump + 1 in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000/10.000000 */
+/* sump : ref^1 [ 0, 0] -> 1.000000/10.000000 */
+  let _ = sum(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000/10.000000 */
+  alias(q=sump+1);
+/* q : ref^1 [ 571 + -1 * sumplen, 571 + -1 * sumplen] -> 0.000000 */
+/* sump : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000/10.000000 */
+}
+
+fun_name:sumback 
+ownership
+sumbackp b : ref^1 [ 0, -1 + 1 * sumbackn] -> 1.000000/10.000000
+sumbackp e : ref^1 [ 0, -1 + 1 * sumbackn] -> 1.000000/10.000000
+if exp then {
+  } else {
+  let q = sumbackp + not yet implemented in
+/* q : ref^1 [ 0, 0] -> 1.000000/10.000000 */
+/* sumbackp : ref^1 [ 0, -2 + 1 * sumbackn] -> 1.000000/10.000000 */
+  let _ = *q in
+  let _ = sumback(not yet implemented, sumbackp) in
+/* sumbackp : ref^1 [ 0, -2 + 1 * sumbackn] -> 1.000000/10.000000 */
+  alias(q=sumbackp+not yet implemented);
+/* q : ref^1 [ 571 + -1 * sumbackn, 571 + -1 * sumbackn] -> 0.000000 */
+/* sumbackp : ref^1 [ 0, -1 + 1 * sumbackn] -> 1.000000/10.000000 */
+}
+
+fun_name:sumMatrix 
+ownership
+sumMatrixq b : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000/10.000000
+sumMatrixq b : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000
+sumMatrixq e : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000/10.000000
+sumMatrixq e : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000
+if exp then {
+    let qin = *sumMatrixq in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+/* sumMatrixq_eq0 : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* sumMatrixq_eq0 : ref^1 [ 571 + -1 * i_3_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 571 + -1 * i_3_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq_non0 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000/10.000000 */
+/* sumMatrixq_non0 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+  let _ = sum(sumMatrixn1, qin) in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+  alias(qin=*sumMatrixq);
+/* qin : ref^1 [ 571 + -1 * sumMatrixn1 + -1 * sumMatrixn2, 571 + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000/10.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+  let q2 = sumMatrixq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+/* sumMatrixq : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* sumMatrixq : ref^1 [ 0 + -1 * i_3_sumMatrixq_2th, -1 + -1 * i_3_sumMatrixq_2th + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+  let _ = sumMatrix(sumMatrixn1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+  alias(q2=sumMatrixq+1);
+/* q2 : ref^2 [ 392 + -1 * sumMatrixn1 + 1 * sumMatrixn2, 571 + -1 * sumMatrixn1] -> 0.000000 */
+/* q2 : ref^1 [ 571 + -1 * i_3_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 571 + -1 * i_3_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000/10.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000/10.000000 */
+} else {
+}
+
+fun_name:sumBackMatrix 
+ownership
+sumBackMatrixq b : ref^2 [ 0, -1 + 1 * sumBackMatrixn2] -> 1.000000/10.000000
+sumBackMatrixq b : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000
+sumBackMatrixq e : ref^2 [ 0, -1 + 1 * sumBackMatrixn2] -> 1.000000/10.000000
+sumBackMatrixq e : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000
+if exp then {
+    let qin = *sumBackMatrixq in
+/* qin : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+/* sumBackMatrixq_eq0 : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* sumBackMatrixq_eq0 : ref^1 [ 571 + -1 * i_4_sumBackMatrixq_eq0_2th + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2, 571 + -1 * i_4_sumBackMatrixq_eq0_2th + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2] -> 0.000000 */
+/* sumBackMatrixq_non0 : ref^2 [ 0, -2 + 1 * sumBackMatrixn2] -> 1.000000/10.000000 */
+/* sumBackMatrixq_non0 : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+  let _ = sumback(sumBackMatrixn1, qin) in
+/* qin : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+  alias(qin=*sumBackMatrixq);
+/* qin : ref^1 [ 571 + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2, 571 + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2] -> 0.000000 */
+/* sumBackMatrixq : ref^2 [ 0, -1 + 1 * sumBackMatrixn2] -> 1.000000/10.000000 */
+/* sumBackMatrixq : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+  let q2 = sumBackMatrixq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * sumBackMatrixn2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+/* sumBackMatrixq : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* sumBackMatrixq : ref^1 [ 0 + -1 * i_4_sumBackMatrixq_2th, -1 + -1 * i_4_sumBackMatrixq_2th + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+  let _ = sumMatrix(sumBackMatrixn1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * sumBackMatrixn2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+  alias(q2=sumBackMatrixq+1);
+/* q2 : ref^2 [ -50 + 1 * sumBackMatrixn2, 571 + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2] -> 0.000000 */
+/* q2 : ref^1 [ 571 + -1 * i_4_q2_2th + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2, 571 + -1 * i_4_q2_2th + -1 * sumBackMatrixn1 + -1 * sumBackMatrixn2] -> 0.000000 */
+/* sumBackMatrixq : ref^2 [ 0, -1 + 1 * sumBackMatrixn2] -> 1.000000/10.000000 */
+/* sumBackMatrixq : ref^1 [ 0, -1 + 1 * sumBackMatrixn1] -> 1.000000/10.000000 */
+} else {
+}
+
+
+*/

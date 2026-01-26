@@ -1,0 +1,161 @@
+init(n1, val, p1) 
+[ <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.)> -> 
+  <#n1: int, #val: int, p1: int ref(0, n1- 1, 1.) | int> ]
+{
+  if n1 <= 0 then {
+    1
+  } else {
+    p1 := val;
+    let q = p1 + 1 in
+    let m = n1 - 1 in
+    let nextval = val - 1 in
+    let d = init(m, nextval, q) in
+    alias(q = p1 + 1);
+    1
+  }
+}
+
+easyMatrix(l, k, val, pp)
+[ <#l: int, #k: int, val: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, val: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, val, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    /*let nextval = val + 1 in*/
+    let d2 = easyMatrix(l, m, val, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+/*verify(n, p, q)
+[ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    assert(x < y);
+    let p2 = p + 1 in
+    let q2 = q + 1 in
+    let m = n - 1 in
+    let d = verify(m, p2, q2) in
+    alias(p2=p+1);
+    alias(q2=q+1);
+    1
+  }
+}*/
+
+/*verifyM(s, s2, p, q)
+[ <#s: int, #s2: int, 
+p: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.), 
+q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.)> ->
+  <#s: int, #s2: int, 
+p: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.), 
+q: int ref(0, s - 1, 1.) ref(0, s2 - 1, 1.) | int> ]
+{
+    let ind1 = _ : (ind1 >= 0 && ind1 < s) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < s2) in
+    assert(p[ind1][ind2] < q[ind1][ind2]);
+    1
+}*/
+
+{
+    let three = 3 in
+    let four = 4 in
+    let p1 = alloc three : int ref ref in
+    let q1 = alloc three : int ref ref in
+    let d = easyMatrix(three, three, three, p1) in
+    let d2 = easyMatrix(three, three, four, q1) in
+    assert(3 = 3);
+    
+    let ind1 = _ : (ind1 >= 0 && ind1 <= 2) in
+    let ind2 = _ : (ind2 >= 0 && ind2 < three) in
+    /*assert(p1[ind1][ind2] = three - ind2);*/
+    assert(q1[ind1][ind2] = four - ind2);
+    assert(p1[ind1][ind2] < q1[ind1][ind2]);
+    /*let d3 = verifyM(three, three, p, qq) in*/
+    ()
+}
+
+/*
+./example/much_time_example/compare_element.imp ->
+fun_name:main 
+ownership
+  let p1 = alloc 3 : int ref ref in
+/* p1 : ref^2 [ 0, 2] -> 1.000000 */
+/* p1 : ref^1 [ 0, 0] -> 0.000000 */
+   let q1 = alloc 3 : int ref ref in
+/* q1 : ref^2 [ 0, 2] -> 1.000000 */
+/* q1 : ref^1 [ 0, 0] -> 0.000000 */
+   let _ = easyMatrix(3, 3, 3, p1) in
+/* p1 : ref^2 [ 0, 2] -> 1.000000 */
+/* p1 : ref^1 [ 0, 2] -> 1.000000 */
+   let _ = easyMatrix(3, 3, 4, q1) in
+/* q1 : ref^2 [ 0, 2] -> 1.000000 */
+/* q1 : ref^1 [ 0, 2] -> 1.000000 */
+ let ind1 = _ in 
+let ind2 = _ in 
+
+
+
+fun_name:init 
+ownership
+initp1 b : ref^1 [ 0, -1 + 1 * initn1] -> 1.000000
+initp1 e : ref^1 [ 0, -1 + 1 * initn1] -> 1.000000
+if exp then {
+  } else {
+  initp1 := (int);
+  let q = initp1 + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initn1] -> 1.000000 */
+/* initp1 : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * initn1] -> 1.000000 */
+  alias(q=initp1+1);
+/* q : ref^1 [ 66, 66] -> 0.000000 */
+/* initp1 : ref^1 [ 0, -1 + 1 * initn1] -> 1.000000 */
+}
+
+fun_name:easyMatrix 
+ownership
+easyMatrixpp b : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000
+easyMatrixpp b : ref^1 [ 0, 0] -> 0.000000
+easyMatrixpp e : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000
+easyMatrixpp e : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000
+if exp then {
+    let r = alloc easyMatrixl : int ref in
+/* r : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  let _ = init(easyMatrixl, easyMatrixval, r) in
+/* r : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  easyMatrixpp := r;
+/* easyMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* easyMatrixpp_eq0 : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+/* easyMatrixpp_non0 : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* easyMatrixpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 66, 66] -> 0.000000 */
+  let q = easyMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* easyMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* easyMatrixpp : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  let _ = easyMatrix(easyMatrixl, not yet implemented, easyMatrixval, q) in
+/* q : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  alias(q=easyMatrixpp+1);
+/* q : ref^2 [ 2, 66 + -1 * easyMatrixl] -> 0.000000 */
+/* q : ref^1 [ 66, 66] -> 0.000000 */
+/* easyMatrixpp : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000 */
+/* easyMatrixpp : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+} else {
+}
+
+
+*/

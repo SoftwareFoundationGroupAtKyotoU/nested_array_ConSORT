@@ -1,0 +1,215 @@
+init(pin, val, p) 
+[ <#pin: int, val: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, val: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := val;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, val, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+initMatrix(k, n, val, pp)
+[ <#k: int, #n: int, val: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#k: int, #n: int, val: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < k)) (v = val))} ref(0 , n - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 then { 
+    let r = alloc n : int ref in
+    let d = init(n, val, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(m, n, val, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+sum(plen, p) 
+[ <#plen: int, p: int ref(0, plen - 1, 1.)> -> 
+  <#plen: int, p: int ref(0, plen - 1, 1.) | int> ]
+{
+  if plen <= 0 then { 0 } else {
+    let x = *p in
+    let q = p + 1 in
+    let m = plen - 1 in
+    let s = sum(m, q) in
+    let y = x + s in
+    alias(q = p + 1);
+    y
+  }
+}
+
+sumMatrix(n1, n2, q) 
+[ <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) > -> 
+  <#n1: int, #n2: int, q: int ref(0 , n1- 1, 1.) ref(0, n2 - 1, 1.) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let qin = *q in
+    let s = sum(n1, qin) in
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m = n2 - 1 in
+    let y = sumMatrix(n1, m, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+/*sumMatrix(q) 
+[ <q: int ref(0 , 9, 1.) ref(0, 9, 1.) > -> 
+  <q: int ref(0 , 9, 1.) ref(0, 9, 1.) | int> ]
+{
+  if 1 > 0 then {
+    assert(q[0][0] = 1);
+    let qin = *q in
+    assert(qin[0] = 1);
+    alias(qin = *q);
+    let q2 = q + 1 in
+    alias(q2 = q + 1);
+    0
+  } else {
+    0
+  }
+}*/
+
+{
+  let undet = _ : (undet > 0) in
+  let mat1 = alloc undet : int ref ref in
+  let one = 1 in
+  let d1 = initMatrix(undet, undet, one, mat1) in
+  let d2 = sumMatrix(undet, undet, mat1) in
+  assert(d2 >= 0);
+  1
+}
+/* 
+./example/much_time_example/sum_matrix.imp ->
+fun_name:main 
+ownership
+let undet = _ in 
+  let mat1 = alloc undet : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0 + -1 * i_0_mat1_2th + -1 * undet, 0 + -1 * i_0_mat1_2th + -1 * undet] -> 0.000000 */
+  let _ = initMatrix(undet, undet, 1, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * undet] -> 1.000000 */
+  let _ = sumMatrix(undet, undet, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * undet] -> 1.000000 */
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, initval, q) in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 127 + -1 * initpin, 127 + -1 * initpin] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000 */
+}
+
+fun_name:initMatrix 
+ownership
+initMatrixpp b : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp b : ref^1 [ 0, 0] -> 0.000000
+initMatrixpp e : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp e : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000
+if exp then {
+    let r = alloc initMatrixn : int ref in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  let _ = init(initMatrixn, initMatrixval, r) in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  initMatrixpp := r;
+/* initMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp_eq0 : ref^1 [ 0 + -1 * i_2_initMatrixpp_eq0_2th, -1 + -1 * i_2_initMatrixpp_eq0_2th + 1 * initMatrixn] -> 1.000000 */
+/* initMatrixpp_non0 : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 127 + -1 * initMatrixk + -1 * initMatrixn, 127 + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+  let q = initMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0 + 1 * i_2_initMatrixpp_2th, -1 + 1 * i_2_initMatrixpp_2th + 1 * initMatrixn] -> 1.000000 */
+  let _ = initMatrix(not yet implemented, initMatrixn, initMatrixval, q) in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  alias(q=initMatrixpp+1);
+/* q : ref^2 [ 127 + 1 * initMatrixn, 127 + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+/* q : ref^1 [ 127 + -1 * i_2_q_2th + -1 * initMatrixk + -1 * initMatrixn, 127 + -1 * i_2_q_2th + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+} else {
+}
+
+fun_name:sum 
+ownership
+sump b : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000
+sump e : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000
+if exp then {
+  } else {
+  let _ = *sump in
+  let q = sump + 1 in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000 */
+/* sump : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = sum(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000 */
+  alias(q=sump+1);
+/* q : ref^1 [ 127 + -1 * sumplen, 127 + -1 * sumplen] -> 0.000000 */
+/* sump : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000 */
+}
+
+fun_name:sumMatrix 
+ownership
+sumMatrixq b : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000
+sumMatrixq b : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000
+sumMatrixq e : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000
+sumMatrixq e : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000
+if exp then {
+    let qin = *sumMatrixq in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+/* sumMatrixq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* sumMatrixq_eq0 : ref^1 [ 127 + -1 * i_4_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * i_4_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq_non0 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq_non0 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  let _ = sum(sumMatrixn1, qin) in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  alias(qin=*sumMatrixq);
+/* qin : ref^1 [ 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  let q2 = sumMatrixq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+/* sumMatrixq : ref^2 [ 0, 0] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + -1 * i_4_sumMatrixq_2th + 1 * sumMatrixn1] -> 1.000000 */
+  let _ = sumMatrix(sumMatrixn1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  alias(q2=sumMatrixq+1);
+/* q2 : ref^2 [ 660 + 1 * sumMatrixn1 + 1 * sumMatrixn2, 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* q2 : ref^1 [ 127 + -1 * i_4_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * i_4_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+} else {
+}
+
+
+*/

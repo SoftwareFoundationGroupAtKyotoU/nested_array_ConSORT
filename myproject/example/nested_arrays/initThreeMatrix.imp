@@ -1,0 +1,181 @@
+init(n, p) 
+[ <#n: int, p: int ref(0, n - 1, 1.)> -> 
+  <#n: int, p: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+iM(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = iM(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+iTm(ll, kk, ppp)
+[ <#ll: int, #kk: int, ppp: int ref (0, 0, 0.) ref(0, 0, 0.) ref(0, kk - 1, 1.)> ->
+    <#ll: int, #kk: int, ppp: int ref (0, ll- 1, 1.) ref(0 , ll - 1, 1.) ref(0, kk - 1, 1.) | int> ]
+{ 
+  if kk > 0 && ll > 0 then { 
+    let rr = alloc ll : int ref ref in
+    let d = iM(ll, ll, rr) in
+    ppp := rr;
+    let qq = ppp + 1 in
+    let mm = kk - 1 in
+    let d2 = iTm(ll, mm, qq) in
+    alias(qq=ppp+1);
+    0
+  } else {
+    0
+  }
+}
+
+{
+  let x = _ : (x > 0) in
+  let p = alloc x : int ref ref ref in
+  let d = iTm(x, x, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < x) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < x) in
+  let ind3 = _ : (ind3 >= 0 && ind3 < x) in
+  assert(p[ind1][ind2][ind3] = 1);
+  1
+}
+
+/*
+./example/much_time_example/initThreeMatrix.imp ->
+fun_name:main 
+ownership
+let x = _ in 
+  let p = alloc x : int ref ref ref in
+/* p : ref^3 [ 0, -1 + 1 * x] -> 1.000000 */
+/* p : ref^2 [ 0 + -1 * i_0_p_3th + -1 * x, 0 + -1 * i_0_p_3th + -1 * x] -> 0.000000 */
+/* p : ref^1 [ 0 + -1 * i_0_p_2th + -1 * i_0_p_3th + -1 * x, 0 + -1 * i_0_p_2th + -1 * i_0_p_3th + -1 * x] -> 0.000000 */
+  let _ = iTm(x, x, p) in
+/* p : ref^3 [ 0, -1 + 1 * x] -> 1.000000 */
+/* p : ref^2 [ 0, -1 + 1 * x] -> 1.000000 */
+/* p : ref^1 [ 0, -1 + 1 * x] -> 1.000000 */
+let ind1 = _ in 
+let ind2 = _ in 
+let ind3 = _ in 
+
+
+
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 571 + -1 * initn, 571 + -1 * initn] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initn] -> 1.000000 */
+}
+
+fun_name:iM 
+ownership
+iMpp b : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000
+iMpp b : ref^1 [ 0, 0] -> 0.000000
+iMpp e : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000
+iMpp e : ref^1 [ 0, -1 + 1 * iMl] -> 1.000000
+if exp then {
+    let r = alloc iMl : int ref in
+/* r : ref^1 [ 0, -1 + 1 * iMl] -> 1.000000 */
+  let _ = init(iMl, r) in
+/* r : ref^1 [ 0, -1 + 1 * iMl] -> 1.000000 */
+  iMpp := r;
+/* iMpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* iMpp_eq0 : ref^1 [ 0 + -1 * i_2_iMpp_eq0_2th, -1 + -1 * i_2_iMpp_eq0_2th + 1 * iMl] -> 1.000000 */
+/* iMpp_non0 : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* iMpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 571 + -1 * iMl + -1 * iMk, 571 + -1 * iMl + -1 * iMk] -> 0.000000 */
+  let q = iMpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* iMpp : ref^2 [ 0, 0] -> 1.000000 */
+/* iMpp : ref^1 [ 0 + -1 * i_2_iMpp_2th, -1 + -1 * i_2_iMpp_2th + 1 * iMl] -> 1.000000 */
+  let _ = iM(iMl, not yet implemented, q) in
+/* q : ref^2 [ 0, -2 + 1 * iMk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * iMl] -> 1.000000 */
+  alias(q=iMpp+1);
+/* q : ref^2 [ -7 + 1 * iMl + 1 * iMk, 39 + -1 * iMl + -1 * iMk] -> 0.000000 */
+/* q : ref^1 [ 571 + -1 * i_2_q_2th + -1 * iMl + -1 * iMk, 571 + -1 * i_2_q_2th + -1 * iMl + -1 * iMk] -> 0.000000 */
+/* iMpp : ref^2 [ 0, -1 + 1 * iMk] -> 1.000000 */
+/* iMpp : ref^1 [ 0, -1 + 1 * iMl] -> 1.000000 */
+} else {
+}
+
+fun_name:iTm 
+ownership
+iTmppp b : ref^3 [ 0, -1 + 1 * iTmkk] -> 1.000000
+iTmppp b : ref^2 [ 0, 0] -> 0.000000
+iTmppp b : ref^1 [ 0, 0] -> 0.000000
+iTmppp e : ref^3 [ 0, -1 + 1 * iTmkk] -> 1.000000
+iTmppp e : ref^2 [ 0, -1 + 1 * iTmll] -> 1.000000
+iTmppp e : ref^1 [ 0, -1 + 1 * iTmll] -> 1.000000
+if exp then {
+    let rr = alloc iTmll : int ref ref in
+/* rr : ref^2 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+/* rr : ref^1 [ 0 + -1 * i_3_rr_2th + -1 * iTmll + -1 * iTmkk, 0 + -1 * i_3_rr_2th + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+  let _ = iM(iTmll, iTmll, rr) in
+/* rr : ref^2 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+/* rr : ref^1 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+  iTmppp := rr;
+/* iTmppp_eq0 : ref^3 [ 0, 0] -> 1.000000 */
+/* iTmppp_eq0 : ref^2 [ 0 + -1 * i_3_iTmppp_eq0_3th, -1 + -1 * i_3_iTmppp_eq0_3th + 1 * iTmll] -> 1.000000 */
+/* iTmppp_eq0 : ref^1 [ 0 + -1 * i_3_iTmppp_eq0_3th, -1 + -1 * i_3_iTmppp_eq0_3th + 1 * iTmll] -> 1.000000 */
+/* iTmppp_non0 : ref^3 [ 0, -2 + 1 * iTmkk] -> 1.000000 */
+/* iTmppp_non0 : ref^2 [ 0, 0] -> 0.000000 */
+/* iTmppp_non0 : ref^1 [ 0 + -1 * i_3_iTmppp_non0_2th, 0 + -1 * i_3_iTmppp_non0_2th] -> 0.000000 */
+/* rr : ref^2 [ 19 + -1 * iTmll, 571 + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+/* rr : ref^1 [ 571 + -1 * i_3_rr_2th + -1 * iTmll + -1 * iTmkk, 571 + -1 * i_3_rr_2th + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+  let qq = iTmppp + 1 in
+/* qq : ref^3 [ 0, -2 + 1 * iTmkk] -> 1.000000 */
+/* qq : ref^2 [ 0, 0] -> 0.000000 */
+/* qq : ref^1 [ 0 + -1 * i_3_qq_2th, 0 + -1 * i_3_qq_2th] -> 0.000000 */
+/* iTmppp : ref^3 [ 0, 0] -> 1.000000 */
+/* iTmppp : ref^2 [ 0 + -1 * i_3_iTmppp_3th, -1 + -1 * i_3_iTmppp_3th + 1 * iTmll] -> 1.000000 */
+/* iTmppp : ref^1 [ 0 + -1 * i_3_iTmppp_3th, -1 + -1 * i_3_iTmppp_3th + 1 * iTmll] -> 1.000000 */
+  let _ = iTm(iTmll, not yet implemented, qq) in
+/* qq : ref^3 [ 0, -2 + 1 * iTmkk] -> 1.000000 */
+/* qq : ref^2 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+/* qq : ref^1 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+  alias(qq=iTmppp+1);
+/* qq : ref^3 [ 571 + -1 * iTmll + -1 * iTmkk, 571 + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+/* qq : ref^2 [ 571 + -1 * i_3_qq_3th + -1 * iTmll + -1 * iTmkk, 571 + -1 * i_3_qq_3th + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+/* qq : ref^1 [ 571 + -1 * i_3_qq_2th + -1 * i_3_qq_3th + -1 * iTmll + -1 * iTmkk, 571 + -1 * i_3_qq_2th + -1 * i_3_qq_3th + -1 * iTmll + -1 * iTmkk] -> 0.000000 */
+/* iTmppp : ref^3 [ 0, -1 + 1 * iTmkk] -> 1.000000 */
+/* iTmppp : ref^2 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+/* iTmppp : ref^1 [ 0, -1 + 1 * iTmll] -> 1.000000 */
+} else {
+}
+
+
+*/

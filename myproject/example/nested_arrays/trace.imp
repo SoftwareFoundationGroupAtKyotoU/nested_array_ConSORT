@@ -1,0 +1,175 @@
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, 
+    pp: int ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+
+trace(n1, n2, q)
+[ <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, q: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int > ]
+{
+  if n1 > 0 && n2 > 0 && n1 >= n2 then {
+    let qin = *q in
+    let m = n1 - n2 in
+    let qinShift = qin + m in
+    let s = *qinShift in
+    alias(qinShift = qin + m);
+    alias(qin = *q);
+    let q2 = q + 1 in
+    let m2 = n2 - 1 in
+    let y = trace(n1, m2, q2) in
+    alias(q2 = q + 1);
+    let z = s + y in
+    z
+  } else {
+    0
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let d1 = initMatrix(ten, ten, mat1) in
+  let d2 = trace(ten, ten, mat1) in
+  assert(d2 >= 0);
+  1
+}
+
+/*
+./example/positive_example/trace.imp ->
+fun_name:main 
+ownership
+let ten = _ in 
+  let mat1 = alloc ten : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, 0] -> 0.000000 */
+  let _ = initMatrix(ten, ten, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+  let _ = trace(ten, ten, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 571, 571] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000 */
+}
+
+fun_name:initMatrix 
+ownership
+initMatrixpp b : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp b : ref^1 [ 0, 0] -> 0.000000
+initMatrixpp e : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp e : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000
+if exp then {
+    let r = alloc initMatrixl : int ref in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  let _ = init(initMatrixl, r) in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  initMatrixpp := r;
+/* initMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp_eq0 : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+/* initMatrixpp_non0 : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 571, 571] -> 0.000000 */
+  let q = initMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  let _ = initMatrix(initMatrixl, not yet implemented, q) in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  alias(q=initMatrixpp+1);
+/* q : ref^2 [ 65, -3 + -1 * initMatrixl] -> 0.000000 */
+/* q : ref^1 [ 571, 571] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+} else {
+}
+
+fun_name:trace 
+ownership
+traceq b : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000
+traceq b : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000
+traceq e : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000
+traceq e : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000
+if exp then {
+    let qin = *traceq in
+/* qin : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+/* traceq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* traceq_eq0 : ref^1 [ 571, 571] -> 0.000000 */
+/* traceq_non0 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000 */
+/* traceq_non0 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+  let qinShift = qin + not yet implemented in
+/* qinShift : ref^1 [ 0, -1 + 1 * tracen2] -> 1.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * tracen1 + -1 * tracen2] -> 1.000000 */
+  let _ = *qinShift in
+  alias(qinShift=qin+not yet implemented);
+/* qinShift : ref^1 [ 571, 571] -> 0.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+  alias(qin=*traceq);
+/* qin : ref^1 [ 571, 571] -> 0.000000 */
+/* traceq : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+  let q2 = traceq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+/* traceq : ref^2 [ 0, 0] -> 1.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+  let _ = trace(tracen1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+  alias(q2=traceq+1);
+/* q2 : ref^2 [ 272 + -1 * tracen1, -2] -> 0.000000 */
+/* q2 : ref^1 [ 571, 571] -> 0.000000 */
+/* traceq : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000 */
+} else {
+}
+
+
+*/
