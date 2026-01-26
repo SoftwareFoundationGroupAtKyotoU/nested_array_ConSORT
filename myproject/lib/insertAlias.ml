@@ -6,7 +6,8 @@ let rec insert_sub_deref id1' id2' exp =
   match exp with
   | Let (id,e1,e2) -> Let(id, e1, insert_sub_deref id1' id2' e2)
   | LetIntExp(id,e1,e2) -> LetIntExp(id, e1, insert_sub_deref id1' id2' e2)
-  | LetDerefExp (id1,id2,e) -> LetDerefExp(id1, id2, insert_sub_deref id1' id2' e)
+  | LetDerefExp (id1,id2,e) when id2 != id2' -> LetDerefExp(id1, id2, insert_sub_deref id1' id2' e)
+  | LetDerefExp _ -> AliasDeref(id1', id2', exp)
   (* | LetAddPtrExp (id1,id2,e1,e2) -> LetAddPtrExp(id1, id2, e1, insert_sub_deref id1' id2' e2) *)
   | LetAddPtrExp (id1,id2,e1,e2) when id2 != id2' -> LetAddPtrExp(id1, id2, e1, insert_sub_deref id1' id2' e2)
   | LetAddPtrExp _ -> AliasDeref(id1', id2', exp)
