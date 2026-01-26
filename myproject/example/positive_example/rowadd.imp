@@ -53,3 +53,90 @@ pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), q: int ref(0, n1- 1, 1.)| int> ]
   assert(mat2[ind1] = unde);
   1
 }
+
+/*
+./example/positive_example/rowadd.imp ->
+fun_name:main 
+ownership
+let unde = _ in 
+  let mat1 = alloc unde : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+  let mat2 = alloc unde : int ref in
+/* mat2 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+  let _ = sumrow(unde, unde, mat1, mat2) in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+let ind1 = _ in 
+
+
+
+fun_name:addarray 
+ownership
+addarrayp b : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayq b : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayp e : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayq e : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+if exp then {
+  } else {
+  let _ = *addarrayp in
+  let _ = *addarrayq in
+  addarrayp := (int);
+  let p1 = addarrayp + 1 in
+/* p1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* addarrayp : ref^1 [ 0, 0] -> 1.000000 */
+  let q1 = addarrayq + 1 in
+/* q1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* addarrayq : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = addarray(not yet implemented, addarraydum, p1, q1) in
+/* p1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* q1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+  alias(q1=addarrayq+1);
+/* q1 : ref^1 [ 66 + -1 * addarrayn, 66 + -1 * addarrayn] -> 0.000000 */
+/* addarrayq : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000 */
+  alias(p1=addarrayp+1);
+/* p1 : ref^1 [ 66 + -1 * addarrayn, 66 + -1 * addarrayn] -> 0.000000 */
+/* addarrayp : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000 */
+}
+
+fun_name:sumrow 
+ownership
+sumrowpp b : ref^2 [ 0, -1 + 1 * sumrown2] -> 1.000000
+sumrowpp b : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000
+sumrowq b : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000
+sumrowpp e : ref^2 [ 0, -1 + 1 * sumrown2] -> 1.000000
+sumrowpp e : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000
+sumrowq e : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000
+if exp then {
+    let ppin = *sumrowpp in
+/* ppin : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+/* sumrowpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* sumrowpp_eq0 : ref^1 [ 66 + -1 * i_2_sumrowpp_eq0_2th + -1 * sumrown1 + -1 * sumrown2, 66 + -1 * i_2_sumrowpp_eq0_2th + -1 * sumrown1 + -1 * sumrown2] -> 0.000000 */
+/* sumrowpp_non0 : ref^2 [ 0, -2 + 1 * sumrown2] -> 1.000000 */
+/* sumrowpp_non0 : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+  let _ = addarray(sumrown1, not yet implemented, sumrowq, ppin) in
+/* sumrowq : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+/* ppin : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+  alias(ppin=*sumrowpp);
+/* ppin : ref^1 [ 66 + -1 * sumrown1 + -1 * sumrown2, 66 + -1 * sumrown1 + -1 * sumrown2] -> 0.000000 */
+/* sumrowpp : ref^2 [ 0, -1 + 1 * sumrown2] -> 1.000000 */
+/* sumrowpp : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+  let ppp = sumrowpp + 1 in
+/* ppp : ref^2 [ 0, -2 + 1 * sumrown2] -> 1.000000 */
+/* ppp : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+/* sumrowpp : ref^2 [ 0, 0] -> 1.000000 */
+/* sumrowpp : ref^1 [ 0 + -1 * i_2_sumrowpp_2th, -1 + -1 * i_2_sumrowpp_2th + 1 * sumrown1] -> 1.000000 */
+  let _ = sumrow(sumrown1, not yet implemented, ppp, sumrowq) in
+/* ppp : ref^2 [ 0, -2 + 1 * sumrown2] -> 1.000000 */
+/* ppp : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+/* sumrowq : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+  alias(ppp=sumrowpp+1);
+/* ppp : ref^2 [ 66 + -1 * sumrown1 + 1 * sumrown2, 5 + -1 * sumrown1 + -1 * sumrown2] -> 0.000000 */
+/* ppp : ref^1 [ 66 + -1 * i_2_ppp_2th + -1 * sumrown1 + -1 * sumrown2, 66 + -1 * i_2_ppp_2th + -1 * sumrown1 + -1 * sumrown2] -> 0.000000 */
+/* sumrowpp : ref^2 [ 0, -1 + 1 * sumrown2] -> 1.000000 */
+/* sumrowpp : ref^1 [ 0, -1 + 1 * sumrown1] -> 1.000000 */
+} else {
+}
+
+*/

@@ -55,37 +55,105 @@ traceback(n1, n2, q)
 }
 
 /*
-int fin                               
-fv fin iter: 0 unsat time: 0.079482s
-cex fin int fin 
-fv fin iter: 1 unsat time: 0.973492s
-cex fin int fin 
-fv fin iter: 2 unsat time: 2.087388s
-cex fin int fin 
-fv fin iter: 3 unsat time: 3.669322s
-cex fin int fin 
-fv fin iter: 4 unsat time: 5.330462s
-cex fin int fin 
-fv fin iter: 5 unsat time: 6.555625s
-cex fin int fin 
-fv fin iter: 6 unsat time: 7.300366s
-cex fin int fin 
-fv fin iter: 7 unsat time: 8.269690s
-cex fin int fin 
-fv fin iter: 8 unsat time: 9.092692s
-cex fin int fin 
-fv fin iter: 9 unsat time: 10.268760s
-cex fin int fin 
-fv fin iter: 10 unsat time: 11.312924s
-cex fin int fin 
-fv fin iter: 11 unsat time: 12.482087s
-cex fin int fin 
-fv fin iter: 12 unsat time: 13.345423s
-cex fin int fin 
-fv fin iter: 13 unsat time: 14.524019s
-cex fin int fin 
-fv fin iter: 14 sat time: 15.691392s
-ownership: sat
-refinement: sat
-total time: 29.678957s
+./example/positive_example/eta_equi_trace.imp ->
+fun_name:main 
+ownership
+let ten = _ in 
+  let mat1 = alloc ten : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+  let immut mat2 = mat1 + 0 in
+/* mat2 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 9.000000/10.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 9.000000/10.000000 */
+  let _ = trace(ten, ten, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+  let _ = traceback(ten, ten, mat2) in
+/* mat2 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000/10.000000 */
+
+
+fun_name:trace 
+ownership
+traceq b : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000/10.000000
+traceq b : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000
+traceq e : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000/10.000000
+traceq e : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000
+if exp then {
+    let qin = *traceq in
+/* qin : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+/* traceq_eq0 : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* traceq_eq0 : ref^1 [ 571 + -1 * i_1_traceq_eq0_2th + -1 * tracen1 + -1 * tracen2, 571 + -1 * i_1_traceq_eq0_2th + -1 * tracen1 + -1 * tracen2] -> 0.000000 */
+/* traceq_non0 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000/10.000000 */
+/* traceq_non0 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+  let qinShift = qin + not yet implemented in
+/* qinShift : ref^1 [ 0, -1 + 1 * tracen2] -> 1.000000/10.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * tracen1 + -1 * tracen2] -> 1.000000/10.000000 */
+  let _ = *qinShift in
+  alias(qinShift=qin+not yet implemented);
+/* qinShift : ref^1 [ 571 + -1 * tracen1 + -1 * tracen2, 571 + -1 * tracen1 + -1 * tracen2] -> 0.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+  alias(qin=*traceq);
+/* qin : ref^1 [ 571 + -1 * tracen1 + -1 * tracen2, 571 + -1 * tracen1 + -1 * tracen2] -> 0.000000 */
+/* traceq : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000/10.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+  let q2 = traceq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+/* traceq : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+  let _ = trace(tracen1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * tracen2] -> 1.000000/10.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+  alias(q2=traceq+1);
+/* q2 : ref^2 [ 571 + -1 * tracen1 + 1 * tracen2, 571 + -1 * tracen1 + -1 * tracen2] -> 0.000000 */
+/* q2 : ref^1 [ 571 + -1 * i_1_q2_2th + -1 * tracen1 + -1 * tracen2, 571 + -1 * i_1_q2_2th + -1 * tracen1 + -1 * tracen2] -> 0.000000 */
+/* traceq : ref^2 [ 0, -1 + 1 * tracen2] -> 1.000000/10.000000 */
+/* traceq : ref^1 [ 0, -1 + 1 * tracen1] -> 1.000000/10.000000 */
+} else {
+}
+
+fun_name:traceback 
+ownership
+tracebackq b : ref^2 [ 0, -1 + 1 * tracebackn2] -> 1.000000/10.000000
+tracebackq b : ref^1 [ 0, -1 + 1 * tracebackn1] -> 1.000000/10.000000
+tracebackq e : ref^2 [ 0, -1 + 1 * tracebackn2] -> 1.000000/10.000000
+tracebackq e : ref^1 [ 0, -1 + 1 * tracebackn1] -> 1.000000/10.000000
+if exp then {
+    let qshift = tracebackq + not yet implemented in
+/* qshift : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* qshift : ref^1 [ 0 + 1 * i_2_qshift_2th, -2 + -1 * i_2_qshift_2th + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+/* tracebackq : ref^2 [ 0, -2 + 1 * tracebackn2] -> 1.000000/10.000000 */
+/* tracebackq : ref^1 [ 2 + -1 * i_2_tracebackq_2th + -1 * tracebackn2, 2 + 1 * i_2_tracebackq_2th + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+  let qin = *qshift in
+/* qin : ref^1 [ 0, -2 + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+/* qshift_eq0 : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* qshift_eq0 : ref^1 [ 571 + -1 * i_2_qshift_eq0_2th + -1 * tracebackn1 + -1 * tracebackn2, 571 + -1 * i_2_qshift_eq0_2th + -1 * tracebackn1] -> 0.000000 */
+/* qshift_non0 : ref^2 [ 0, -1] -> 1.000000/10.000000 */
+/* qshift_non0 : ref^1 [ 1 + 1 * i_2_qshift_non0_2th, -3 + -1 * i_2_qshift_non0_2th + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+  let qinShift = qin + not yet implemented in
+/* qinShift : ref^1 [ 0, -1 + 1 * tracebackn1] -> 1.000000/10.000000 */
+/* qin : ref^1 [ 0, -2 + 1 * tracebackn2] -> 1.000000/10.000000 */
+  let _ = *qinShift in
+  alias(qinShift=qin+not yet implemented);
+/* qinShift : ref^1 [ 571 + -1 * tracebackn1 + -1 * tracebackn2, 571 + -1 * tracebackn1 + -1 * tracebackn2] -> 0.000000 */
+/* qin : ref^1 [ 0, -2 + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+  alias(qin=*qshift);
+/* qin : ref^1 [ 571 + -1 * tracebackn1 + -1 * tracebackn2, 571 + -1 * tracebackn1 + -1 * tracebackn2] -> 0.000000 */
+/* qshift : ref^2 [ 0, 0] -> 1.000000/10.000000 */
+/* qshift : ref^1 [ 0 + -1 * i_2_qshift_2th, -2 + -1 * i_2_qshift_2th + 1 * tracebackn1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+  let _ = traceback(tracebackn1, not yet implemented, tracebackq) in
+/* tracebackq : ref^2 [ 0, -2 + 1 * tracebackn2] -> 1.000000/10.000000 */
+/* tracebackq : ref^1 [ 0, -1 + 1 * tracebackn1] -> 1.000000/10.000000 */
+  alias(qshift=tracebackq+not yet implemented);
+/* qshift : ref^2 [ 571 + 1 * tracebackn1 + -1 * tracebackn2, 571 + -1 * tracebackn1] -> 0.000000 */
+/* qshift : ref^1 [ 571 + -1 * i_2_qshift_2th + -1 * tracebackn1 + -1 * tracebackn2, 571 + -1 * i_2_qshift_2th + -1 * tracebackn1 + -1 * tracebackn2] -> 0.000000 */
+/* tracebackq : ref^2 [ 0, -1 + 1 * tracebackn2] -> 1.000000/10.000000 */
+/* tracebackq : ref^1 [ 0, -1 + 1 * i_2_tracebackq_2th + 1 * tracebackn1] -> 1.000000/10.000000 */
+} else {
+}
+
+
 */

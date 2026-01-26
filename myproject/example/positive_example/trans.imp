@@ -63,117 +63,117 @@ qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.)| int> ]
 }
 
 /*
-int fin                               
-fv fin iter: 0 unsat time: 0.096448s
-cex fin int fin 
-fv fin iter: 1 unsat time: 1.707837s
-cex fin int fin 
-fv fin iter: 2 unsat time: 3.465464s
-cex fin int fin 
-fv fin iter: 3 unsat time: 4.175598s
-cex fin int fin 
-fv fin iter: 4 unsat time: 6.295339s
-cex fin int fin 
-fv fin iter: 5 unsat time: 7.911830s
-cex fin int fin 
-fv fin iter: 6 unsat time: 9.211598s
-cex fin int fin 
-fv fin iter: 7 unsat time: 10.711613s
-cex fin int fin 
-fv fin iter: 8 unsat time: 12.589668s
-cex fin (incomplete quantifiers)
-iter: 9 unknown time: 12.916056s
-int fin 
-fv fin iter: 10 unsat time: 15.170979s
-cex fin (incomplete quantifiers)
-iter: 11 unknown time: 15.420999s
-(incomplete quantifiers)
-iter: 12 unknown time: 15.619070s
-int fin 
-fv fin iter: 13 unsat time: 17.635646s
-cex fin int fin 
-fv fin iter: 14 unsat time: 19.921857s
-cex fin (incomplete quantifiers)
-iter: 15 unknown time: 20.272560s
-(incomplete quantifiers)
-iter: 16 unknown time: 20.448673s
-int fin 
-fv fin iter: 17 unsat time: 24.493898s
-cex fin (incomplete quantifiers)
-iter: 18 unknown time: 24.745212s
-(incomplete quantifiers)
-iter: 19 unknown time: 24.913084s
-(incomplete quantifiers)
-iter: 20 unknown time: 25.186086s
-int fin 
-fv fin iter: 21 unsat time: 26.672996s
-cex fin int fin 
-fv fin iter: 22 unsat time: 28.084766s
-cex fin (incomplete quantifiers)
-iter: 23 unknown time: 28.382512s
-(incomplete quantifiers)
-iter: 24 unknown time: 28.584233s
-(incomplete quantifiers)
-iter: 25 unknown time: 28.860625s
-(incomplete quantifiers)
-iter: 26 unknown time: 29.008211s
-(incomplete quantifiers)
-iter: 27 unknown time: 29.228277s
-int fin 
-fv fin iter: 28 unsat time: 31.356621s
-cex fin int fin 
-fv fin iter: 29 unsat time: 34.470174s
-cex fin int fin 
-fv fin iter: 30 unsat time: 36.333876s
-cex fin int fin 
-fv fin iter: 31 unsat time: 39.428757s
-cex fin (incomplete quantifiers)
-iter: 32 unknown time: 39.844749s
-int fin 
-fv fin iter: 33 unsat time: 41.661290s
-cex fin (incomplete quantifiers)
-iter: 34 unknown time: 41.925811s
-int fin 
-fv fin iter: 35 unsat time: 44.395007s
-cex fin (incomplete quantifiers)
-iter: 36 unknown time: 44.663364s
-(incomplete quantifiers)
-iter: 37 unknown time: 44.989244s
-(incomplete quantifiers)
-iter: 38 unknown time: 45.291699s
-int fin 
-fv fin iter: 39 unsat time: 49.355986s
-cex fin int fin 
-fv fin iter: 40 unsat time: 51.979753s
-cex fin int fin 
-fv fin iter: 41 unsat time: 55.707093s
-cex fin (incomplete quantifiers)
-iter: 42 unknown time: 55.914601s
-int fin 
-fv fin iter: 43 unsat time: 61.314821s
-cex fin (incomplete quantifiers)
-iter: 44 unknown time: 61.748890s
-(incomplete quantifiers)
-iter: 45 unknown time: 61.974728s
-(incomplete quantifiers)
-iter: 46 unknown time: 62.204022s
-(incomplete quantifiers)
-iter: 47 unknown time: 62.393316s
-(incomplete quantifiers)
-iter: 48 unknown time: 62.674629s
-(incomplete quantifiers)
-iter: 49 unknown time: 63.015808s
-int fin 
-fv fin iter: 50 unsat time: 67.860029s
-cex fin int fin 
-fv fin iter: 51 unsat time: 76.579479s
-cex fin (incomplete quantifiers)
-iter: 52 unknown time: 77.021263s
-int fin 
-fv fin iter: 53 unsat time: 80.431197s
-cex fin int fin 
-fv fin iter: 54 sat time: 86.260563s
-ownership: sat
-refinement: sat
-total time: 107.817930s
+./example/positive_example/trans.imp ->
+fun_name:main 
+ownership
+let unde = _ in 
+  let mat1 = alloc unde : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+  let mat2 = alloc unde : int ref ref in
+/* mat2 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat2 : ref^1 [ 0 + -1 * i_0_mat2_2th + -1 * unde, 0 + -1 * i_0_mat2_2th + -1 * unde] -> 0.000000 */
+  let _ = trans(unde, unde, mat1, mat2) in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat2 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+let ind1 = _ in 
+let ind2 = _ in 
+
+
+
+
+fun_name:init 
+ownership
+initph b : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+initq b : ref^2 [ 0, -1 + 1 * initn] -> 1.000000
+initq b : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000
+initph e : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+initq e : ref^2 [ 0, -1 + 1 * initn] -> 1.000000
+initq e : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000
+if exp then {
+  } else {
+  let qin = *initq in
+/* qin : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+/* initq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* initq_eq0 : ref^1 [ 4859 + -1 * i_1_initq_eq0_2th + -1 * initn + -1 * initlen + -1 * initm, 4859 + -1 * i_1_initq_eq0_2th + -1 * initn + -1 * initlen + -1 * initm] -> 0.000000 */
+/* initq_non0 : ref^2 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* initq_non0 : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  let qinShift = qin + initm in
+/* qinShift : ref^1 [ 0, -1 + 1 * initlen + -1 * initm] -> 1.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * initm] -> 1.000000 */
+  let _ = *qinShift in
+  initph := (int);
+  alias(qinShift=qin+initm);
+/* qinShift : ref^1 [ 4859 + 1 * initn + -1 * initlen + -1 * initm, 4859 + -1 * initn + -1 * initlen + -1 * initm] -> 0.000000 */
+/* qin : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  alias(qin=*initq);
+/* qin : ref^1 [ 4859 + -1 * initlen + -1 * initm, 4859 + -1 * initlen + -1 * initm] -> 0.000000 */
+/* initq : ref^2 [ 0, -1 + 1 * initn] -> 1.000000 */
+/* initq : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  let phShift = initph + 1 in
+/* phShift : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* initph : ref^1 [ 0, 0] -> 1.000000 */
+  let qShift = initq + 1 in
+/* qShift : ref^2 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* qShift : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+/* initq : ref^2 [ 0, 0] -> 1.000000 */
+/* initq : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  let _ = init(not yet implemented, initlen, initm, phShift, qShift) in
+/* phShift : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* qShift : ref^2 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* qShift : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  alias(qShift=initq+1);
+/* qShift : ref^2 [ 4859 + -1 * initn + 1 * initlen + -1 * initm, 4859 + -1 * initlen + -1 * initm] -> 0.000000 */
+/* qShift : ref^1 [ 4859 + -1 * i_1_qShift_2th + -1 * initlen + -1 * initm, 4859 + -1 * i_1_qShift_2th + 1 * initn + -1 * initlen + -1 * initm] -> 0.000000 */
+/* initq : ref^2 [ 0, -1 + 1 * initn] -> 1.000000 */
+/* initq : ref^1 [ 0, -1 + 1 * initlen] -> 1.000000 */
+  alias(phShift=initph+1);
+/* phShift : ref^1 [ 4859 + -1 * initlen + -1 * initm, 4859 + -1 * initn + -1 * initlen + -1 * initm] -> 0.000000 */
+/* initph : ref^1 [ 0, -1 + 1 * initn] -> 1.000000 */
+}
+
+fun_name:trans 
+ownership
+transpp b : ref^2 [ 0, -1 + 1 * transn1] -> 1.000000
+transpp b : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000
+transqq b : ref^2 [ 0, -1 + 1 * transn2] -> 1.000000
+transqq b : ref^1 [ 0, 0] -> 0.000000
+transpp e : ref^2 [ 0, -1 + 1 * transn1] -> 1.000000
+transpp e : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000
+transqq e : ref^2 [ 0, -1 + 1 * transn2] -> 1.000000
+transqq e : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000
+if exp then {
+  } else {
+  let arr = alloc transn1 : int ref in
+/* arr : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+  let _ = init(transn1, transn1, not yet implemented, arr, transpp) in
+/* arr : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+/* transpp : ref^2 [ 0, -1 + 1 * transn1] -> 1.000000 */
+/* transpp : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+  transqq := arr;
+/* transqq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* transqq_eq0 : ref^1 [ 0 + -1 * i_2_transqq_eq0_2th, -1 + -1 * i_2_transqq_eq0_2th + 1 * transn1] -> 1.000000 */
+/* transqq_non0 : ref^2 [ 0, -2 + 1 * transn2] -> 1.000000 */
+/* transqq_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* arr : ref^1 [ 4859 + -1 * transn1 + -1 * transn2, 4859 + -1 * transn1 + -1 * transn2] -> 0.000000 */
+  let qqShift = transqq + 1 in
+/* qqShift : ref^2 [ 0, -2 + 1 * transn2] -> 1.000000 */
+/* qqShift : ref^1 [ 0, 0] -> 0.000000 */
+/* transqq : ref^2 [ 0, 0] -> 1.000000 */
+/* transqq : ref^1 [ 0 + -1 * i_2_transqq_2th, -1 + -1 * i_2_transqq_2th + 1 * transn1] -> 1.000000 */
+  let _ = trans(transn1, not yet implemented, transpp, qqShift) in
+/* transpp : ref^2 [ 0, -1 + 1 * transn1] -> 1.000000 */
+/* transpp : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+/* qqShift : ref^2 [ 0, -2 + 1 * transn2] -> 1.000000 */
+/* qqShift : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+  alias(qqShift=transqq+1);
+/* qqShift : ref^2 [ 4859 + -1 * transn1 + -1 * transn2, 4859 + -1 * transn1 + -1 * transn2] -> 0.000000 */
+/* qqShift : ref^1 [ 4859 + -1 * i_2_qqShift_2th + -1 * transn1 + -1 * transn2, 4859 + -1 * i_2_qqShift_2th + -1 * transn1 + -1 * transn2] -> 0.000000 */
+/* transqq : ref^2 [ 0, -1 + 1 * transn2] -> 1.000000 */
+/* transqq : ref^1 [ 0, -1 + 1 * transn1] -> 1.000000 */
+}
+
+
 */

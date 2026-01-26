@@ -93,82 +93,123 @@ sumMatrix(n1, n2, q)
   assert(d2 >= 0);
   1
 }
-/* ugoku 
-int fin                               
-fv fin iter: 0 unsat time: 0.074298s
-cex fin int fin 
-fv fin iter: 1 unsat time: 1.106708s
-cex fin int fin 
-fv fin iter: 2 unsat time: 1.916003s
-cex fin int fin 
-fv fin iter: 3 unsat time: 2.712775s
-cex fin int fin 
-fv fin iter: 4 unsat time: 3.711727s
-cex fin int fin 
-fv fin iter: 5 unsat time: 4.381452s
-cex fin int fin 
-fv fin iter: 6 unsat time: 5.230624s
-cex fin int fin 
-fv fin iter: 7 unsat time: 6.157972s
-cex fin int fin 
-fv fin iter: 8 unsat time: 6.872530s
-cex fin int fin 
-fv fin iter: 9 unsat time: 7.625332s
-cex fin int fin 
-fv fin iter: 10 unsat time: 8.545427s
-cex fin int fin 
-fv fin iter: 11 unsat time: 9.468555s
-cex fin int fin 
-fv fin iter: 12 unsat time: 10.322834s
-cex fin int fin 
-fv fin iter: 13 unsat time: 11.146230s
-cex fin int fin 
-fv fin iter: 14 unsat time: 12.171548s
-cex fin (incomplete quantifiers)
-iter: 15 unknown time: 12.540728s
-int fin 
-fv fin iter: 16 unsat time: 13.485171s
-cex fin int fin 
-fv fin iter: 17 unsat time: 14.516407s
-cex fin int fin 
-fv fin iter: 18 unsat time: 15.731036s
-cex fin int fin 
-fv fin iter: 19 unsat time: 16.663720s
-cex fin int fin 
-fv fin iter: 20 unsat time: 17.544532s
-cex fin int fin 
-fv fin iter: 21 unsat time: 18.316863s
-cex fin (incomplete quantifiers)
-iter: 22 unknown time: 18.630617s
-(incomplete quantifiers)
-iter: 23 unknown time: 18.847703s
-int fin 
-fv fin iter: 24 unsat time: 19.587684s
-cex fin (incomplete quantifiers)
-iter: 25 unknown time: 19.774725s
-(incomplete quantifiers)
-iter: 26 unknown time: 19.952159s
-int fin 
-fv fin iter: 27 unsat time: 21.050257s
-cex fin (incomplete quantifiers)
-iter: 28 unknown time: 21.233835s
-(incomplete quantifiers)
-iter: 29 unknown time: 21.448404s
-(incomplete quantifiers)
-iter: 30 unknown time: 21.733067s
-int fin 
-fv fin iter: 31 unsat time: 22.783251s
-cex fin (incomplete quantifiers)
-iter: 32 unknown time: 23.014928s
-(incomplete quantifiers)
-iter: 33 unknown time: 23.264851s
-int fin 
-fv fin iter: 34 unsat time: 24.488486s
-cex fin (incomplete quantifiers)
-iter: 35 unknown time: 24.695054s
-int fin 
-fv fin iter: 36 sat time: 26.073190s
-ownership: sat
-refinement: sat
-total time: 82.919675s
+/* 
+./example/much_time_example/sum_matrix.imp ->
+fun_name:main 
+ownership
+let undet = _ in 
+  let mat1 = alloc undet : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0 + -1 * i_0_mat1_2th + -1 * undet, 0 + -1 * i_0_mat1_2th + -1 * undet] -> 0.000000 */
+  let _ = initMatrix(undet, undet, 1, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * undet] -> 1.000000 */
+  let _ = sumMatrix(undet, undet, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * undet] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * undet] -> 1.000000 */
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, initval, q) in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 127 + -1 * initpin, 127 + -1 * initpin] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000 */
+}
+
+fun_name:initMatrix 
+ownership
+initMatrixpp b : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp b : ref^1 [ 0, 0] -> 0.000000
+initMatrixpp e : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp e : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000
+if exp then {
+    let r = alloc initMatrixn : int ref in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  let _ = init(initMatrixn, initMatrixval, r) in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  initMatrixpp := r;
+/* initMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp_eq0 : ref^1 [ 0 + -1 * i_2_initMatrixpp_eq0_2th, -1 + -1 * i_2_initMatrixpp_eq0_2th + 1 * initMatrixn] -> 1.000000 */
+/* initMatrixpp_non0 : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ 127 + -1 * initMatrixk + -1 * initMatrixn, 127 + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+  let q = initMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0 + 1 * i_2_initMatrixpp_2th, -1 + 1 * i_2_initMatrixpp_2th + 1 * initMatrixn] -> 1.000000 */
+  let _ = initMatrix(not yet implemented, initMatrixn, initMatrixval, q) in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+  alias(q=initMatrixpp+1);
+/* q : ref^2 [ 127 + 1 * initMatrixn, 127 + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+/* q : ref^1 [ 127 + -1 * i_2_q_2th + -1 * initMatrixk + -1 * initMatrixn, 127 + -1 * i_2_q_2th + -1 * initMatrixk + -1 * initMatrixn] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0, -1 + 1 * initMatrixn] -> 1.000000 */
+} else {
+}
+
+fun_name:sum 
+ownership
+sump b : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000
+sump e : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000
+if exp then {
+  } else {
+  let _ = *sump in
+  let q = sump + 1 in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000 */
+/* sump : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = sum(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * sumplen] -> 1.000000 */
+  alias(q=sump+1);
+/* q : ref^1 [ 127 + -1 * sumplen, 127 + -1 * sumplen] -> 0.000000 */
+/* sump : ref^1 [ 0, -1 + 1 * sumplen] -> 1.000000 */
+}
+
+fun_name:sumMatrix 
+ownership
+sumMatrixq b : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000
+sumMatrixq b : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000
+sumMatrixq e : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000
+sumMatrixq e : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000
+if exp then {
+    let qin = *sumMatrixq in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+/* sumMatrixq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* sumMatrixq_eq0 : ref^1 [ 127 + -1 * i_4_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * i_4_sumMatrixq_eq0_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq_non0 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq_non0 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  let _ = sum(sumMatrixn1, qin) in
+/* qin : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  alias(qin=*sumMatrixq);
+/* qin : ref^1 [ 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  let q2 = sumMatrixq + 1 in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+/* sumMatrixq : ref^2 [ 0, 0] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + -1 * i_4_sumMatrixq_2th + 1 * sumMatrixn1] -> 1.000000 */
+  let _ = sumMatrix(sumMatrixn1, not yet implemented, q2) in
+/* q2 : ref^2 [ 0, -2 + 1 * sumMatrixn2] -> 1.000000 */
+/* q2 : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+  alias(q2=sumMatrixq+1);
+/* q2 : ref^2 [ 660 + 1 * sumMatrixn1 + 1 * sumMatrixn2, 127 + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* q2 : ref^1 [ 127 + -1 * i_4_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2, 127 + -1 * i_4_q2_2th + -1 * sumMatrixn1 + -1 * sumMatrixn2] -> 0.000000 */
+/* sumMatrixq : ref^2 [ 0, -1 + 1 * sumMatrixn2] -> 1.000000 */
+/* sumMatrixq : ref^1 [ 0, -1 + 1 * sumMatrixn1] -> 1.000000 */
+} else {
+}
+
+
 */
