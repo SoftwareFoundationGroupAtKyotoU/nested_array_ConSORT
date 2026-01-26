@@ -396,14 +396,14 @@ and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
       if m > n then []
       else m :: range (m + 1) n
     in
-    let rec generate_combinations fvs int_range =
+    (* let rec generate_combinations fvs int_range =
       match fvs with
       | [] -> [[]]
       | hd :: tl ->
         let combinations_hd = List.map (fun x -> (hd, x)) int_range in
         let combinations_tl = generate_combinations tl int_range in
         List.flatten (List.map (fun a -> List.map (fun b -> a :: b) combinations_tl) combinations_hd)
-    in
+    in *)
     List.iter
       (fun sl -> 
         let idxs = list_to_set (idx_of_smtlib sl) [] in
@@ -414,7 +414,7 @@ and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
             print_smtlib oc sl [] num; 
             output_string oc ( ")\n");)
         else
-          (* (output_string oc "(assert (forall (";
+          (output_string oc "(assert (forall (";
           output_string oc (make_args fvs);
           output_string oc ") ";
           List.iter 
@@ -424,8 +424,8 @@ and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
           List.iter 
           (fun _ -> output_string oc (asprintf "))" ))
           fvs;
-          output_string oc ("))\n");)) *)
-          let comb = generate_combinations fvs (range (-iter + 1) (iter+1)) in
+          output_string oc ("))\n");))
+          (* let comb = generate_combinations fvs (range (-iter + 1) (iter+1)) in
           List.iter (fun map -> 
           (output_string oc "(assert ";
           (* smtlibの制約部分の記述 *)
@@ -433,7 +433,7 @@ and print_smtlibs_iter oc smtlibs is_unconcrete unsat_core_flag num iter =
             output_string oc ( ")\n");)
             )comb;
             output_string oc "\n";
-            )          
+            )           *)
       smtlibs
 and print_smtlibs_sub oc unsat_core_flag num sl = 
   (* 制約内の重複を除いた自由変数のリスト *)
