@@ -2,60 +2,42 @@ init(n, x, p)
 [ <#n: int, x: int, p: int ref (0, n - 1, 1.) > -> 
   <#n: int, x: int, p: int ref (0, n - 1, 1.) | int> ]
 {
-  if n <= 0 then {
-    1
-  } else {
-    p := x;
-    let q = p + 1 in
-    let m = n - 1 in
-    let d = init(m, x, q) in
-    alias(q=p+1);
-    1
+  if n <= 0 then { 1 } 
+  else {
+    p := x; let q = p + 1 in
+    let m = n - 1 in let d = init(m, x, q) in 1
   }
 }
 
-boomerang(b2, r)
-[ <#b2: int, r: int ref(0, b2 - 1, 1.)> ->
-    <#b2: int, r: int ref(0, b2 - 1, 1.) | int> ]
-{
-  if b2 > 0 then {
-    let t = *r in
-    assert(t = 0);
-    r := t;
-    let s = r + 1 in
-    let b3 = b2 - 1 in
-    let d = boomerang(b3, s) in
-    alias(s = r + 1);
-    0
-  } else {
-    0
-  }
+
+easyMatrix(l, k, val, pp)
+[ <#l: int, #k: int, val: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
+  <#l: int, #k: int, val: int,
+  pp: {v:int| (=>((((i1>=0) and (i1<l)) and (i2>=0)) and (i2<k)) (v=val))} 
+  ref(0 , l - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in let d = init(l, val, r) in
+    pp := r; let q = pp + 1 in
+    let m = k - 1 in let d2 = easyMatrix(l, m, val, q) in 0} 
+  else { 0 }
 }
 
-verify(a, p)
-[ <#a: int, p: int ref(0, a - 1, 1.)> -> 
-  <#a: int, p: int ref(0, a - 1, 1.) | int> ]
+boomerang(b1, b2, r)
+[ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.)> ->
+  <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
 {
-  if a <= 0 then {
-    1
-  } else {
-    let y = *p in
-    let q = p + 1 in
-    let m = a - 1 in
-    let d = verify(m, q) in
-    alias(q = p + 1);
-    1
-  }
+  if b2 > 0 && b1 > 0 then {
+    let t = *r in let b3 = b2 - 1 in let t2 = r+ 1 in
+    let b4 = boomerang(b1, b3, t2) in 0} 
+  else { 0 }
 }
 
 {
-  let kp = alloc 10 : int ref in
-  let ten = 10 in
-  let zero = 0 in
-  let d1 = init(ten, zero, kp) in
-  assert(kp[0] = 0);
-  let d2 = boomerang(ten, kp) in
-  assert(kp[0] = 0);
-  let d3 = verify(ten, kp) in
-  ()
+  let ten = _ : (ten >= 1) in let kp = alloc ten : int ref ref in
+  let val = 1 in let d = easyMatrix(ten, ten, val, kp) in
+  let d2 = boomerang(ten, ten, kp) in
+  let one = _ : (one >= 0 && one < ten) in
+  let two = _ : (two >= 0 && two < ten) in
+  assert(kp[one][two] = val); ()
 }

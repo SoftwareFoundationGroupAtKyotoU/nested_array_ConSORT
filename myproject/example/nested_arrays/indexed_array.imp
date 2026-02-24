@@ -33,8 +33,6 @@ init(n, p)
   }
 }
 
-
-
 easyMatrix(k, pp)
 [ <#k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
     <#k: int, pp: int ref(0 , k- i_2 - 1, 1.) ref(0, k - 1, 1.) | int> ]
@@ -53,13 +51,12 @@ easyMatrix(k, pp)
   }
 }
 
-
 {
   let p = alloc 10 : int ref ref in
   let ten = 10 in
   let d = easyMatrix(ten, p) in
   let ind1 = _ : (ind1 >= 0 && ind1 < 10) in
-  let ind2 = 9 - ind1 in
+  let ind2 = _ : (ind2 >= 0 && ind2 < 9 - ind1) in
   assert(p[ind1][ind2] = 1);
   ()
 }

@@ -16,6 +16,8 @@ sum(n, p)
       let m = n - 2 in
       let p1 = p + 1 in
       let s = sum(m, p1) in
+      alias(p1=p+1);
+      alias(q=p+k);
       let z = y + s in
       z
     } 

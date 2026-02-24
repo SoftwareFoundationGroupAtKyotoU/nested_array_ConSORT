@@ -75,5 +75,5 @@ verify(n, p)
 }
 
 /* 
-alias ga 4 -> 0
+alias ga 5 -> 0
  */
