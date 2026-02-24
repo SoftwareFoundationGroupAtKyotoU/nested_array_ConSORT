@@ -13,6 +13,11 @@ depends: [
   "ocaml"
   "dune" {>= "3.16"}
   "odoc" {with-doc}
+  "zarith" {>= "1.14"}
+  "menhir" {>= "20250912"}
+  "ounit" {>= "2.2.7"}
+  "ounit2" {>= "2.2.7"}
+  "ppx_deriving" {>= "6.1.1"}
 ]
 build: [
   ["dune" "subst"] {dev}
