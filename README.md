@@ -1,6 +1,6 @@
 # nested_array_ConSORT
 ## 使い方
-- dune buildでビルド
+- myprojectフォルダ下でdune buildでビルド(以下全てmyproject下で)
 - dune exec myproject ファイルのパス でファイル中のプログラムの所有権推論　結果はout_sat_ans.amt2出力
 
     ```
