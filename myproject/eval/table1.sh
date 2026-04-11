@@ -50,7 +50,7 @@ while IFS= read -r paper_name; do
 
     if [ -z "$total_time" ]; then
         # Diagnose the cause of failure
-        local error_cause="unknown"
+        error_cause="unknown"
         if echo "$output" | grep -q "program error"; then
             error_cause="ownership unsat (Z3 returned unsat on ownership constraints)"
         elif echo "$output" | grep -q "TIME LIMIT" || echo "$output" | grep -q "timeout"; then
@@ -63,7 +63,6 @@ while IFS= read -r paper_name; do
             error_cause="no output (tool may have crashed or timed out)"
         else
             # Check if ownership succeeded but refinement failed to produce timing
-            local own_result
             own_result=$(parse_ownership_result "$output")
             if [ "$own_result" = "sat" ]; then
                 error_cause="refinement phase failed or timed out (ownership succeeded)"
