@@ -130,9 +130,11 @@ ECOOP 2026 アーティファクト評価の詳細な手順は [ARTIFACT.md](ART
 
 ```sh
 make eval-short     # 簡易テスト（ベンチマークのサブセット）
-make eval-all       # 完全な評価: 論文の Table 1 と 3 を再現
+make eval-all       # 完全な評価: 論文の全テーブルを再現
 make eval-table1    # Table 1 の再現（ネスト配列ベンチマーク）
 make eval-table3    # Table 3 の再現（Tanaka et al. との比較）
+make eval-table4    # Table 4 の再現（Z3 バージョン比較）
+make eval-table5    # Table 5 の再現（Z3 バージョン比較サマリ）
 ```
 
 ## プログラム例

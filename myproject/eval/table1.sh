@@ -49,7 +49,29 @@ while IFS= read -r paper_name; do
     total_time=$(parse_total_time "$output")
 
     if [ -z "$total_time" ]; then
-        echo "  WARNING: Failed to parse output for $paper_name"
+        # Diagnose the cause of failure
+        local error_cause="unknown"
+        if echo "$output" | grep -q "program error"; then
+            error_cause="ownership unsat (Z3 returned unsat on ownership constraints)"
+        elif echo "$output" | grep -q "TIME LIMIT" || echo "$output" | grep -q "timeout"; then
+            error_cause="timeout (exceeded ${TIMEOUT_SEC}s)"
+        elif echo "$output" | grep -q "refinement: unsat"; then
+            error_cause="refinement unsat (hoice returned unsat on CHC constraints)"
+        elif echo "$output" | grep -qi "error"; then
+            error_cause=$(echo "$output" | grep -i "error" | head -1)
+        elif [ -z "$output" ]; then
+            error_cause="no output (tool may have crashed or timed out)"
+        else
+            # Check if ownership succeeded but refinement failed to produce timing
+            local own_result
+            own_result=$(parse_ownership_result "$output")
+            if [ "$own_result" = "sat" ]; then
+                error_cause="refinement phase failed or timed out (ownership succeeded)"
+            else
+                error_cause="failed to parse output"
+            fi
+        fi
+        echo "  WARNING: Failed for $paper_name: $error_cause"
         own_time="ERROR"
         ref_time="ERROR"
         total_time="ERROR"

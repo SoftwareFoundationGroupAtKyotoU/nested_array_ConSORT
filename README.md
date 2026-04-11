@@ -129,9 +129,11 @@ For ECOOP 2026 artifact evaluation, see [ARTIFACT.md](ARTIFACT.md) for detailed 
 
 ```sh
 make eval-short     # Quick smoke-test (subset of benchmarks)
-make eval-all       # Full evaluation: reproduce Tables 1 and 3 from the paper
+make eval-all       # Full evaluation: reproduce all tables from the paper
 make eval-table1    # Reproduce Table 1 (Nested Array Benchmarks)
 make eval-table3    # Reproduce Table 3 (Comparison with Tanaka et al.)
+make eval-table4    # Reproduce Table 4 (Z3 Version Comparison)
+make eval-table5    # Reproduce Table 5 (Z3 Version Summary)
 ```
 
 ## Example Programs

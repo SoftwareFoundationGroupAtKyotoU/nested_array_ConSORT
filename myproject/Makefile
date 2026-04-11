@@ -48,7 +48,7 @@ ALL_LOG_FILES := $(patsubst %, logs/%.log, $(notdir $(patsubst %/,%,$(ALL_DIRS))
 # --- Phony Targets ---
 
 .PHONY: build test run run_all \
-        eval-setup eval-short eval-all eval-table1 eval-table2 eval-table3 \
+        eval-setup eval-short eval-all eval-table1 eval-table2 eval-table3 eval-table4 eval-table5 \
         clean help default
 
 .PRECIOUS: $(ALL_LOG_FILES)
@@ -129,6 +129,12 @@ eval-table2:
 eval-table3:
 	bash eval/table3.sh
 
+eval-table4:
+	bash eval/table4.sh
+
+eval-table5:
+	bash eval/table5.sh
+
 # =============================================================================
 # Cleanup
 # =============================================================================
@@ -160,6 +166,8 @@ help:
 	@echo "  make eval-table1        Reproduce Table 1 (Nested Array Benchmarks)"
 	@echo "  make eval-table2        Reproduce Table 2 (Ownership Terms)"
 	@echo "  make eval-table3        Reproduce Table 3 (Comparison with Tanaka et al.)"
+	@echo "  make eval-table4        Reproduce Table 4 (Z3 Version Comparison)"
+	@echo "  make eval-table5        Reproduce Table 5 (Z3 Version Summary)"
 	@echo ""
 	@echo "  make clean              Remove logs, experiment artifacts, eval results"
 	@echo ""

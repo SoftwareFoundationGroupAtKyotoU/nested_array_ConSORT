@@ -10,8 +10,12 @@ The artifact supports the following claims from the paper:
 
 - **Table 1**: Verification timing and alias statement counts for 19 nested array benchmarks.
 - **Table 3**: Performance comparison with Tanaka et al. on 8 integer array benchmarks.
+- **Table 4**: Z3 version comparison across all 35 benchmarks (single run per benchmark).
+- **Table 5**: Summary of Z3 version comparison results (derived from Table 4).
 
 Note: Table 2 (inferred ownership terms) is not included in the automated evaluation. The ownership terms are output as SMT2 formulas in `experiment/out_sat_ans.smt2` after each verification run, but interpreting them as the ownership terms presented in the paper requires manual inspection.
+
+Note: The paper reports Table 4 results as the mean of 10 runs per benchmark. To keep evaluation time manageable, this artifact performs a single run per benchmark. Absolute timing values may show more variance than the paper's averaged results, but the relative trends between Z3 versions should be consistent.
 
 ## 2. Requirements
 
@@ -72,7 +76,7 @@ If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is wor
 bash eval/run_all.sh
 ```
 
-This script runs the table reproduction scripts (Tables 1 and 3) sequentially and stores results in `eval/results/`.
+This script runs all table reproduction scripts sequentially and stores results in `eval/results/`.
 
 ### Run individual tables
 
@@ -81,6 +85,8 @@ If you prefer to run tables independently:
 ```sh
 bash eval/table1.sh    # Table 1: Nested array benchmarks (~10 min)
 bash eval/table3.sh    # Table 3: Comparison with Tanaka et al. (~10 min)
+bash eval/table4.sh    # Table 4: Z3 version comparison (~60 min)
+bash eval/table5.sh    # Table 5: Summary (derived from Table 4, <1 min)
 ```
 
 ## 5. Claims and Evidence Mapping
@@ -89,6 +95,8 @@ bash eval/table3.sh    # Table 3: Comparison with Tanaka et al. (~10 min)
 |---|---|---|---|
 | Table 1 | `eval/table1.sh` | `eval/results/table1.md` | Timing and alias counts for 19 nested array benchmarks |
 | Table 3 | `eval/table3.sh` | `eval/results/table3.md` | Timing comparison with Tanaka et al. on 8 integer array benchmarks |
+| Table 4 | `eval/table4.sh` | `eval/results/table4.md` | Z3 4.14.1 vs 4.11.2 timing for all 35 benchmarks |
+| Table 5 | `eval/table5.sh` | `eval/results/table5.md` | Summary: how many benchmarks each Z3 version is faster |
 
 CSV files with raw data are also available in `eval/results/` for further analysis.
 
@@ -122,7 +130,7 @@ nested_array_ConSORT/
       run_all.sh             -- Master evaluation script
       run_short.sh           -- Quick kick-the-tires evaluation
       setup.sh               -- Dependency installation and build
-      table1.sh, table3.sh -- Individual table reproduction scripts
+      table1.sh, table3.sh, table4.sh, table5.sh -- Individual table reproduction scripts
       lib/common.sh          -- Shared helper functions
       z3-versions/           -- Z3 binaries (4.11.2 and 4.14.1)
       Extended_ConSORT/      -- Tanaka et al. tool (for Table 3 comparison)
