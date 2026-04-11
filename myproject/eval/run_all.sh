@@ -10,8 +10,14 @@ echo "============================================================"
 echo ""
 
 # ---- Step 1: Setup ----
-echo "=== Step 1/6: Setup ==="
-bash "$EVAL_DIR/setup.sh"
+# Skip setup if --no-setup is passed (e.g., inside Docker where deps are pre-installed)
+if [ "${1:-}" = "--no-setup" ]; then
+    echo "=== Step 1/6: Setup (skipped: --no-setup) ==="
+    source "$EVAL_DIR/lib/common.sh"
+else
+    echo "=== Step 1/6: Setup ==="
+    bash "$EVAL_DIR/setup.sh"
+fi
 
 # ---- Step 2: Table 1 ----
 echo ""

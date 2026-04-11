@@ -5,7 +5,9 @@ init(n, x, p)
   if n <= 0 then { 1 } 
   else {
     p := x; let q = p + 1 in
-    let m = n - 1 in let d = init(m, x, q) in 1
+    let m = n - 1 in let d = init(m, x, q) in
+    alias(q=p+1);
+    1
   }
 }
 
@@ -19,7 +21,9 @@ easyMatrix(l, k, val, pp)
   if k > 0 && l > 0 then { 
     let r = alloc l : int ref in let d = init(l, val, r) in
     pp := r; let q = pp + 1 in
-    let m = k - 1 in let d2 = easyMatrix(l, m, val, q) in 0} 
+    let m = k - 1 in let d2 = easyMatrix(l, m, val, q) in
+    alias(q=pp+1);
+    0}
   else { 0 }
 }
 
@@ -28,8 +32,12 @@ boomerang(b1, b2, r)
   <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
 {
   if b2 > 0 && b1 > 0 then {
-    let t = *r in let b3 = b2 - 1 in let t2 = r+ 1 in
-    let b4 = boomerang(b1, b3, t2) in 0} 
+    let t = *r in
+    alias(t = *r);
+    let b3 = b2 - 1 in let t2 = r+ 1 in
+    let b4 = boomerang(b1, b3, t2) in
+    alias(t2 = r+ 1);
+    0}
   else { 0 }
 }
 

@@ -1,47 +1,91 @@
-# 1. OCamlのバージョンとOSを指定
+# =============================================================================
+# Dockerfile for nested_array_ConSORT — ECOOP 2026 Artifact Evaluation
+# =============================================================================
+# Base image: Ubuntu 22.04 with OCaml 4.14 (opam pre-configured)
 FROM ocaml/opam:ubuntu-22.04-ocaml-4.14
-
-# ★Z3のバージョンとアーキテクチャ（x64に修正。ARMなら arm64 に書き換えてください）
-ARG Z3_VERSION=4.14.0
-ARG Z3_ARCH=x64-glibc-2.35
 
 USER opam
 WORKDIR /home/opam/app
 
-# 2. システム依存ライブラリのインストール
+# =============================================================================
+# 1. System dependencies
+# =============================================================================
 RUN sudo apt-get update && sudo apt-get install -y \
     libgmp-dev \
     pkg-config \
     python3 \
     wget \
     unzip \
+    git \
     && sudo rm -rf /var/lib/apt/lists/*
 
-# 3. Z3のインストール
-# URLが正しいか注意（例: 4.14.1は現在執筆時点で最新すぎると存在しない場合があるため、4.13.0等が安定）
-RUN wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/z3-4.14.1-arm64-glibc-2.34.zip \
-    && unzip -q z3-4.14.1-arm64-glibc-2.34.zip \
-    && sudo cp z3-4.14.1-arm64-glibc-2.34/bin/z3 /usr/local/bin/z3 \
-    && sudo chmod +x /usr/local/bin/z3 \
-    && rm -rf z3-4.14.1-arm64-glibc-2.34*
+# =============================================================================
+# 2. Z3 SMT Solver (two versions for evaluation)
+#    - 4.14.1: primary solver used by nested_array_ConSORT
+#    - 4.11.2: used by Extended_ConSORT for comparison
+#    Both are x86_64 Linux builds.
+# =============================================================================
 
-# 4. Rust & Hoice のインストール
-# rustupを先にインストールし、PATHを通してから cargo install
-RUN wget -qO- https://sh.rustup.rs | sh -s -- -y
+# Z3 4.14.1 (default)
+RUN wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/z3-4.14.1-x64-glibc-2.35.zip \
+    && unzip -q z3-4.14.1-x64-glibc-2.35.zip \
+    && sudo mkdir -p /usr/local/z3-4.14.1/bin \
+    && sudo cp z3-4.14.1-x64-glibc-2.35/bin/z3 /usr/local/z3-4.14.1/bin/z3 \
+    && sudo chmod +x /usr/local/z3-4.14.1/bin/z3 \
+    && sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 \
+    && rm -rf z3-4.14.1-x64-glibc-2.35*
+
+# Z3 4.11.2 (for Extended_ConSORT comparison)
+RUN wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip \
+    && unzip -q z3-4.11.2-x64-glibc-2.31.zip \
+    && sudo mkdir -p /usr/local/z3-4.11.2/bin \
+    && sudo cp z3-4.11.2-x64-glibc-2.31/bin/z3 /usr/local/z3-4.11.2/bin/z3 \
+    && sudo chmod +x /usr/local/z3-4.11.2/bin/z3 \
+    && rm -rf z3-4.11.2-x64-glibc-2.31*
+
+# =============================================================================
+# 3. Rust 1.78.0 and Hoice CHC solver (v1.10.0)
+#    Rust 1.78.0 is required — newer versions cause build failures with hoice.
+# =============================================================================
+RUN wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.78.0
 ENV PATH="/home/opam/.cargo/bin:${PATH}"
 RUN cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
 
-# 5. OCaml依存ライブラリのインストール
-# プロジェクト全体をコピーする前に、依存関係定義ファイルだけコピーするとビルドが速くなります
-COPY --chown=opam:opam *.opam ./
+# =============================================================================
+# 4. Extended_ConSORT (baseline for comparison in evaluation)
+# =============================================================================
+RUN mkdir -p /home/opam/app/eval \
+    && git clone https://github.com/mamizu-git/Extended_ConSORT /home/opam/app/eval/Extended_ConSORT \
+    && cd /home/opam/app/eval/Extended_ConSORT/src && make \
+    && mkdir -p /home/opam/app/eval/Extended_ConSORT/experiment
 
-
-# 6. ソースコードをコピーしてビルド
+# =============================================================================
+# 5. Copy source code and build
+#    The opam file is at myproject/myproject.opam, so we copy everything
+#    then install from myproject/.
+# =============================================================================
 COPY --chown=opam:opam . .
-# myprojectディレクトリへ移動が必要な場合はここで行う
 WORKDIR /home/opam/app/myproject
 
-RUN opam install . --deps-only
+# Create required directories for solver output
+RUN mkdir -p experiment/own_result
+
+# Install OCaml dependencies and build the project
+RUN opam install . --deps-only -y
 RUN opam exec -- dune build
 
+# =============================================================================
+# 7. Set up eval environment
+#    Create symlinks so eval scripts can find Z3 versions and Extended_ConSORT
+#    at the expected paths relative to myproject/eval/.
+# =============================================================================
+RUN mkdir -p eval/z3-versions \
+    && ln -sf /usr/local/z3-4.14.1 eval/z3-versions/z3-4.14.1 \
+    && ln -sf /usr/local/z3-4.11.2 eval/z3-versions/z3-4.11.2 \
+    && ln -sf /home/opam/app/eval/Extended_ConSORT eval/Extended_ConSORT
+
+# =============================================================================
+# 8. Default working directory and entrypoint
+# =============================================================================
+WORKDIR /home/opam/app/myproject
 CMD ["bash"]

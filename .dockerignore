@@ -1,0 +1,9 @@
+.git
+myproject/eval/results/
+myproject/eval/z3-versions/
+myproject/eval/Extended_ConSORT/
+myproject/experiment/
+myproject/_build/
+myproject/_tmp/
+_build/
+*.tar.gz
