@@ -95,10 +95,13 @@ Both must be on `$PATH`.
 
 #### Installing hoice
 
-hoice requires Rust. Install Rust via [rustup](https://rustup.rs/) if you haven't already, then:
+hoice requires Rust. Install Rust via [rustup](https://rustup.rs/) if you haven't already.
+
+Note: hoice v1.10.0 does not compile with Rust 1.81+. Use Rust 1.78.0:
 
 ```sh
-cargo install --git https://github.com/hopv/hoice
+rustup install 1.78.0
+rustup run 1.78.0 cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
 ```
 
 This places the `hoice` binary in `~/.cargo/bin/`, which should be on your `$PATH` if Rust was installed via rustup.

@@ -32,6 +32,13 @@ check_cmd python3 || MISSING=1
 if ! check_cmd cargo; then
     echo "         Install Rust via https://rustup.rs/ for hoice support"
     MISSING=1
+else
+    # hoice v1.10.0 requires Rust <= 1.78 (newer versions break Borrow trait bounds)
+    if ! rustup toolchain list 2>/dev/null | grep -q '1.78'; then
+        echo "  Installing Rust 1.78.0 toolchain for hoice compatibility..."
+        rustup install 1.78.0
+    fi
+    echo "  [OK] Rust 1.78.0 toolchain available for hoice"
 fi
 
 if [ $MISSING -ne 0 ]; then
@@ -54,8 +61,8 @@ echo "--- Checking hoice ---"
 if command -v hoice >/dev/null 2>&1; then
     echo "  [OK] hoice found: $(command -v hoice)"
 else
-    echo "  hoice not found. Installing via cargo..."
-    cargo install --git https://github.com/hopv/hoice
+    echo "  hoice not found. Installing via cargo (using Rust 1.78.0)..."
+    rustup run 1.78.0 cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
     if command -v hoice >/dev/null 2>&1; then
         echo "  [OK] hoice installed"
     else

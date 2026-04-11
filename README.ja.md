@@ -95,10 +95,13 @@
 
 #### hoice のインストール
 
-hoice には Rust が必要です。[rustup](https://rustup.rs/) で Rust をインストールした後、以下を実行してください:
+hoice には Rust が必要です。[rustup](https://rustup.rs/) で Rust をインストールしてください。
+
+注意: hoice v1.10.0 は Rust 1.81 以降ではコンパイルできません。Rust 1.78.0 を使用してください:
 
 ```sh
-cargo install --git https://github.com/hopv/hoice
+rustup install 1.78.0
+rustup run 1.78.0 cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
 ```
 
 これにより `hoice` バイナリが `~/.cargo/bin/` に配置されます。rustup 経由で Rust をインストールした場合、このパスは自動的に `$PATH` に含まれます。
