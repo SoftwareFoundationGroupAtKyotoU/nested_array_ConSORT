@@ -9,7 +9,6 @@ This artifact accompanies the paper "Ownership Refinement Types for Pointer Arit
 The artifact supports the following claims from the paper:
 
 - **Table 1**: Verification timing and alias statement counts for 19 nested array benchmarks.
-- **Table 2**: Inferred ownership term solutions (qualitative correctness).
 - **Table 3**: Performance comparison with Tanaka et al. on 8 integer array benchmarks.
 
 ## 2. Requirements
@@ -71,7 +70,7 @@ If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is wor
 bash eval/run_all.sh
 ```
 
-This script runs the three table reproduction scripts (Tables 1-3) sequentially and stores results in `eval/results/`.
+This script runs the table reproduction scripts (Tables 1 and 3) sequentially and stores results in `eval/results/`.
 
 ### Run individual tables
 
@@ -79,7 +78,6 @@ If you prefer to run tables independently:
 
 ```sh
 bash eval/table1.sh    # Table 1: Nested array benchmarks (~10 min)
-bash eval/table2.sh    # Table 2: Ownership term solutions (~5 min)
 bash eval/table3.sh    # Table 3: Comparison with Tanaka et al. (~10 min)
 ```
 
@@ -88,7 +86,6 @@ bash eval/table3.sh    # Table 3: Comparison with Tanaka et al. (~10 min)
 | Paper Section | Script | Output File | What to Check |
 |---|---|---|---|
 | Table 1 | `eval/table1.sh` | `eval/results/table1.md` | Timing and alias counts for 19 nested array benchmarks |
-| Table 2 | `eval/table2.sh` | `eval/results/table2/` | Ownership term solutions (SMT2 files; manual interpretation needed) |
 | Table 3 | `eval/table3.sh` | `eval/results/table3.md` | Timing comparison with Tanaka et al. on 8 integer array benchmarks |
 
 CSV files with raw data are also available in `eval/results/` for further analysis.
@@ -98,7 +95,7 @@ CSV files with raw data are also available in `eval/results/` for further analys
 - **Absolute timing values** will differ from those reported in the paper due to hardware differences. The paper's experiments were conducted on a specific machine; your Docker container will have different CPU characteristics.
 - **Relative ordering** of benchmarks by time should be approximately consistent.
 - **Sat/unsat results** must match the paper exactly. Every benchmark in `positive_example/` and `nested_arrays/` should report `sat`; every benchmark in `negative_example/` should report `unsat`.
-- **Ownership term solutions** (Table 2) should match the paper exactly, as these are determined by the constraint solver and are not timing-dependent.
+
 
 ## 7. Directory Structure
 
@@ -123,7 +120,7 @@ nested_array_ConSORT/
       run_all.sh             -- Master evaluation script
       run_short.sh           -- Quick kick-the-tires evaluation
       setup.sh               -- Dependency installation and build
-      table1.sh, table2.sh, table3.sh -- Individual table reproduction scripts
+      table1.sh, table3.sh -- Individual table reproduction scripts
       lib/common.sh          -- Shared helper functions
       z3-versions/           -- Z3 binaries (4.11.2 and 4.14.1)
       Extended_ConSORT/      -- Tanaka et al. tool (for Table 3 comparison)

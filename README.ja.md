@@ -126,11 +126,12 @@ make run_all
 
 ### アーティファクト評価
 
+ECOOP 2026 アーティファクト評価の詳細な手順は [ARTIFACT.md](ARTIFACT.md) を参照してください。
+
 ```sh
 make eval-short     # 簡易テスト（ベンチマークのサブセット）
-make eval-all       # 完全な評価: 論文の Table 1-3 を再現
+make eval-all       # 完全な評価: 論文の Table 1 と 3 を再現
 make eval-table1    # Table 1 の再現（ネスト配列ベンチマーク）
-make eval-table2    # Table 2 の再現（所有権項）
 make eval-table3    # Table 3 の再現（Tanaka et al. との比較）
 ```
 
