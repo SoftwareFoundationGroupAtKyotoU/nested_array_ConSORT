@@ -5,6 +5,9 @@ set -euo pipefail
 EVAL_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$EVAL_DIR/lib/common.sh"
 
+# Use Z3 4.14.1 (the version used in the paper)
+use_z3 "4.14.1"
+
 echo "============================================================"
 echo "  Table 2: Inferred Ownership Terms"
 echo "============================================================"
