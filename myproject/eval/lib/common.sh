@@ -109,23 +109,23 @@ run_tanaka() {
 
 # ---- Output Parsing ----
 parse_own_time() {
-    echo "$1" | grep -oE 'own time:? *[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' | tail -1
+    echo "$1" | { grep -oE 'own time:? *[0-9]+\.[0-9]+' || true; } | { grep -oE '[0-9]+\.[0-9]+' || true; } | tail -1
 }
 
 parse_ref_time() {
-    echo "$1" | grep -oE 'ref time [0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' | tail -1
+    echo "$1" | { grep -oE 'ref time [0-9]+\.[0-9]+' || true; } | { grep -oE '[0-9]+\.[0-9]+' || true; } | tail -1
 }
 
 parse_total_time() {
-    echo "$1" | grep -oE 'total time: [0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' | tail -1
+    echo "$1" | { grep -oE 'total time: [0-9]+\.[0-9]+' || true; } | { grep -oE '[0-9]+\.[0-9]+' || true; } | tail -1
 }
 
 parse_ownership_result() {
-    echo "$1" | grep -oE 'ownership: (sat|unsat)' | awk '{print $2}' | tail -1
+    echo "$1" | { grep -oE 'ownership: (sat|unsat)' || true; } | awk '{print $2}' | tail -1
 }
 
 parse_refinement_result() {
-    echo "$1" | grep -oE 'refinement: (sat|unsat)' | awk '{print $2}' | tail -1
+    echo "$1" | { grep -oE 'refinement: (sat|unsat)' || true; } | awk '{print $2}' | tail -1
 }
 
 # ---- Alias Counting ----
@@ -134,7 +134,7 @@ count_aliases() {
     shift
     local output
     output=$(cd "$MYPROJECT_DIR" && dune exec myproject -- "$imp_file" -print_program "$@" 2>&1)
-    echo "$output" | grep -oE "AliasAddPtr|AliasDeref" | wc -l | tr -d ' '
+    echo "$output" | { grep -oE "AliasAddPtr|AliasDeref" || true; } | wc -l | tr -d ' '
 }
 
 # ---- Benchmark Name Mapping (bash 3.2 compatible) ----
