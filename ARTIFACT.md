@@ -23,9 +23,21 @@ The artifact supports the following claims from the paper:
 
 ### Step 1: Load the Docker image
 
+If you have the pre-built image:
+
 ```sh
 docker load -i nested-array-consort-ecoop26.tar.gz
 ```
+
+Alternatively, you can build the image from source:
+
+```sh
+git clone https://github.com/SoftwareFoundationGroupAtKyotoU/nested_array_ConSORT.git
+cd nested_array_ConSORT
+docker build --platform linux/amd64 -t nested-array-consort:ecoop26 .
+```
+
+Note: Building from source requires an internet connection (to download Z3, hoice, and Extended_ConSORT) and may take 10-15 minutes.
 
 ### Step 2: Start the container
 
