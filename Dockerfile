@@ -28,31 +28,29 @@ RUN sudo apt-get update && sudo apt-get install -y \
 #    - 4.11.2: used by Extended_ConSORT for comparison
 #
 #    On amd64: pre-built binaries are used for both versions.
-#    On arm64: Z3 is built from source via opam (no pre-built arm64 release
-#    exists for 4.11.2).
+#    On arm64: 4.14.1 uses pre-built arm64 binary; 4.11.2 is built from
+#    source via opam (no pre-built arm64 release exists for 4.11.2).
 # =============================================================================
 
 ARG TARGETARCH
 
-# Z3 4.14.1 (default)
+# Z3 4.14.1 (default) — pre-built binaries available for both amd64 and arm64
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      opam install z3.4.14.1 -y && \
-      sudo mkdir -p /usr/local/z3-4.14.1/bin && \
-      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.14.1/bin/z3 && \
-      sudo chmod +x /usr/local/z3-4.14.1/bin/z3 && \
-      sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
-      opam remove z3 -y; \
+      Z3_ARCHIVE="z3-4.14.1-arm64-glibc-2.35"; \
     else \
-      wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/z3-4.14.1-x64-glibc-2.35.zip && \
-      unzip -q z3-4.14.1-x64-glibc-2.35.zip && \
-      sudo mkdir -p /usr/local/z3-4.14.1/bin && \
-      sudo cp z3-4.14.1-x64-glibc-2.35/bin/z3 /usr/local/z3-4.14.1/bin/z3 && \
-      sudo chmod +x /usr/local/z3-4.14.1/bin/z3 && \
-      sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
-      rm -rf z3-4.14.1-x64-glibc-2.35*; \
-    fi
+      Z3_ARCHIVE="z3-4.14.1-x64-glibc-2.35"; \
+    fi && \
+    wget -q "https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/${Z3_ARCHIVE}.zip" && \
+    unzip -q "${Z3_ARCHIVE}.zip" && \
+    sudo mkdir -p /usr/local/z3-4.14.1/bin && \
+    sudo cp "${Z3_ARCHIVE}/bin/z3" /usr/local/z3-4.14.1/bin/z3 && \
+    sudo chmod +x /usr/local/z3-4.14.1/bin/z3 && \
+    sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
+    rm -rf ${Z3_ARCHIVE}*
 
 # Z3 4.11.2 (for Extended_ConSORT comparison)
+#   arm64: built from source via opam (install, copy binary, remove)
+#   amd64: pre-built binary
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
       opam install z3.4.11.2 -y && \
       sudo mkdir -p /usr/local/z3-4.11.2/bin && \
