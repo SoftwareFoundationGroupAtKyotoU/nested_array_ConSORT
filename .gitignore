@@ -32,3 +32,8 @@ setup.log
 _opam/
 
 experiment/
+
+# Eval artifacts
+myproject/eval/results/
+myproject/eval/z3-versions/
+myproject/eval/Extended_ConSORT/
