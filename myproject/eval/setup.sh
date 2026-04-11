@@ -26,6 +26,7 @@ check_cmd() {
 
 MISSING=0
 check_cmd ocaml || MISSING=1
+check_cmd opam || MISSING=1
 check_cmd dune || MISSING=1
 check_cmd python3 || MISSING=1
 
@@ -47,10 +48,16 @@ if [ $MISSING -ne 0 ]; then
     exit 1
 fi
 
+# ---- Install OCaml dependencies ----
+echo ""
+echo "--- Installing OCaml dependencies ---"
+cd "$MYPROJECT_DIR"
+opam install . --deps-only -y
+echo "  [OK] OCaml dependencies installed"
+
 # ---- Build this tool ----
 echo ""
 echo "--- Building nested_array_ConSORT ---"
-cd "$MYPROJECT_DIR"
 mkdir -p experiment/own_result
 dune build
 echo "  [OK] Build succeeded"
