@@ -1,106 +1,174 @@
-# -----------------------------------------------------------------------------
-# 汎用テスト実行Makefile
+# =============================================================================
+# Makefile for nested_array_ConSORT
 #
-# 使い方:
-#   - 単一ディレクトリ実行: make run DIR=<テストケースのディレクトリパス>
-#   - 全ディレクトリ実行:   make run_all
-#   - ログの削除:         make clean
+# Usage:
+#   make build              - Build the project with dune
+#   make test               - Run unit tests
+#   make run DIR=<path>     - Run verification on all .imp files in <path>
+#   make run_all            - Run verification on all predefined directories
+#   make eval-setup         - Install dependencies for artifact evaluation
+#   make eval-short         - Quick smoke-test evaluation (subset of benchmarks)
+#   make eval-all           - Full evaluation: reproduce all tables from paper
+#   make eval-table1        - Reproduce Table 1 (Nested Array Benchmarks)
+#   make eval-table2        - Reproduce Table 2 (Ownership Terms)
+#   make eval-table3        - Reproduce Table 3 (Comparison with Tanaka et al.)
+#   make clean              - Remove generated logs and experiment artifacts
 #
-# 例:
+# Examples:
 #   make run DIR=./example/positive_example
+#   make run DIR=./example/omit_alias OPTS="-insert_alias"
 #   make run_all
-# -----------------------------------------------------------------------------
+#   make eval-all
+# =============================================================================
 
-# 'make run_all' で実行するディレクトリのリスト
+# --- Configuration ---
+
+# Directories to process with 'make run_all'
 ALL_DIRS = \
 	./example/positive_example \
 	./example/negative_example \
 	./example/much_time_example \
 	./example/omit_alias
 
-# デフォルトで実行するディレクトリ (make run のみの場合)
+# Default directory for 'make run'
 DEFAULT_DIR = ./example/positive_example
 DIR ?= $(DEFAULT_DIR)
 
+# Extra CLI options (e.g., -insert_alias)
 OPTS ?=
 
-# DIRからディレクトリ名を取得し、ログファイル名を生成 (例: ./a/b -> logs/b.log)
+# Timeout for each verification run (seconds)
+TIMEOUT_SEC = 1500
+
+# Derived names for log files
 DIR_BASENAME := $(notdir $(patsubst %/,%,$(DIR)))
 LOG_FILE := logs/$(DIR_BASENAME).log
-
-# 'run_all' 用のログファイルリストを生成
 ALL_LOG_FILES := $(patsubst %, logs/%.log, $(notdir $(patsubst %/,%,$(ALL_DIRS))))
 
-# 検証の上限時間
-TIMEOUT_SEC = 1000
+# --- Phony Targets ---
 
-# .PHONY は、ファイル名とターゲット名が衝突しても正しく動作させるための宣言
-.PHONY: run run_all clean help default
+.PHONY: build test run run_all \
+        eval-setup eval-short eval-all eval-table1 eval-table2 eval-table3 \
+        clean help default
 
 .PRECIOUS: $(ALL_LOG_FILES)
 
-# デフォルトターゲット (make とだけ打った時に実行される)
 default: help
 
-# ---- メインのターゲット ----
+# =============================================================================
+# Build & Test
+# =============================================================================
 
-# 全ての指定ディレクトリを実行するターゲット
+build:
+	@mkdir -p experiment/own_result
+	dune build
+
+test:
+	dune test
+
+# =============================================================================
+# Benchmark Runs (legacy batch runner)
+# =============================================================================
+
+# Run verification on all predefined directories
 run_all: $(ALL_LOG_FILES)
 	@echo "============================================================"
 	@echo "All specified directories have been processed."
 	@echo "Generated logs: $(ALL_LOG_FILES)"
 	@echo "============================================================"
 
-# 'run_all' から呼び出される、ログファイル名をターゲットとしたルール
-# 例: 'make logs/positive_example.log' が実行される
+# Pattern rule: each log file triggers a recursive make for the matching dir
 $(ALL_LOG_FILES):
-	@# このルールは 'run_all' ターゲットから呼び出される
-	@# 'make' コマンドを再帰的に呼び出すことで、単一実行のロジックを再利用する
 	$(MAKE) run DIR=./example/$(patsubst %.log,%,$(notdir $@)) OPTS="$(OPTS)"
 
-# 単一のディレクトリを実行するターゲット
+# Run verification on a single directory
 run:
-	@# ログを保存するディレクトリがなければ作成
 	@mkdir -p $(dir $(LOG_FILE))
+	@mkdir -p experiment/own_result
 	@echo "============================================================"
 	@echo "Target Directory : $(DIR)"
 	@echo "Log File         : $(LOG_FILE)"
 	@echo "============================================================"
 	@( \
-	    echo "==> Changing directory to ~/nested_array_ConSORT/myproject..." && \
-	    cd ~/nested_array_ConSORT/myproject && \
 	    for file in $(DIR)/*.imp; do \
 	        if [ -f "$$file" ]; then \
 	            echo "--- Executing for: $$file ---"; \
 	            gtimeout $(TIMEOUT_SEC)s dune exec myproject -- "$$file" $(OPTS) -unsat-core false; \
 	            EXIT_CODE=$$?; \
-                if [ $$EXIT_CODE -eq 124 ]; then \
-                    echo "!!! TIME LIMIT EXCEEDED ($(TIMEOUT_SEC) s) - Skipped !!!"; \
-                elif [ $$EXIT_CODE -ne 0 ]; then \
-                    echo "!!! Process failed with error code $$EXIT_CODE !!!"; \
-                fi; \
-                echo ""; \
+	            if [ $$EXIT_CODE -eq 124 ]; then \
+	                echo "!!! TIME LIMIT EXCEEDED ($(TIMEOUT_SEC) s) - Skipped !!!"; \
+	            elif [ $$EXIT_CODE -ne 0 ]; then \
+	                echo "!!! Process failed with error code $$EXIT_CODE !!!"; \
+	            fi; \
+	            echo ""; \
 	        fi; \
 	    done \
 	) 2>&1 | tee "$(LOG_FILE)"
 	@echo "==> Processing complete. Log saved to $(LOG_FILE)."
 	@echo "============================================================"
 
+# =============================================================================
+# Artifact Evaluation (paper tables)
+# =============================================================================
 
-# 生成されたログファイルを削除するターゲット
+eval-setup:
+	bash eval/setup.sh
+
+eval-short:
+	bash eval/run_short.sh
+
+eval-all:
+	bash eval/run_all.sh
+
+eval-table1:
+	bash eval/table1.sh
+
+eval-table2:
+	bash eval/table2.sh
+
+eval-table3:
+	bash eval/table3.sh
+
+# =============================================================================
+# Cleanup
+# =============================================================================
+
 clean:
-	@echo "Cleaning up log files in logs/ directory..."
+	@echo "Cleaning up generated artifacts..."
 	@rm -rf logs
+	@rm -f experiment/out_int.smt2 experiment/result_int
+	@rm -f experiment/out_fv.smt2 experiment/out_chc.smt2
+	@rm -f experiment/chc_result experiment/out_sat_ans.amt2
+	@rm -rf experiment/own_result
+	@rm -rf eval/results/*.csv eval/results/*.md
 	@echo "Done."
 
-# ヘルプメッセージを表示するターゲット
+# =============================================================================
+# Help
+# =============================================================================
+
 help:
 	@echo "Usage:"
-	@echo "  make run DIR=<path>  - Run tests in a single directory <path>."
-	@echo "  make run_all         - Run tests for all predefined directories."
-	@echo "                         ($(ALL_DIRS))"
-	@echo "  make clean           - Remove all generated log files."
+	@echo "  make build              Build the project with dune"
+	@echo "  make test               Run unit tests (OUnit2)"
+	@echo "  make run DIR=<path>     Run verification on .imp files in <path>"
+	@echo "  make run_all            Run on all predefined directories"
+	@echo ""
+	@echo "  make eval-setup         Install deps for artifact evaluation"
+	@echo "  make eval-short         Quick smoke-test (subset of benchmarks)"
+	@echo "  make eval-all           Full evaluation: reproduce all tables"
+	@echo "  make eval-table1        Reproduce Table 1 (Nested Array Benchmarks)"
+	@echo "  make eval-table2        Reproduce Table 2 (Ownership Terms)"
+	@echo "  make eval-table3        Reproduce Table 3 (Comparison with Tanaka et al.)"
+	@echo ""
+	@echo "  make clean              Remove logs, experiment artifacts, eval results"
+	@echo ""
+	@echo "Options:"
+	@echo "  DIR=<path>              Directory of .imp files (default: $(DEFAULT_DIR))"
+	@echo "  OPTS=<flags>            Extra flags passed to the tool (e.g., -insert_alias)"
+	@echo "  TIMEOUT_SEC=<n>         Per-file timeout in seconds (default: $(TIMEOUT_SEC))"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make run DIR=./example/positive_example"
-	@echo "  make run_all"
+	@echo "  make run DIR=./example/omit_alias OPTS=\"-insert_alias\""
+	@echo "  make eval-all"

@@ -24,7 +24,7 @@ else
     TIMEOUT_CMD=""
 fi
 
-TIMEOUT_SEC="${TIMEOUT_SEC:-600}"
+TIMEOUT_SEC="${TIMEOUT_SEC:-900}"
 
 # ---- Z3 Version Switching ----
 _ORIGINAL_PATH="${_ORIGINAL_PATH:-$PATH}"
