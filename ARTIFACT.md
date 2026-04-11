@@ -21,7 +21,7 @@ Note: The paper reports Table 4 results as the mean of 10 runs per benchmark. To
 
 - **Docker** (tested with Docker 20.x and later)
 - Approximately **4 GB** of disk space for the Docker image
-- **x86_64** Linux or macOS with Docker support
+- **x86_64** or **ARM64** (Apple Silicon) Linux or macOS with Docker support
 - No internet connection required after loading the image
 
 ## 3. Getting Started (Kick-the-Tires, 30 minutes or less)
@@ -39,15 +39,15 @@ Alternatively, you can build the image from source:
 ```sh
 git clone https://github.com/SoftwareFoundationGroupAtKyotoU/nested_array_ConSORT.git
 cd nested_array_ConSORT
-docker build --platform linux/amd64 -t nested-array-consort:ecoop26 .
+docker build -t nested-array-consort:ecoop26 .
 ```
 
-Note: Building from source requires an internet connection (to download Z3, hoice, and Extended_ConSORT) and may take 10-15 minutes.
+Note: Building from source requires an internet connection (to download Z3, hoice, and Extended_ConSORT) and may take 10-15 minutes on x86_64. On ARM64, Z3 4.11.2 is compiled from source, which adds approximately 10 minutes to the build.
 
 ### Step 2: Start the container
 
 ```sh
-docker run -it --platform linux/amd64 nested-array-consort:ecoop26
+docker run -it nested-array-consort:ecoop26
 ```
 
 You will be placed in the `/home/opam/app/myproject/` directory inside the container.

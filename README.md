@@ -17,10 +17,10 @@ A pre-built Docker image is provided for artifact evaluation. No manual dependen
 docker load -i nested-array-consort-ecoop26.tar.gz
 
 # Or build it from source
-docker build --platform linux/amd64 -t nested-array-consort:ecoop26 .
+docker build -t nested-array-consort:ecoop26 .
 
 # Run the container
-docker run -it --platform linux/amd64 nested-array-consort:ecoop26
+docker run -it nested-array-consort:ecoop26
 
 # Inside the container: quick smoke test
 bash eval/run_short.sh

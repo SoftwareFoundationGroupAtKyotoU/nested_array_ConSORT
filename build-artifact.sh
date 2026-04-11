@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # build-artifact.sh — Build and export the Docker image for ECOOP 2026 artifact evaluation
+# Supports both x86_64 (amd64) and ARM64 (aarch64/Apple Silicon) platforms.
 set -euo pipefail
 
 IMAGE_NAME="nested-array-consort"
@@ -7,17 +8,35 @@ IMAGE_TAG="ecoop26"
 FULL_TAG="${IMAGE_NAME}:${IMAGE_TAG}"
 OUTPUT_DIR="artifact-package"
 
+# Detect host architecture
+HOST_ARCH=$(uname -m)
+case "$HOST_ARCH" in
+    x86_64|amd64)   PLATFORM="linux/amd64" ;;
+    aarch64|arm64)   PLATFORM="linux/arm64" ;;
+    *)
+        echo "WARNING: Unknown architecture '$HOST_ARCH'. Defaulting to linux/amd64."
+        PLATFORM="linux/amd64"
+        ;;
+esac
+
+# Allow override via environment variable or first argument
+PLATFORM="${DOCKER_PLATFORM:-${1:-$PLATFORM}}"
+
 echo "============================================================"
 echo "  Building ECOOP 2026 Artifact: ${FULL_TAG}"
+echo "  Platform: ${PLATFORM}"
 echo "============================================================"
 echo ""
 
 # ---- Step 1: Build Docker image ----
 echo "--- Step 1: Building Docker image ---"
 echo "  This may take 10-20 minutes (compiling hoice from source is slow)."
+if [ "$PLATFORM" = "linux/arm64" ]; then
+    echo "  NOTE: On ARM64, Z3 4.11.2 is built from source (adds ~10 min)."
+fi
 echo ""
 
-docker build --platform linux/amd64 -t "$FULL_TAG" .
+docker build --platform "$PLATFORM" -t "$FULL_TAG" .
 
 echo ""
 echo "  [OK] Docker image built: $FULL_TAG"
@@ -26,7 +45,7 @@ echo "  [OK] Docker image built: $FULL_TAG"
 echo ""
 echo "--- Step 2: Smoke test ---"
 
-smoke_output=$(docker run --rm --platform linux/amd64 "$FULL_TAG" bash -c \
+smoke_output=$(docker run --rm --platform "$PLATFORM" "$FULL_TAG" bash -c \
     'cd /home/opam/app/myproject && dune exec myproject -- ./example/nested_arrays/indexed_value.imp -unsat-core false 2>&1 | tail -5')
 
 echo "$smoke_output"
@@ -70,10 +89,10 @@ ls -lh "${OUTPUT_DIR}/"
 echo ""
 echo "  To test locally:"
 echo "    docker load -i ${TARFILE}"
-echo "    docker run -it --platform linux/amd64 ${FULL_TAG}"
+echo "    docker run -it --platform ${PLATFORM} ${FULL_TAG}"
 echo "    # Inside container:"
 echo "    bash eval/run_short.sh   # Quick test (~10 min)"
-echo "    bash eval/run_all.sh     # Full evaluation (~2-4 hours)"
+echo "    bash eval/run_all.sh     # Full evaluation"
 echo ""
 echo "  Next steps:"
 echo "    1. Upload ${OUTPUT_DIR}/ contents to Zenodo"

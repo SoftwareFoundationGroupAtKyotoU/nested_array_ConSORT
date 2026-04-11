@@ -17,10 +17,10 @@
 docker load -i nested-array-consort-ecoop26.tar.gz
 
 # またはソースからビルド
-docker build --platform linux/amd64 -t nested-array-consort:ecoop26 .
+docker build -t nested-array-consort:ecoop26 .
 
 # コンテナの起動
-docker run -it --platform linux/amd64 nested-array-consort:ecoop26
+docker run -it nested-array-consort:ecoop26
 
 # コンテナ内: 簡易テスト
 bash eval/run_short.sh

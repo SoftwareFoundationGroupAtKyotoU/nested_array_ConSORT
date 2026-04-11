@@ -2,6 +2,7 @@
 # Dockerfile for nested_array_ConSORT — ECOOP 2026 Artifact Evaluation
 # =============================================================================
 # Base image: Ubuntu 22.04 with OCaml 4.14 (opam pre-configured)
+# Supports both x86_64 (amd64) and ARM64 (aarch64/Apple Silicon) platforms.
 FROM ocaml/opam:ubuntu-22.04-ocaml-4.14
 
 USER opam
@@ -17,31 +18,55 @@ RUN sudo apt-get update && sudo apt-get install -y \
     wget \
     unzip \
     git \
+    cmake \
+    g++ \
     && sudo rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
 # 2. Z3 SMT Solver (two versions for evaluation)
 #    - 4.14.1: primary solver used by nested_array_ConSORT
 #    - 4.11.2: used by Extended_ConSORT for comparison
-#    Both are x86_64 Linux builds.
+#
+#    On amd64: pre-built binaries are used for both versions.
+#    On arm64: Z3 is built from source via opam (no pre-built arm64 release
+#    exists for 4.11.2).
 # =============================================================================
 
+ARG TARGETARCH
+
 # Z3 4.14.1 (default)
-RUN wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/z3-4.14.1-x64-glibc-2.35.zip \
-    && unzip -q z3-4.14.1-x64-glibc-2.35.zip \
-    && sudo mkdir -p /usr/local/z3-4.14.1/bin \
-    && sudo cp z3-4.14.1-x64-glibc-2.35/bin/z3 /usr/local/z3-4.14.1/bin/z3 \
-    && sudo chmod +x /usr/local/z3-4.14.1/bin/z3 \
-    && sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 \
-    && rm -rf z3-4.14.1-x64-glibc-2.35*
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      opam install z3.4.14.1 -y && \
+      sudo mkdir -p /usr/local/z3-4.14.1/bin && \
+      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.14.1/bin/z3 && \
+      sudo chmod +x /usr/local/z3-4.14.1/bin/z3 && \
+      sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
+      opam remove z3 -y; \
+    else \
+      wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.14.1/z3-4.14.1-x64-glibc-2.35.zip && \
+      unzip -q z3-4.14.1-x64-glibc-2.35.zip && \
+      sudo mkdir -p /usr/local/z3-4.14.1/bin && \
+      sudo cp z3-4.14.1-x64-glibc-2.35/bin/z3 /usr/local/z3-4.14.1/bin/z3 && \
+      sudo chmod +x /usr/local/z3-4.14.1/bin/z3 && \
+      sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
+      rm -rf z3-4.14.1-x64-glibc-2.35*; \
+    fi
 
 # Z3 4.11.2 (for Extended_ConSORT comparison)
-RUN wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip \
-    && unzip -q z3-4.11.2-x64-glibc-2.31.zip \
-    && sudo mkdir -p /usr/local/z3-4.11.2/bin \
-    && sudo cp z3-4.11.2-x64-glibc-2.31/bin/z3 /usr/local/z3-4.11.2/bin/z3 \
-    && sudo chmod +x /usr/local/z3-4.11.2/bin/z3 \
-    && rm -rf z3-4.11.2-x64-glibc-2.31*
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      opam install z3.4.11.2 -y && \
+      sudo mkdir -p /usr/local/z3-4.11.2/bin && \
+      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.11.2/bin/z3 && \
+      sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
+      opam remove z3 -y; \
+    else \
+      wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip && \
+      unzip -q z3-4.11.2-x64-glibc-2.31.zip && \
+      sudo mkdir -p /usr/local/z3-4.11.2/bin && \
+      sudo cp z3-4.11.2-x64-glibc-2.31/bin/z3 /usr/local/z3-4.11.2/bin/z3 && \
+      sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
+      rm -rf z3-4.11.2-x64-glibc-2.31*; \
+    fi
 
 # =============================================================================
 # 3. Rust 1.78.0 and Hoice CHC solver (v1.10.0)
