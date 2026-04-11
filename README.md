@@ -55,7 +55,7 @@ All commands below should be run from the `myproject/` directory.
     make run DIR=./example/omit_alias OPTS="-insert_alias"
     ```
 
-- Verify all `.imp` files under `positive_example/`, `negative_example/`, and `much_time_example/`:
+- Verify all `.imp` files under `positive_example/`, `negative_example/`, `much_time_example/`, and `omit_alias/`:
     ```sh
     make run_all
     ```
@@ -146,3 +146,4 @@ If you see `ownership: sat` and `refinement: sat`, it means that the ownership a
 | `-random_assignment` | Disable heuristics in ownership type inference. |
 | `-insert_alias` | Automatic alias insertion. Correctness of inserted aliases is not guaranteed. |
 | `-print_program` | Pretty-print the parsed program AST. |
+| `-unsat-core true/false` | Enable/disable unsat core analysis (default: true). |

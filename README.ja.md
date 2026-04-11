@@ -55,7 +55,7 @@
     make run DIR=./example/omit_alias OPTS="-insert_alias"
     ```
 
-- `positive_example/`、`negative_example/`、`much_time_example/` にある全ての `.imp` ファイルの検査:
+- `positive_example/`、`negative_example/`、`much_time_example/`、`omit_alias/` にある全ての `.imp` ファイルの検査:
     ```sh
     make run_all
     ```
@@ -144,3 +144,4 @@ dune exec myproject -- ./example/positive_example/init_10.imp
 | `-random_assignment` | 所有権型推論のヒューリスティクスを無効化。 |
 | `-insert_alias` | aliasの自動挿入。挿入されるaliasの正しさは保証されない。 |
 | `-print_program` | パースされたプログラムのASTを整形表示。 |
+| `-unsat-core true/false` | unsat core 解析の有効/無効（デフォルト: true）。 |

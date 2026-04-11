@@ -138,7 +138,7 @@ clean:
 	@rm -rf logs
 	@rm -f experiment/out_int.smt2 experiment/result_int
 	@rm -f experiment/out_fv.smt2 experiment/out_chc.smt2
-	@rm -f experiment/chc_result experiment/out_sat_ans.amt2
+	@rm -f experiment/chc_result experiment/out_sat_ans.smt2
 	@rm -rf experiment/own_result
 	@rm -rf eval/results/*.csv eval/results/*.md
 	@echo "Done."

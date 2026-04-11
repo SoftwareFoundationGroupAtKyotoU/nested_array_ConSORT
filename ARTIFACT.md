@@ -24,13 +24,13 @@ The artifact supports the following claims from the paper:
 ### Step 1: Load the Docker image
 
 ```sh
-docker load -i artifact.tar.gz
+docker load -i nested-array-consort-ecoop26.tar.gz
 ```
 
 ### Step 2: Start the container
 
 ```sh
-docker run -it nested-array-consort:ecoop26
+docker run -it --platform linux/amd64 nested-array-consort:ecoop26
 ```
 
 You will be placed in the `/home/opam/app/myproject/` directory inside the container.
@@ -51,7 +51,7 @@ The short evaluation runs a small subset of benchmarks and should complete withi
 
 If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is working correctly.
 
-## 4. Full Evaluation (2-4 hours)
+## 4. Full Evaluation (~30 minutes)
 
 ### Run all tables at once
 
@@ -59,7 +59,7 @@ If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is wor
 bash eval/run_all.sh
 ```
 
-This script runs all five table reproduction scripts sequentially and stores results in `eval/results/`.
+This script runs the three table reproduction scripts (Tables 1-3) sequentially and stores results in `eval/results/`.
 
 ### Run individual tables
 
@@ -111,7 +111,7 @@ nested_array_ConSORT/
       run_all.sh             -- Master evaluation script
       run_short.sh           -- Quick kick-the-tires evaluation
       setup.sh               -- Dependency installation and build
-      table1.sh ... table5.sh -- Individual table reproduction scripts
+      table1.sh, table2.sh, table3.sh -- Individual table reproduction scripts
       lib/common.sh          -- Shared helper functions
       z3-versions/           -- Z3 binaries (4.11.2 and 4.14.1)
       Extended_ConSORT/      -- Tanaka et al. tool (for Table 3 comparison)
@@ -149,15 +149,9 @@ which z3      # Should print the path to z3
 which hoice   # Should print the path to hoice
 ```
 
-### Table 4 takes too long
+### Trace-Matrix refinement timeout
 
-Use fewer runs:
-
-```sh
-NUM_RUNS=2 bash eval/table4.sh
-```
-
-Or run only a subset of benchmarks by editing `eval/table4.sh` to include fewer files.
+The Trace-Matrix benchmark's refinement phase (hoice) may take longer than the default timeout (900s). This is a known solver performance issue, not a bug in the tool. The ownership phase completes successfully.
 
 ### Solver timeout or unexpected unsat
 

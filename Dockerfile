@@ -75,7 +75,7 @@ RUN opam install . --deps-only -y
 RUN opam exec -- dune build
 
 # =============================================================================
-# 7. Set up eval environment
+# 6. Set up eval environment
 #    Create symlinks so eval scripts can find Z3 versions and Extended_ConSORT
 #    at the expected paths relative to myproject/eval/.
 # =============================================================================
@@ -85,7 +85,7 @@ RUN mkdir -p eval/z3-versions \
     && ln -sf /home/opam/app/eval/Extended_ConSORT eval/Extended_ConSORT
 
 # =============================================================================
-# 8. Default working directory and entrypoint
+# 7. Default working directory and entrypoint
 # =============================================================================
 WORKDIR /home/opam/app/myproject
 CMD ["bash"]

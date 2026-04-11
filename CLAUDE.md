@@ -97,7 +97,7 @@ Both must be on `$PATH`. The tool invokes them via `Sys.command`.
 ## Language Notes
 
 - Comments and README are primarily in Japanese
-- OCaml 4.14.1, Dune 3.16, Menhir for parser generation
+- OCaml 4.14.1, Dune 2.7+, Menhir for parser generation
 - `ppx_deriving.std` for `[@@deriving show]` on types
 - Warnings `-warn-error -A -w -39` (all warnings non-fatal, unused rec flag suppressed)
 - `.ocamlformat` with `comment-check=false`

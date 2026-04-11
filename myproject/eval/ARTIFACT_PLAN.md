@@ -39,7 +39,7 @@ Create in repo root:
 
 Create LaTeX document using the DARTS template:
 - Abstract describing the tool
-- Scope: Tables 1-5 reproducibility
+- Scope: Tables 1-3 reproducibility
 - Content: Docker image + source
 - Getting started instructions
 - Detailed evaluation instructions
