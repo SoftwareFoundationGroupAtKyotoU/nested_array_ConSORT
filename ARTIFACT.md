@@ -11,6 +11,8 @@ The artifact supports the following claims from the paper:
 - **Table 1**: Verification timing and alias statement counts for 19 nested array benchmarks.
 - **Table 3**: Performance comparison with Tanaka et al. on 8 integer array benchmarks.
 
+Note: Table 2 (inferred ownership terms) is not included in the automated evaluation. The ownership terms are output as SMT2 formulas in `experiment/out_sat_ans.smt2` after each verification run, but interpreting them as the ownership terms presented in the paper requires manual inspection.
+
 ## 2. Requirements
 
 - **Docker** (tested with Docker 20.x and later)
