@@ -36,4 +36,4 @@ experiment/
 # Eval artifacts
 myproject/eval/results/
 myproject/eval/z3-versions/
-myproject/eval/Extended_ConSORT/
+myproject/eval/Extended_ConSORT/ecoop26-paper78.pdf

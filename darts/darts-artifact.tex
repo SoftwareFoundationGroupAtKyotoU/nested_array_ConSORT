@@ -48,8 +48,6 @@ Specifically, it enables reproduction of:
   \item \textbf{Table~1}: Verification timing and alias statement counts for 19 nested array benchmarks.
   \item \textbf{Table~2}: Inferred ownership term solutions (SMT2 output files for manual inspection).
   \item \textbf{Table~3}: Performance comparison with the tool by Tanaka et al.\ on 8 integer array benchmarks.
-  \item \textbf{Table~4}: Mean verification time over 10 runs with Z3 versions 4.11.2 and 4.14.1.
-  \item \textbf{Table~5}: Summary of Z3 version comparison (derived from Table~4).
 \end{itemize}
 
 The tool accepts programs written in a custom \texttt{.imp} language and automatically
@@ -137,24 +135,15 @@ Each table can be reproduced independently:
 Table~1 & \texttt{eval/table1.sh} & \texttt{eval/results/table1.md} & $\sim$10 min \\
 Table~2 & \texttt{eval/table2.sh} & \texttt{eval/results/table2/} & $\sim$5 min \\
 Table~3 & \texttt{eval/table3.sh} & \texttt{eval/results/table3.md} & $\sim$10 min \\
-Table~4 & \texttt{eval/table4.sh} & \texttt{eval/results/table4.md} & $\sim$1--3 hours \\
-Table~5 & \texttt{eval/table5.sh} & \texttt{eval/results/table5.md} & $<$1 min \\
 \hline
 \end{tabular}
 \end{center}
-
-For a faster Table~4 evaluation (2 runs instead of 10):
-
-\begin{verbatim}
-NUM_RUNS=2 bash eval/table4.sh
-\end{verbatim}
 
 \subsection{Expected Variation}
 
 \begin{itemize}
   \item \textbf{Absolute timing} will differ from the paper due to hardware differences.
   \item \textbf{Sat/unsat results} must match the paper exactly.
-  \item \textbf{Z3 version comparison trends} (Table~5) should be directionally consistent.
   \item \textbf{Ownership solutions} (Table~2) are deterministic and should match the paper.
 \end{itemize}
 

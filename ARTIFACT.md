@@ -11,8 +11,6 @@ The artifact supports the following claims from the paper:
 - **Table 1**: Verification timing and alias statement counts for 19 nested array benchmarks.
 - **Table 2**: Inferred ownership term solutions (qualitative correctness).
 - **Table 3**: Performance comparison with Tanaka et al. on 8 integer array benchmarks.
-- **Table 4**: Mean verification time over 10 runs with two Z3 versions (4.11.2 and 4.14.1).
-- **Table 5**: Summary of Z3 version comparison (derived from Table 4 data).
 
 ## 2. Requirements
 
@@ -49,7 +47,6 @@ The short evaluation runs a small subset of benchmarks and should complete withi
 
 - A few nested array benchmarks from Table 1 with timing output (ownership time, refinement time, total time).
 - One integer array benchmark from Table 3 comparing our tool with Extended_ConSORT (Tanaka et al.).
-- A brief Table 4 check with `NUM_RUNS=1` on a few benchmarks.
 - Final summary indicating which paper tables correspond to each output.
 
 If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is working correctly.
@@ -72,19 +69,7 @@ If you prefer to run tables independently:
 bash eval/table1.sh    # Table 1: Nested array benchmarks (~10 min)
 bash eval/table2.sh    # Table 2: Ownership term solutions (~5 min)
 bash eval/table3.sh    # Table 3: Comparison with Tanaka et al. (~10 min)
-bash eval/table4.sh    # Table 4: Mean time, 10 runs x 2 Z3 versions (~1-3 hours)
-bash eval/table5.sh    # Table 5: Z3 version comparison summary (~1 min, requires Table 4 data)
 ```
-
-### Speeding up Table 4
-
-Table 4 is the most time-consuming step (700 verification tasks: 35 benchmarks x 10 runs x 2 Z3 versions). To reduce evaluation time:
-
-```sh
-NUM_RUNS=2 bash eval/table4.sh
-```
-
-This runs only 2 iterations instead of 10, completing in roughly 15-30 minutes. The resulting averages will be noisier but sufficient to confirm the general trend.
 
 ## 5. Claims and Evidence Mapping
 
@@ -93,8 +78,6 @@ This runs only 2 iterations instead of 10, completing in roughly 15-30 minutes. 
 | Table 1 | `eval/table1.sh` | `eval/results/table1.md` | Timing and alias counts for 19 nested array benchmarks |
 | Table 2 | `eval/table2.sh` | `eval/results/table2/` | Ownership term solutions (SMT2 files; manual interpretation needed) |
 | Table 3 | `eval/table3.sh` | `eval/results/table3.md` | Timing comparison with Tanaka et al. on 8 integer array benchmarks |
-| Table 4 | `eval/table4.sh` | `eval/results/table4.md` | Mean verification time over 10 runs with Z3 4.11.2 and Z3 4.14.1 |
-| Table 5 | `eval/table5.sh` | `eval/results/table5.md` | Z3 version comparison summary (derived from Table 4 data) |
 
 CSV files with raw data are also available in `eval/results/` for further analysis.
 
@@ -103,7 +86,6 @@ CSV files with raw data are also available in `eval/results/` for further analys
 - **Absolute timing values** will differ from those reported in the paper due to hardware differences. The paper's experiments were conducted on a specific machine; your Docker container will have different CPU characteristics.
 - **Relative ordering** of benchmarks by time should be approximately consistent.
 - **Sat/unsat results** must match the paper exactly. Every benchmark in `positive_example/` and `nested_arrays/` should report `sat`; every benchmark in `negative_example/` should report `unsat`.
-- **Z3 version comparison trends** (Table 5) should be directionally consistent: the same benchmarks that are faster on one Z3 version in the paper should generally remain faster on that version in your run.
 - **Ownership term solutions** (Table 2) should match the paper exactly, as these are determined by the constraint solver and are not timing-dependent.
 
 ## 7. Directory Structure

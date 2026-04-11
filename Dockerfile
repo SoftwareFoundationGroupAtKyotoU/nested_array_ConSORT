@@ -56,7 +56,7 @@ RUN cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
 # =============================================================================
 RUN mkdir -p /home/opam/app/eval \
     && git clone https://github.com/mamizu-git/Extended_ConSORT /home/opam/app/eval/Extended_ConSORT \
-    && cd /home/opam/app/eval/Extended_ConSORT/src && make \
+    && cd /home/opam/app/eval/Extended_ConSORT/src && opam exec -- make \
     && mkdir -p /home/opam/app/eval/Extended_ConSORT/experiment
 
 # =============================================================================

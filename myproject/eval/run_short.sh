@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run_short.sh — "Kick-the-tires" script for ECOOP artifact evaluation
-# Runs a subset of benchmarks from Tables 1-4 in under 10 minutes.
+# Runs a subset of benchmarks from Tables 1 and 3 in under 10 minutes.
 set -euo pipefail
 
 EVAL_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -10,7 +10,7 @@ source "$EVAL_DIR/lib/common.sh"
 use_z3 "4.14.1"
 
 echo "============================================================"
-echo "  Kick-the-Tires: Quick Verification (subset of Tables 1, 3, 4)"
+echo "  Kick-the-Tires: Quick Verification (subset of Tables 1 and 3)"
 echo "  Expected runtime: < 10 minutes"
 echo "============================================================"
 echo ""
@@ -147,108 +147,6 @@ fi
 echo ""
 
 # ==================================================================
-# Table 4 subset: Run Init-Matrix(2D) and Indexed-Value with NUM_RUNS=2
-# ==================================================================
-echo "------------------------------------------------------------"
-echo "  Table 4 (subset): Mean Verification Time (2 runs)"
-echo "------------------------------------------------------------"
-
-NUM_RUNS=2
-TABLE4_DIR="$SHORT_DIR/table4_raw"
-TABLE4_CSV="$SHORT_DIR/table4_subset.csv"
-mkdir -p "$TABLE4_DIR"
-
-echo "Benchmark,Own_4.14.1,Own_4.11.2,Total_4.14.1,Total_4.11.2" > "$TABLE4_CSV"
-
-TABLE4_BENCHMARKS="Init-Matrix(2D)
-Indexed-Value"
-
-while IFS= read -r paper_name; do
-    file_base=$(get_nested_array_file "$paper_name")
-    imp_file="./example/nested_arrays/${file_base}.imp"
-    dir_name=$(echo "$paper_name" | tr '()' '__' | tr ' ' '_')
-
-    log_progress "Table 4: Running $paper_name ($NUM_RUNS runs x 2 Z3 versions)..."
-
-    for z3_ver in 4.14.1 4.11.2; do
-        run_dir="$TABLE4_DIR/${dir_name}/z3-${z3_ver}"
-        mkdir -p "$run_dir"
-
-        use_z3 "$z3_ver"
-
-        for run_num in $(seq 1 "$NUM_RUNS"); do
-            output=$(run_tool "$imp_file")
-            own=$(parse_own_time "$output")
-            ref=$(parse_ref_time "$output")
-            total=$(parse_total_time "$output")
-            echo "own=${own:-TIMEOUT} ref=${ref:-TIMEOUT} total=${total:-TIMEOUT}" > "$run_dir/run_${run_num}.txt"
-        done
-    done
-
-    # Compute means with Python
-    mean_result=$(python3 - "$TABLE4_DIR/${dir_name}" "$NUM_RUNS" << 'PYTHON_SCRIPT'
-import sys, os, re
-
-base_dir = sys.argv[1]
-num_runs = int(sys.argv[2])
-
-def parse_run_file(path, field):
-    try:
-        with open(path) as f:
-            content = f.read().strip()
-        m = re.search(rf'{field}=(\S+)', content)
-        if m:
-            val = m.group(1)
-            if val == "TIMEOUT":
-                return None
-            return float(val)
-    except Exception:
-        return None
-    return None
-
-def compute_mean(run_dir, field, num_runs):
-    vals = []
-    for i in range(1, num_runs + 1):
-        path = os.path.join(run_dir, f"run_{i}.txt")
-        v = parse_run_file(path, field)
-        if v is None:
-            return None
-        vals.append(v)
-    if not vals:
-        return None
-    return sum(vals) / len(vals)
-
-def fmt(v):
-    return f"{v:.3f}" if v is not None else "TIMEOUT"
-
-own_414 = compute_mean(os.path.join(base_dir, "z3-4.14.1"), "own", num_runs)
-own_411 = compute_mean(os.path.join(base_dir, "z3-4.11.2"), "own", num_runs)
-total_414 = compute_mean(os.path.join(base_dir, "z3-4.14.1"), "total", num_runs)
-total_411 = compute_mean(os.path.join(base_dir, "z3-4.11.2"), "total", num_runs)
-
-print(f"{fmt(own_414)} {fmt(own_411)} {fmt(total_414)} {fmt(total_411)}")
-PYTHON_SCRIPT
-    )
-
-    own_414=$(echo "$mean_result" | awk '{print $1}')
-    own_411=$(echo "$mean_result" | awk '{print $2}')
-    total_414=$(echo "$mean_result" | awk '{print $3}')
-    total_411=$(echo "$mean_result" | awk '{print $4}')
-
-    echo "$paper_name,$own_414,$own_411,$total_414,$total_411" >> "$TABLE4_CSV"
-
-    if [ "$total_414" != "TIMEOUT" ] && [ "$total_411" != "TIMEOUT" ]; then
-        record_result "Table4/$paper_name" "OK" \
-            "mean total: Z3 4.14.1=${total_414}s, Z3 4.11.2=${total_411}s ($NUM_RUNS runs each)"
-        log_progress "  -> mean total: Z3 4.14.1=${total_414}s, Z3 4.11.2=${total_411}s"
-    else
-        record_result "Table4/$paper_name" "FAIL" "One or more runs timed out"
-    fi
-done <<< "$TABLE4_BENCHMARKS"
-
-echo ""
-
-# ==================================================================
 # Final Summary
 # ==================================================================
 echo ""
@@ -261,13 +159,11 @@ echo ""
 echo "  Passed: $PASS_COUNT"
 echo "  Failed: $FAIL_COUNT"
 echo ""
-echo "  These results correspond to subsets of Tables 1, 3, and 4 in the paper."
+echo "  These results correspond to subsets of Tables 1 and 3 in the paper."
 echo ""
 echo "  Results saved to: $SHORT_DIR/"
 echo "    - table1_subset.csv"
 echo "    - table3_subset.csv"
-echo "    - table4_subset.csv"
-echo "    - table4_raw/"
 echo "============================================================"
 
 if [ "$FAIL_COUNT" -gt 0 ]; then

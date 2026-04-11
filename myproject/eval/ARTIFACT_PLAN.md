@@ -25,9 +25,7 @@ The current Dockerfile has several issues that need fixing:
 For the initial "does it work?" evaluation phase:
 - Run 3-4 fast benchmarks from Table 1 (Init-Matrix(2D), Indexed-Value, Swap)
 - Run 1 benchmark from Table 3 (Init-10, both our tool and Tanaka+)
-- Run Table 4 with `NUM_RUNS=1` on 3 benchmarks only
-- Skip Table 5 (derived from Table 4)
-- Print a summary showing "these outputs correspond to Tables 1/2/3/4 in the paper"
+- Print a summary showing "these outputs correspond to Tables 1 and 3 in the paper"
 
 ## 3. Documentation for Evaluators — `ARTIFACT.md`
 
