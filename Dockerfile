@@ -15,6 +15,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
     libgmp-dev \
     pkg-config \
     python3 \
+    python3-venv \
     wget \
     unzip \
     git \
@@ -27,16 +28,18 @@ RUN sudo apt-get update && sudo apt-get install -y \
 #    - 4.14.1: primary solver used by nested_array_ConSORT
 #    - 4.11.2: used by Extended_ConSORT for comparison
 #
-#    On amd64: pre-built binaries are used for both versions.
-#    On arm64: 4.14.1 uses pre-built arm64 binary; 4.11.2 is built from
-#    source via opam (no pre-built arm64 release exists for 4.11.2).
+#    On amd64: pre-built binaries from GitHub releases.
+#    On arm64: 4.14.1 uses pre-built arm64-glibc-2.34 binary from GitHub;
+#              4.11.2 uses pip3 z3-solver wheel (no arm64 Linux binary on GitHub).
 # =============================================================================
 
 ARG TARGETARCH
 
-# Z3 4.14.1 (default) — pre-built binaries available for both amd64 and arm64
+# Z3 4.14.1 (default)
+#   arm64: pre-built binary (arm64-glibc-2.34, compatible with Ubuntu 22.04's glibc 2.35)
+#   amd64: pre-built binary (x64-glibc-2.35)
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      Z3_ARCHIVE="z3-4.14.1-arm64-glibc-2.35"; \
+      Z3_ARCHIVE="z3-4.14.1-arm64-glibc-2.34"; \
     else \
       Z3_ARCHIVE="z3-4.14.1-x64-glibc-2.35"; \
     fi && \
@@ -49,14 +52,15 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     rm -rf ${Z3_ARCHIVE}*
 
 # Z3 4.11.2 (for Extended_ConSORT comparison)
-#   arm64: built from source via opam (install, copy binary, remove)
+#   arm64: no pre-built arm64 Linux binary on GitHub; use pip3 z3-solver wheel
 #   amd64: pre-built binary
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      opam install z3.4.11.2 -y && \
+      python3 -m venv /tmp/z3-venv-411 && \
+      /tmp/z3-venv-411/bin/pip install z3-solver==4.11.2.0 && \
       sudo mkdir -p /usr/local/z3-4.11.2/bin && \
-      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.11.2/bin/z3 && \
+      sudo cp /tmp/z3-venv-411/bin/z3 /usr/local/z3-4.11.2/bin/z3 && \
       sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
-      opam remove z3 -y; \
+      rm -rf /tmp/z3-venv-411; \
     else \
       wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip && \
       unzip -q z3-4.11.2-x64-glibc-2.31.zip && \
