@@ -68,7 +68,7 @@ The short evaluation runs a small subset of benchmarks and should complete withi
 
 If all benchmarks report `ownership: sat` and `refinement: sat`, the tool is working correctly.
 
-## 4. Full Evaluation (~30 minutes)
+## 4. Full Evaluation (~2 hours)
 
 ### Run all tables at once
 

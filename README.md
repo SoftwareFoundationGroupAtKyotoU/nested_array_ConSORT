@@ -25,7 +25,7 @@ docker run -it nested-array-consort:ecoop26
 # Inside the container: quick smoke test
 bash eval/run_short.sh
 
-# Inside the container: full evaluation (reproduces Tables 1-3 from the paper)
+# Inside the container: full evaluation (reproduces Tables 1, 3, 4, 5 from the paper)
 bash eval/run_all.sh
 ```
 
