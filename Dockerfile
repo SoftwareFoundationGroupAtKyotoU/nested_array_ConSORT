@@ -28,8 +28,8 @@ RUN sudo apt-get update && sudo apt-get install -y \
 #    - 4.11.2: used by Extended_ConSORT for comparison
 #
 #    On amd64: pre-built binaries from GitHub releases.
-#    On arm64: 4.14.1 uses pre-built arm64-glibc-2.34 binary from GitHub;
-#              4.11.2 is built from source via opam (no arm64 Linux binary on GitHub).
+#    On arm64: 4.14.1 uses pre-built arm64-glibc-2.34 binary;
+#              4.11.2 slot uses 4.12.4 (earliest arm64 Linux release) as substitute.
 # =============================================================================
 
 ARG TARGETARCH
@@ -48,15 +48,17 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     sudo ln -sf /usr/local/z3-4.14.1/bin/z3 /usr/local/bin/z3 && \
     rm -rf ${Z3_ARCHIVE}*
 
-# Z3 4.11.2 (for Extended_ConSORT comparison)
-#   arm64: built from source via opam (no arm64 Linux binary on GitHub)
-#   amd64: pre-built binary
+# Z3 4.11.2 (for Extended_ConSORT comparison and Table 4)
+#   amd64: pre-built 4.11.2 binary from GitHub
+#   arm64: no arm64 Linux binary for 4.11.2 and source build OOMs;
+#          use 4.12.4 (earliest arm64 Linux release) as substitute
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      opam install z3.4.11.2 -y && \
+      wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.12.4/z3-4.12.4-arm64-glibc-2.35.zip && \
+      unzip -q z3-4.12.4-arm64-glibc-2.35.zip && \
       sudo mkdir -p /usr/local/z3-4.11.2/bin && \
-      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.11.2/bin/z3 && \
+      sudo cp z3-4.12.4-arm64-glibc-2.35/bin/z3 /usr/local/z3-4.11.2/bin/z3 && \
       sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
-      opam remove z3 -y; \
+      rm -rf z3-4.12.4-arm64-glibc-2.35*; \
     else \
       wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip && \
       unzip -q z3-4.11.2-x64-glibc-2.31.zip && \
