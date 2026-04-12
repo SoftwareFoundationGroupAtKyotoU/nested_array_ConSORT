@@ -29,7 +29,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
 #
 #    On amd64: pre-built binaries from GitHub releases.
 #    On arm64: 4.14.1 uses pre-built arm64-glibc-2.34 binary;
-#              4.11.2 slot uses 4.12.4 (earliest arm64 Linux release) as substitute.
+#              4.11.2 is built from source via opam.
 # =============================================================================
 
 ARG TARGETARCH
@@ -49,17 +49,14 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     rm -rf ${Z3_ARCHIVE}*
 
 # Z3 4.11.2 (for Extended_ConSORT comparison and Table 4)
-#   amd64: pre-built 4.11.2 binary from GitHub
-#   arm64: no arm64 Linux binary for 4.11.2 and building from source
-#          requires prohibitive amounts of memory in Docker;
-#          use 4.12.4 (earliest arm64 Linux release) as substitute
+#   amd64: pre-built binary from GitHub
+#   arm64: built from source via opam (no arm64 Linux binary on GitHub)
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.12.4/z3-4.12.4-arm64-glibc-2.35.zip && \
-      unzip -q z3-4.12.4-arm64-glibc-2.35.zip && \
+      opam install z3.4.11.2 -y && \
       sudo mkdir -p /usr/local/z3-4.11.2/bin && \
-      sudo cp z3-4.12.4-arm64-glibc-2.35/bin/z3 /usr/local/z3-4.11.2/bin/z3 && \
+      sudo cp "$(opam var bin)/z3" /usr/local/z3-4.11.2/bin/z3 && \
       sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
-      rm -rf z3-4.12.4-arm64-glibc-2.35*; \
+      opam remove z3 -y; \
     else \
       wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.11.2/z3-4.11.2-x64-glibc-2.31.zip && \
       unzip -q z3-4.11.2-x64-glibc-2.31.zip && \
@@ -70,12 +67,11 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     fi
 
 # =============================================================================
-# 3. Rust 1.78.0 and Hoice CHC solver (commit bc18c477)
-#    Rust 1.78.0 is required — newer versions cause build failures with hoice.
+# 3. Rust and Hoice CHC solver (v1.10.0)
 # =============================================================================
-RUN wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.78.0
+RUN wget -qO- https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/home/opam/.cargo/bin:${PATH}"
-RUN cargo install --git https://github.com/hopv/hoice --rev bc18c477 --locked
+RUN cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
 
 # =============================================================================
 # 4. Extended_ConSORT (baseline for comparison in evaluation)

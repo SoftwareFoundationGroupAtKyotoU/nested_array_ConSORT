@@ -42,7 +42,7 @@ cd nested_array_ConSORT
 docker build -t nested-array-consort:ecoop26 .
 ```
 
-Note: Building from source requires an internet connection (to download Z3, hoice, and Extended_ConSORT) and may take 10-15 minutes. On ARM64, Z3 4.12.4 is used in place of 4.11.2 because no pre-built arm64 Linux binary exists for 4.11.2 and building Z3 4.11.2 from source requires a large amount of memory, which is prohibitive in a Docker environment. Timing results for the "Z3 4.11.2" column in Tables 4 and 5 may differ slightly from the paper on ARM64.
+Note: Building from source requires an internet connection (to download Z3, hoice, and Extended_ConSORT) and may take 10-15 minutes on x86_64. On ARM64, Z3 4.11.2 is compiled from source via opam (no pre-built arm64 Linux binary exists), which adds approximately 10 minutes to the build and requires at least 8 GB of memory allocated to Docker.
 
 ### Step 2: Start the container
 
