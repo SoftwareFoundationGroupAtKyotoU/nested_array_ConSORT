@@ -119,7 +119,8 @@ for filepath in "$OUTPUT_DIR"/*; do
     fi
 
     # Upload via bucket API (PUT overwrites existing file with same name)
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+    RESPONSE_FILE=$(mktemp)
+    HTTP_CODE=$(curl --progress-bar -o "$RESPONSE_FILE" -w "%{http_code}" \
         -X PUT \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/octet-stream" \
@@ -131,13 +132,9 @@ for filepath in "$OUTPUT_DIR"/*; do
         UPLOADED=$((UPLOADED + 1))
     else
         echo "    [FAIL] HTTP $HTTP_CODE"
-        echo "    Retrying with verbose output..."
-        curl -s -X PUT \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/octet-stream" \
-            -T "$filepath" \
-            "$BUCKET_URL/$filename" | python3 -m json.tool 2>/dev/null || true
+        cat "$RESPONSE_FILE" | python3 -m json.tool 2>/dev/null || cat "$RESPONSE_FILE"
     fi
+    rm -f "$RESPONSE_FILE"
 done
 
 # --- Summary ---
