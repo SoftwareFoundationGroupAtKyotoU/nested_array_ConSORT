@@ -1,9 +1,12 @@
 TEX = darts-artifact
 PDF = $(TEX).pdf
+ARTIFACT_DIR = ../artifact-package
 
 .PHONY: all clean
 
 all: $(PDF)
+	mkdir -p $(ARTIFACT_DIR)
+	cp $(PDF) $(ARTIFACT_DIR)/
 
 $(PDF): $(TEX).tex references.bib lipics-v2021.cls
 	pdflatex $(TEX)
