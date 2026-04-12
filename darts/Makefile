@@ -5,7 +5,9 @@ PDF = $(TEX).pdf
 
 all: $(PDF)
 
-$(PDF): $(TEX).tex lipics-v2021.cls
+$(PDF): $(TEX).tex references.bib lipics-v2021.cls
+	pdflatex $(TEX)
+	bibtex $(TEX)
 	pdflatex $(TEX)
 	pdflatex $(TEX)
 

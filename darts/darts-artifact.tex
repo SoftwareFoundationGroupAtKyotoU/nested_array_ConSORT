@@ -14,16 +14,15 @@
 
 \Copyright{Yusuke Fujiwara, Yusuke Matsushita, Kohei Suenaga, and Atsushi Igarashi}
 
-\ccsdesc[500]{Software and its engineering~Automated static analysis}
-\ccsdesc[300]{Theory of computation~Type theory}
+\ccsdesc[500]{Theory of computation~Program verification} 
 
 \keywords{ownership types, refinement types, pointer arithmetic, nested arrays, verification}
 
 %% TODO: Update related article DOI when assigned
-\relatedversiondetails{Full Paper}{https://doi.org/10.4230/LIPIcs.ECOOP.2026.XXX}
+% \relatedversiondetails{Full Paper}{https://doi.org/10.4230/LIPIcs.ECOOP.2026.XXX}
 
 %% TODO: Update artifact DOI from Zenodo when assigned
-\relatedversiondetails{Artifact (Software Heritage)}{https://archive.softwareheritage.org/swh:1:dir:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
+% \relatedversiondetails{Artifact (Software Heritage)}{https://archive.softwareheritage.org/swh:1:dir:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
 
 \begin{document}
 
@@ -62,7 +61,7 @@ after each verification run, but interpreting them as the ownership terms presen
 paper requires manual inspection.
 
 The tool accepts programs written in a custom \texttt{.imp} language and automatically
-performs ownership type inference (using Z3) followed by refinement type checking (using hoice).
+performs ownership type inference (using Z3~\cite{z3}) followed by refinement type checking (using hoice~\cite{hoice}).
 Both positive examples (expected to verify) and negative examples (expected to fail) are included.
 
 % CONTENT
@@ -75,8 +74,8 @@ The artifact consists of:
   \item A pre-built Docker image (\texttt{nested-array-consort:ecoop26}) containing:
     \begin{itemize}
       \item The \texttt{nested\_array\_ConSORT} tool (OCaml, built with dune)
-      \item Z3 SMT solver versions 4.11.2 and 4.14.1
-      \item hoice CHC solver v1.10.0
+      \item Z3 SMT solver~\cite{z3} versions 4.11.2 and 4.14.1
+      \item hoice CHC solver~\cite{hoice} v1.10.0
       \item Extended\_ConSORT (Tanaka et al.) for baseline comparison
       \item All benchmark \texttt{.imp} programs
       \item Evaluation scripts for reproducing Tables~1, 3, 4, and~5
@@ -179,12 +178,11 @@ Table~5 & \texttt{eval/table5.sh} & \texttt{eval/results/table5.md} & $<$1 min \
 
 \section{Notes}
 
-The tool invokes Z3 and hoice as external processes. The evaluation scripts switch between
+The tool invokes Z3~\cite{z3} and hoice~\cite{hoice} as external processes. The evaluation scripts switch between
 Z3 versions by manipulating the \texttt{PATH} environment variable. All intermediate solver
 files are written to \texttt{experiment/} within the project directory. Due to this shared
 state, benchmarks must be run sequentially (not in parallel).
 
-% REFERENCES (optional)
-%\bibliography{references}
+\bibliography{references}
 
 \end{document}
