@@ -50,7 +50,8 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
 
 # Z3 4.11.2 (for Extended_ConSORT comparison and Table 4)
 #   amd64: pre-built 4.11.2 binary from GitHub
-#   arm64: no arm64 Linux binary for 4.11.2 and source build OOMs;
+#   arm64: no arm64 Linux binary for 4.11.2 and building from source
+#          requires prohibitive amounts of memory in Docker;
 #          use 4.12.4 (earliest arm64 Linux release) as substitute
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
       wget -q https://github.com/Z3Prover/z3/releases/download/z3-4.12.4/z3-4.12.4-arm64-glibc-2.35.zip && \
