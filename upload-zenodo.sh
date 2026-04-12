@@ -123,7 +123,7 @@ for filepath in "$OUTPUT_DIR"/*; do
         -X PUT \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/octet-stream" \
-        --data-binary @"$filepath" \
+        -T "$filepath" \
         "$BUCKET_URL/$filename")
 
     if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
@@ -135,7 +135,7 @@ for filepath in "$OUTPUT_DIR"/*; do
         curl -s -X PUT \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @"$filepath" \
+            -T "$filepath" \
             "$BUCKET_URL/$filename" | python3 -m json.tool 2>/dev/null || true
     fi
 done
