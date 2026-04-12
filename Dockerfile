@@ -70,12 +70,12 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     fi
 
 # =============================================================================
-# 3. Rust 1.78.0 and Hoice CHC solver (v1.10.0)
+# 3. Rust 1.78.0 and Hoice CHC solver (commit bc18c477)
 #    Rust 1.78.0 is required — newer versions cause build failures with hoice.
 # =============================================================================
 RUN wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.78.0
 ENV PATH="/home/opam/.cargo/bin:${PATH}"
-RUN cargo install --git https://github.com/hopv/hoice --tag v1.10.0 --locked
+RUN cargo install --git https://github.com/hopv/hoice --rev bc18c477 --locked
 
 # =============================================================================
 # 4. Extended_ConSORT (baseline for comparison in evaluation)
