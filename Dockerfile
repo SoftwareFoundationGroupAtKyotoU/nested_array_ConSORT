@@ -52,7 +52,7 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
 #   amd64: pre-built binary from GitHub
 #   arm64: built from source via opam (no arm64 Linux binary on GitHub)
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      opam install z3.4.11.2 -y -j 1 && \
+      opam install z3.4.11.2 -y -j 1 --verbose && \
       sudo mkdir -p /usr/local/z3-4.11.2/bin && \
       sudo cp "$(opam var bin)/z3" /usr/local/z3-4.11.2/bin/z3 && \
       sudo chmod +x /usr/local/z3-4.11.2/bin/z3 && \
