@@ -73,19 +73,22 @@ echo "  Bucket: $BUCKET_URL"
 echo ""
 echo "--- Checking existing files on Zenodo ---"
 
-# Build associative array of remote files: name -> size
-declare -A REMOTE_FILES
-while IFS='|' read -r fname fsize; do
-    REMOTE_FILES["$fname"]="$fsize"
-    echo "  Remote: $fname ($fsize bytes)"
-done < <(echo "$DEPOSIT_JSON" | python3 -c "
+# Save remote file list to temp file: name|size per line
+REMOTE_LIST=$(mktemp)
+trap "rm -f $REMOTE_LIST" EXIT
+
+echo "$DEPOSIT_JSON" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 for f in d.get('files', []):
     print(f'{f[\"filename\"]}|{f[\"filesize\"]}')
-")
+" > "$REMOTE_LIST"
 
-if [ ${#REMOTE_FILES[@]} -eq 0 ]; then
+if [ -s "$REMOTE_LIST" ]; then
+    while IFS='|' read -r fname fsize; do
+        echo "  Remote: $fname ($fsize bytes)"
+    done < "$REMOTE_LIST"
+else
     echo "  (no existing files)"
 fi
 
@@ -101,7 +104,7 @@ for filepath in "$OUTPUT_DIR"/*; do
     filename=$(basename "$filepath")
     local_size=$(stat -f%z "$filepath" 2>/dev/null || stat -c%s "$filepath" 2>/dev/null)
 
-    remote_size="${REMOTE_FILES[$filename]:-}"
+    remote_size=$(grep "^${filename}|" "$REMOTE_LIST" | cut -d'|' -f2)
 
     if [ -n "$remote_size" ] && [ "$local_size" = "$remote_size" ]; then
         echo "  SKIP: $filename (same size: $local_size bytes)"
