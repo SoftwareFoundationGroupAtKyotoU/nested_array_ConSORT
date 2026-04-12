@@ -31,7 +31,7 @@ Note: The paper reports Table 4 results as the mean of 10 runs per benchmark. To
 If you have the pre-built image:
 
 ```sh
-docker load -i nested-array-consort-ecoop26.tar.gz
+docker load -i nested-array-consort-ecoop26.(arm64|x86).tar.gz
 ```
 
 Alternatively, you can build the image from source:
