@@ -103,9 +103,9 @@ CSV files with raw data are also available in `eval/results/` for further analys
 ## 6. Expected Variation
 
 - **Absolute timing values** will differ from those reported in the paper due to hardware differences. The paper's experiments were conducted on a specific machine; your Docker container will have different CPU characteristics.
+- **Nondeterministm**: Due to the nondeterminism of solution search procedure in our tool, some benchmakrs may experience timeout although all succeeds in the paper.
 - **Relative ordering** of benchmarks by time should be approximately consistent.
 - **Sat/unsat results** must match the paper exactly. Every benchmark in `positive_example/` and `nested_arrays/` should report `sat`; every benchmark in `negative_example/` should report `unsat`.
-
 
 ## 7. Directory Structure
 
@@ -167,18 +167,6 @@ Ensure both solvers are on `$PATH`. Inside the Docker container, they should alr
 which z3      # Should print the path to z3
 which hoice   # Should print the path to hoice
 ```
-
-### Trace-Matrix refinement timeout
-
-The Trace-Matrix benchmark's refinement phase (hoice) may take longer than the default timeout (900s). This is a known solver performance issue, not a bug in the tool. The ownership phase completes successfully.
-
-### Solver timeout or unexpected unsat
-
-If a benchmark that should pass reports `unsat` or times out:
-
-1. Check that Z3 version 4.14.1 is active: the tool expects this version by default.
-2. Run with verbose output to see intermediate solver results in `experiment/`.
-3. Ensure `experiment/own_result/` directory exists: `mkdir -p experiment/own_result`.
 
 ### Container runs out of memory
 

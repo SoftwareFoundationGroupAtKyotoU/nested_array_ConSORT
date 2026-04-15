@@ -83,16 +83,27 @@ The artifact consists of:
   \item This artifact description document
 \end{itemize}
 
+% REQUIREMENTS
+
+\section{Requirements}
+
+\begin{itemize}
+  \item \textbf{Docker} (tested with Docker~20.x and later).
+  \item Approximately \textbf{4\,GB} of disk space for the Docker image.
+  \item \textbf{x86\_64} or \textbf{ARM64} (Apple Silicon) Linux or macOS with Docker support.
+  \item No internet connection is required after loading the image.
+\end{itemize}
+
 % GETTING STARTED
 
 \section{Getting Started Guide}
 
 \subsection{Loading the Docker Image}
 
-If you have the pre-built image:
+If you have the pre-built image (replace \texttt{arm64} with \texttt{x86} on x86\_64 hosts):
 
 \begin{verbatim}
-docker load -i nested-array-consort-ecoop26.tar.gz
+docker load -i nested-array-consort-ecoop26.arm64.tar.gz
 docker run -it nested-array-consort:ecoop26
 \end{verbatim}
 
@@ -106,8 +117,11 @@ docker build -t nested-array-consort:ecoop26 .
 \end{verbatim}
 
 Both x86\_64 and ARM64 platforms are supported.
-Building from source requires an internet connection and takes 10--20 minutes
-(longer on ARM64, where Z3~4.11.2 is compiled from source via opam; at least 8\,GB of memory must be allocated to Docker).
+Building from source requires an internet connection (to download Z3, HoICE, and
+Extended\_ConSORT) and takes 10--15 minutes on x86\_64.
+On ARM64, Z3~4.11.2 is compiled from source via opam because no pre-built ARM64
+Linux binary exists; this adds approximately 10 minutes to the build and
+requires at least 8\,GB of memory allocated to Docker.
 
 This drops you into a shell at \texttt{/home/opam/app/myproject/}.
 
@@ -119,8 +133,13 @@ Run the kick-the-tires script:
 bash eval/run_short.sh
 \end{verbatim}
 
-This runs a subset of benchmarks from Tables~1 and 3 and prints a pass/fail summary.
-All benchmarks should report \texttt{[PASS]}.
+This runs a small subset of benchmarks from Tables~1 and~3 and completes within
+10 minutes. You should see a few nested array benchmarks with timing output
+(ownership time, refinement time, total time), one integer array benchmark
+from Table~3 comparing our tool with Extended\_ConSORT, and a final summary
+indicating which paper tables correspond to each output.
+If all benchmarks report \texttt{ownership: sat} and \texttt{refinement: sat}
+(\texttt{unsat} for negative examples), the tool is working correctly.
 
 \subsection{Running a Single Benchmark}
 
@@ -130,7 +149,8 @@ To verify a single program manually:
 dune exec myproject -- ./example/nested_arrays/swap.imp
 \end{verbatim}
 
-Expected output includes \texttt{ownership: sat} and \texttt{refinement: sat}.
+Expected output includes \texttt{ownership: sat} and \texttt{refinement: sat}
+(or \texttt{unsat} for programs in \texttt{negative\_example/}).
 
 % DETAILED EVALUATION
 
@@ -165,14 +185,101 @@ Table~5 & \texttt{eval/table5.sh} & \texttt{eval/results/table5.md} & $<$1 min \
 \end{tabular}
 \end{center}
 
+CSV files with raw data are also produced in \texttt{eval/results/} for further analysis.
+
+\subsection{Claims and Evidence Mapping}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Paper} & \textbf{Output File} & \textbf{What to Check} \\
+\hline
+Table~1 & \texttt{table1.md} & Timing and alias counts for 19 nested array benchmarks \\
+Table~3 & \texttt{table3.md} & Timing comparison with Tanaka et al.\ on 8 integer benchmarks \\
+Table~4 & \texttt{table4.md} & Z3~4.14.1 vs.\ 4.11.2 timing for all 35 benchmarks \\
+Table~5 & \texttt{table5.md} & Summary: how many benchmarks each Z3 version is faster \\
+\hline
+\end{tabular}
+\end{center}
+
 \subsection{Expected Variation}
 
 \begin{itemize}
   \item \textbf{Absolute timing} will differ from the paper due to hardware differences.
-        Table~4 uses a single run (vs.\ the paper's 10-run mean), so individual
-        timing values may show more variance.
-  \item \textbf{Sat/unsat results} must match the paper exactly. However, some benchmarks may exhibit timeouts or memory limits depending on the environment.
+        The paper's experiments were conducted on a specific machine; the Docker
+        container will have different CPU characteristics. Table~4 uses a single
+        run (vs.\ the paper's 10-run mean), so individual timing values may show
+        more variance, but the relative trends between Z3 versions should be
+        consistent.
+  \item \textbf{Nondeterminism}: Due to the nondeterminism of the solution
+        search procedure in our tool, some benchmarks may experience timeouts
+        even though all benchmarks succeed in the paper.
+  \item \textbf{Relative ordering} of benchmarks by time should be approximately
+        consistent with the paper.
+  \item \textbf{Sat/unsat results} must match the paper exactly. Every benchmark
+        in \texttt{positive\_example/} and \texttt{nested\_arrays/} should
+        report \texttt{sat}; every benchmark in \texttt{negative\_example/}
+        should report \texttt{unsat}.
 \end{itemize}
+
+% DIRECTORY STRUCTURE
+
+\section{Directory Structure}
+
+The project is organised as follows (relevant subset):
+
+\begin{verbatim}
+nested_array_ConSORT/
+  myproject/
+    bin/main.ml       -- Entry point (CLI argument parsing)
+    lib/              -- Core library modules
+                         (syntax, parser, simple typing,
+                          ownership & CHC constraint generation,
+                          workflow orchestration)
+    example/
+      nested_arrays/  -- 19 nested array benchmarks (Table 1)
+      int_arrays/     -- 8 integer array benchmarks (Table 3)
+      positive_example/
+      negative_example/
+    eval/
+      run_all.sh      -- Master evaluation script
+      run_short.sh    -- Kick-the-tires evaluation
+      table1.sh table3.sh table4.sh table5.sh
+      lib/common.sh   -- Shared helper functions
+      z3-versions/    -- Z3 binaries (4.11.2 and 4.14.1)
+      Extended_ConSORT/ -- Tanaka et al. tool (Table 3)
+      results/        -- Generated result files
+    experiment/       -- Intermediate solver files (runtime)
+\end{verbatim}
+
+% TROUBLESHOOTING
+
+\section{Troubleshooting}
+
+\subsection*{``busy'' error when running \texttt{dune}}
+
+If \texttt{dune} reports a ``busy'' error, use an alternative build directory:
+
+\begin{verbatim}
+dune exec --build-dir="_tmp" myproject -- \
+    ./example/nested_arrays/indexed_value.imp
+\end{verbatim}
+
+\subsection*{Z3 or HoICE not found}
+
+Both solvers must be on \texttt{\$PATH}. Inside the Docker container, they are
+already installed. Outside Docker, check with:
+
+\begin{verbatim}
+which z3
+which hoice
+\end{verbatim}
+
+\subsection*{Container runs out of memory}
+
+The evaluation requires at least 4\,GB of RAM (8\,GB when building on ARM64).
+If benchmarks are killed, increase Docker's memory allocation in Docker
+Desktop settings.
 
 \section{Notes}
 
