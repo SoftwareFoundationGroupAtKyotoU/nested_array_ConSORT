@@ -8,7 +8,7 @@ all: $(PDF)
 	mkdir -p $(ARTIFACT_DIR)
 	cp $(PDF) $(ARTIFACT_DIR)/
 
-$(PDF): $(TEX).tex references.bib lipics-v2021.cls
+$(PDF): $(TEX).tex references.bib darts-v2021.cls darts-logo-bw.pdf cc-by.pdf orcid.pdf
 	pdflatex $(TEX)
 	bibtex $(TEX)
 	pdflatex $(TEX)
