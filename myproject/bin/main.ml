@@ -204,6 +204,7 @@ type run_mode =
   | FullAnnotated
 
 let () = 
+  let _ = Sys.command "mkdir -p experiment/own_result" in
   let file_name = ref "" in
   let mode = ref Normal in
   let insert_alias = ref false in
