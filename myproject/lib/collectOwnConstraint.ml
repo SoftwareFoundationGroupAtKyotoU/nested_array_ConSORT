@@ -19,11 +19,16 @@ let rec collect_exp env fun_name args position exp =
     let exp1' = elim_int_var env fun_name args exp1 in
     CIf(exp1', c2, c3, position) :: c1
   | LetIntExp (id,exp1,exp2) ->
-    let exp1' = elim_int_var env fun_name args exp1 in
-    let env' = (id, exp1') :: env in
-    let c1 = collect_exp env' fun_name args position exp1' in
-    let c2 = collect_exp env' fun_name args (position+1) exp2 in
-    c1 @ c2
+    (match exp1 with
+    | ConstRandInt _ ->
+      let c2 = collect_exp ((id, exp1)::env) fun_name args (position+1) exp2 in
+      [CLetUndet(id, c2)]
+    | _ ->
+      let exp1' = elim_int_var env fun_name args exp1 in
+      let env' = (id, exp1') :: env in
+      let c1 = collect_exp env' fun_name args position exp1' in
+      let c2 = collect_exp env' fun_name args (position+1) exp2 in
+      c1 @ c2)
   | LetDerefExp (id1,id2,exp) ->
     let c = collect_exp env fun_name args (position+1) exp in
     CLetDeref(id1, id2, position) :: c
@@ -31,19 +36,31 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CLetAddPtr(id1, id2, elim_int_var env fun_name args exp1, position) :: c1 @ c2
+  | LetImmutAddPtrExp (id1,id2,exp1,exp2) ->
+    let c1 = collect_exp env fun_name args position exp1 in
+    let c2 = collect_exp env fun_name args (position+1) exp2 in
+    CLetImmutAddPtr(id1, id2, elim_int_var env fun_name args exp1, position) :: c1 @ c2
   (* | ELetSubPtr (id1,id2,exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CLetSubPtr(id1, id2, elim_v env fun_name args exp1, l) :: c1 @ c2 *)
-  | LetAllocExp (id,exp1,simpleTy,exp2) ->
+  | LetAllocExp (id,exp1,ftype,exp2) ->
     let c = collect_exp env fun_name args (position+1) exp2 in
-    CMkArray(id, exp1, simpleTy, position) :: c
+    let rec elim_int_var_from_ftype ftype =
+      match ftype with
+      | FTRef (ftype', el, eh, f) ->
+        FTRef (elim_int_var_from_ftype ftype', 
+              elim_int_var env fun_name args el, 
+              elim_int_var env fun_name args eh, 
+              f)
+      | FTInt _ -> ftype in
+    CMkArray(id, elim_int_var env fun_name args exp1, elim_int_var_from_ftype ftype, position) :: c
   | AssignInt (id,exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     CAssignInt(id, position) :: c1 @ c2
-  | AssignPtr (id1,id2,esp) ->
-    let c = collect_exp env fun_name args (position+1) esp in
+  | AssignPtr (id1,id2,exp) ->
+    let c = collect_exp env fun_name args (position+1) exp in
     CAssignRef(id1, id2, position) :: c
   | AliasDeref (id1,id2,e) -> 
     let c = collect_exp env fun_name args (position+1) e in
@@ -56,6 +73,9 @@ let rec collect_exp env fun_name args position exp =
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
     c1 @ c2
+  | Assume (_,exp2) ->
+    let c1 = collect_exp env fun_name args position exp2 in
+    c1
   | Seq (exp1,exp2) ->
     let c1 = collect_exp env fun_name args position exp1 in
     let c2 = collect_exp env fun_name args (position+1) exp2 in
@@ -70,7 +90,10 @@ let rec collect_exp env fun_name args position exp =
       let convert_args param arg =
         match param, arg with
         | SRef _, Var id -> AId id
-        | SInt, _ -> AExp (elim_int_var env fun_name args arg) 
+        | SInt, _ -> 
+          (try
+            AExp (elim_int_var env fun_name args arg) 
+          with | _ -> raise ConstrError)
         (* argsは現在制約作成中の関数の仮引数名，argは既に制約作成の終わった関数の実引数名 *)
         | _ -> raise ConstrError
       in
@@ -85,7 +108,7 @@ let elim_hash ftid =
   | RawId id -> id
   | HashId id -> id
 
-(* ある一つの関数の関数定義を受け取り，関数名と制約集合を表すリスト「を返す *)
+(* ある一つの関数の関数定義を受け取り，関数名と制約集合を表すリストを返す *)
 let collect_function_own_constraints fdef =
   let (id, _, annotation, e) = fdef in
   let (args_before_eval, args_after_eval, _) = annotation in

@@ -1,0 +1,173 @@
+init(n, x, p) 
+[ <#n: int, x: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, x: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, x, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+
+easyMatrix(l, k, val, pp)
+[ <#l: int, #k: int, val: int, pp: int ref(0, l- 1, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, val: int,
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = val))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, val, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = easyMatrix(l, m, val, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+
+boomerang(b1, b2, r)
+[ <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.)> ->
+    <#b1: int, #b2: int, r: int ref(0, b1 - 1, 1.) ref(0, b2 - 1, 1.) | int> ]
+{
+  if b2 > 0 && b1 > 0 then {
+    let t = *r in
+    alias(t = *r);
+    let b3 = b2 - 1 in
+    let t2 = r+ 1 in
+    let b4 = boomerang(b1, b3, t2) in
+    alias(t2 = r+ 1);
+    0
+  } else {
+    0
+  }
+}
+
+{
+  let ten = _ : (ten >= 1) in
+  let kp = alloc ten : int ref ref in
+  let value = 1 in
+  let d = easyMatrix(ten, ten, value, kp) in
+  let d2 = boomerang(ten, ten, kp) in
+  let one = _ : (one >= 0 && one < ten) in
+  let two = _ : (two >= 0 && two < ten) in
+  assert(kp[one][two] = value);
+  ()
+}
+
+/*
+./example/much_time_example/boomerang.imp ->
+fun_name:main 
+ownership
+let ten = _ in 
+  let kp = alloc ten : int ref ref in
+/* kp : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* kp : ref^1 [ 0 + -1 * i_0_kp_2th + -1 * ten, 0 + -1 * i_0_kp_2th + -1 * ten] -> 0.000000 */
+  let _ = easyMatrix(ten, ten, 1, kp) in
+/* kp : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* kp : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+  let _ = boomerang(ten, ten, kp) in
+/* kp : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* kp : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+let one = _ in 
+let two = _ in 
+
+
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initn] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, initx, q) in
+/* q : ref^1 [ 0, -2 + 1 * initn] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ 571 + -1 * initn, 571 + -1 * initn] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initn] -> 1.000000 */
+}
+
+fun_name:easyMatrix 
+ownership
+easyMatrixpp b : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000
+easyMatrixpp b : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 0.000000
+easyMatrixpp e : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000
+easyMatrixpp e : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000
+if exp then {
+    let r = alloc easyMatrixl : int ref in
+/* r : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  let _ = init(easyMatrixl, easyMatrixval, r) in
+/* r : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  easyMatrixpp := r;
+/* easyMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* easyMatrixpp_eq0 : ref^1 [ 0 + -1 * i_2_easyMatrixpp_eq0_2th, -1 + -1 * i_2_easyMatrixpp_eq0_2th + 1 * easyMatrixl] -> 1.000000 */
+/* easyMatrixpp_non0 : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* easyMatrixpp_non0 : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 0.000000 */
+/* r : ref^1 [ 571 + -1 * easyMatrixl + -1 * easyMatrixk, 571 + -1 * easyMatrixl + -1 * easyMatrixk] -> 0.000000 */
+  let q = easyMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 0.000000 */
+/* easyMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* easyMatrixpp : ref^1 [ 0 + -1 * i_2_easyMatrixpp_2th, -1 + -1 * i_2_easyMatrixpp_2th + 1 * easyMatrixl] -> 1.000000 */
+  let _ = easyMatrix(easyMatrixl, not yet implemented, easyMatrixval, q) in
+/* q : ref^2 [ 0, -2 + 1 * easyMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+  alias(q=easyMatrixpp+1);
+/* q : ref^2 [ 45 + 1 * easyMatrixl + -1 * easyMatrixk, 33 + -1 * easyMatrixl + -1 * easyMatrixk] -> 0.000000 */
+/* q : ref^1 [ 571 + -1 * i_2_q_2th + -1 * easyMatrixl + -1 * easyMatrixk, 571 + -1 * i_2_q_2th + -1 * easyMatrixl + -1 * easyMatrixk] -> 0.000000 */
+/* easyMatrixpp : ref^2 [ 0, -1 + 1 * easyMatrixk] -> 1.000000 */
+/* easyMatrixpp : ref^1 [ 0, -1 + 1 * easyMatrixl] -> 1.000000 */
+} else {
+}
+
+fun_name:boomerang 
+ownership
+boomerangr b : ref^2 [ 0, -1 + 1 * boomerangb2] -> 1.000000
+boomerangr b : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000
+boomerangr e : ref^2 [ 0, -1 + 1 * boomerangb2] -> 1.000000
+boomerangr e : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000
+if exp then {
+    let t = *boomerangr in
+/* t : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+/* boomerangr_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* boomerangr_eq0 : ref^1 [ 571 + -1 * i_3_boomerangr_eq0_2th + -1 * boomerangb1 + -1 * boomerangb2, 571 + -1 * i_3_boomerangr_eq0_2th + -1 * boomerangb1 + -1 * boomerangb2] -> 0.000000 */
+/* boomerangr_non0 : ref^2 [ 0, -2 + 1 * boomerangb2] -> 1.000000 */
+/* boomerangr_non0 : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+  alias(t=*boomerangr);
+/* t : ref^1 [ 571 + -1 * boomerangb1 + -1 * boomerangb2, 571 + -1 * boomerangb1 + -1 * boomerangb2] -> 0.000000 */
+/* boomerangr : ref^2 [ 0, -1 + 1 * boomerangb2] -> 1.000000 */
+/* boomerangr : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+  let t2 = boomerangr + 1 in
+/* t2 : ref^2 [ 0, -2 + 1 * boomerangb2] -> 1.000000 */
+/* t2 : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+/* boomerangr : ref^2 [ 0, 0] -> 1.000000 */
+/* boomerangr : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+  let _ = boomerang(boomerangb1, not yet implemented, t2) in
+/* t2 : ref^2 [ 0, -2 + 1 * boomerangb2] -> 1.000000 */
+/* t2 : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+  alias(t2=boomerangr+1);
+/* t2 : ref^2 [ 571 + -1 * boomerangb2, 191 + -1 * boomerangb1 + -1 * boomerangb2] -> 0.000000 */
+/* t2 : ref^1 [ 571 + -1 * i_3_t2_2th + -1 * boomerangb1 + -1 * boomerangb2, 571 + -1 * i_3_t2_2th + -1 * boomerangb1 + -1 * boomerangb2] -> 0.000000 */
+/* boomerangr : ref^2 [ 0, -1 + 1 * boomerangb2] -> 1.000000 */
+/* boomerangr : ref^1 [ 0, -1 + 1 * boomerangb1] -> 1.000000 */
+} else {
+}
+
+
+*/
+
+

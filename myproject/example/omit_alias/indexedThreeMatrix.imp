@@ -1,0 +1,65 @@
+
+init(n, p) 
+[ <#n: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, q) in
+
+    1
+  }
+}
+
+
+
+iM(k, pp)
+[ <#k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#k: int, pp: int ref(0 , k- i_2 - 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 then { 
+    let r = alloc k : int ref in
+    let d = init(k, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = iM(m, q) in
+
+    0
+  } else {
+    0
+  }
+}
+
+iTm(m, ppp)
+[ <#m: int, ppp: int ref(0, 0, 0.) ref(0, 0, 0.) ref(0, m - 1, 1.)> ->
+    <#m: int, ppp: int ref(0 , m- i_2 - i_3 - 1, 1.) ref(0 , m- i_3 - 1, 1.) ref(0, m - 1, 1.) | int> ]
+{ 
+  if m > 0 then { 
+    let r = alloc m : int ref ref in
+    let d = iM(m, r) in
+    ppp := r;
+    let q = ppp + 1 in
+    let u = m - 1 in
+    let d2 = iTm(u, q) in
+
+    0
+  } else {
+    0
+  }
+}
+
+{
+  let p = alloc 10 : int ref ref ref in
+  let ten = 10 in
+  let d = iTm(ten, p) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < 10) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < 9 - ind1) in
+  let ind3 = _ : (ind3 >= 0 && ind3 < 9 - ind1 - ind2) in
+  assert(p[ind1][ind2][ind3] = 1);
+  ()
+}

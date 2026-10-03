@@ -1,0 +1,226 @@
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+addarray(n, p, q, r) 
+[ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    let z = x + y in
+    r := z;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let r1 = r + 1 in
+    let m = n - 1 in
+    let d = addarray(m, p1, q1, r1) in
+    alias(r1 = r + 1);
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+addmatrix(n1, n2, pp, qq, rr) 
+[ <#n1: int, #n2: int, pp: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), 
+qq: {v:int| (=> ((((i1 >= 0) and (i1 < n1)) and (i2 >= 0)) and (i2 < n2)) (v = 1))} ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let x = *pp in
+    let y = *qq in
+    let z = alloc n1 : int ref in
+    let d = addarray(n1, x, y, z) in
+    alias(x = *pp);
+    alias(y = *qq);
+    rr := z;
+    let pp1 = pp + 1 in
+    let qq1 = qq + 1 in
+    let rr1 = rr + 1 in
+    let m = n2 - 1 in
+    let d2 = addmatrix(n1, m, pp1, qq1, rr1) in
+    alias(rr1 = rr + 1);
+    alias(qq1 = qq + 1);
+    alias(pp1 = pp + 1);
+    /*let in1 = _ : (in1 >= 0 && in1 < n2) in
+    let in2 = _ : (in2 >= 0 && in2 < n1) in
+    assert(pp[in1][in2] = 1);
+    assert(qq[in1][in2] = 1);
+    assert(rr[in1][in2] = 2);*/
+    1
+  } else {
+    1
+  }
+}
+
+{
+  let undet = _ : (undet > 0) in
+  let mat1 = alloc undet : int ref ref in
+  let mat2 = alloc undet : int ref ref in
+  let mat3 = alloc undet : int ref ref in
+  let z1 = initMatrix(undet, undet, mat1) in
+  let z2 = initMatrix(undet, undet, mat2) in
+  let z3 = addmatrix(undet, undet, mat1, mat2, mat3) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < undet) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < undet) in
+  assert(mat1[ind1][ind2] = 1);
+  assert(mat2[ind1][ind2] = 1);
+  assert(mat3[ind1][ind2] = 2);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.132536s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.289288s
+cex fin (incomplete quantifiers)
+iter: 2 unknown time: 1.661064s
+(incomplete quantifiers)
+iter: 3 unknown time: 2.000973s
+(incomplete quantifiers)
+iter: 4 unknown time: 2.406445s
+(incomplete quantifiers)
+iter: 5 unknown time: 2.674586s
+(incomplete quantifiers)
+iter: 6 unknown time: 2.938479s
+int fin 
+fv fin iter: 7 unsat time: 5.835892s
+cex fin (incomplete quantifiers)
+iter: 8 unknown time: 6.118467s
+(incomplete quantifiers)
+iter: 9 unknown time: 6.400483s
+(incomplete quantifiers)
+iter: 10 unknown time: 6.662534s
+(incomplete quantifiers)
+iter: 11 unknown time: 6.914720s
+(incomplete quantifiers)
+iter: 12 unknown time: 7.162084s
+(incomplete quantifiers)
+iter: 13 unknown time: 7.480009s
+(incomplete quantifiers)
+iter: 14 unknown time: 7.717627s
+(incomplete quantifiers)
+iter: 15 unknown time: 8.063906s
+int fin 
+fv fin iter: 16 unsat time: 12.228818s
+cex fin (incomplete quantifiers)
+iter: 17 unknown time: 12.577429s
+(incomplete quantifiers)
+iter: 18 unknown time: 12.920865s
+int fin 
+fv fin iter: 19 unsat time: 16.849924s
+cex fin (incomplete quantifiers)
+iter: 20 unknown time: 17.061809s
+(incomplete quantifiers)
+iter: 21 unknown time: 17.384680s
+int fin 
+fv fin iter: 22 unsat time: 21.643416s
+cex fin (incomplete quantifiers)
+iter: 23 unknown time: 21.974357s
+(incomplete quantifiers)
+iter: 24 unknown time: 22.214617s
+(incomplete quantifiers)
+iter: 25 unknown time: 22.510620s
+(incomplete quantifiers)
+iter: 26 unknown time: 22.754374s
+(incomplete quantifiers)
+iter: 27 unknown time: 23.021381s
+(incomplete quantifiers)
+iter: 28 unknown time: 23.306606s
+(incomplete quantifiers)
+iter: 29 unknown time: 23.576740s
+(incomplete quantifiers)
+iter: 30 unknown time: 23.853430s
+(incomplete quantifiers)
+iter: 31 unknown time: 24.112301s
+int fin 
+fv fin iter: 32 unsat time: 31.561524s
+cex fin (incomplete quantifiers)
+iter: 33 unknown time: 31.917745s
+(incomplete quantifiers)
+iter: 34 unknown time: 32.179993s
+(incomplete quantifiers)
+iter: 35 unknown time: 32.528300s
+(incomplete quantifiers)
+iter: 36 unknown time: 32.697027s
+(incomplete quantifiers)
+iter: 37 unknown time: 32.969694s
+(incomplete quantifiers)
+iter: 38 unknown time: 33.230634s
+int fin 
+fv fin iter: 39 unsat time: 48.952245s
+cex fin (incomplete quantifiers)
+iter: 40 unknown time: 49.516402s
+(incomplete quantifiers)
+iter: 41 unknown time: 49.669730s
+int fin 
+fv fin iter: 42 unsat time: 54.519900s
+cex fin int fin 
+fv fin iter: 43 unsat time: 59.886294s
+cex fin (incomplete quantifiers)
+iter: 44 unknown time: 60.624451s
+(incomplete quantifiers)
+iter: 45 unknown time: 61.031236s
+int fin 
+fv fin iter: 46 unsat time: 65.116000s
+cex fin int fin 
+fv fin iter: 47 unsat time: 69.774363s
+cex fin int fin 
+fv fin iter: 48 unsat time: 74.494686s
+cex fin int fin 
+fv fin iter: 49 unsat time: 80.376154s
+cex fin (incomplete quantifiers)
+iter: 50 unknown time: 80.796669s
+(incomplete quantifiers)
+iter: 51 unknown time: 81.199670s
+(incomplete quantifiers)
+iter: 52 unknown time: 81.583833s
+(incomplete quantifiers)
+iter: 53 unknown time: 82.151819s
+int fin 
+fv fin iter: 54 unsat time: 85.781643s
+cex fin (incomplete quantifiers)
+iter: 55 unknown time: 86.227011s
+(incomplete quantifiers)
+iter: 56 unknown time: 86.690493s
+int fin 
+fv fin iter: 57 sat time: 90.938955s
+ownership: sat
+refinement: sat
+total time: 146.198694s
+*/

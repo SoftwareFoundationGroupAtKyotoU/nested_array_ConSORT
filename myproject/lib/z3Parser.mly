@@ -3,7 +3,7 @@
 %}
 
 // values
-%token <int> INT
+%token <Z.t> INT
 %token <float> FLOAT
 %token <string> ID
 
@@ -11,14 +11,25 @@
 %token TINT TREAL MINUS DIV
 
 // structure
-%token SAT MODEL DEF LPAREN RPAREN EOF
+%token SAT DEF LPAREN RPAREN
+%token EOF
 
-%start result
-%type <Z3Syntax.result> result
+%start results
+%type <Z3Syntax.results> results
 %%
 
+results:
+  | list_of_results EOF  { $1 }
+;
+
+list_of_results:
+  | result                { $1 }
+  | result list_of_results { $1 @ $2 }
+;
+
 result:
-  SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN defines RPAREN { $3 }
+  | SAT LPAREN RPAREN { [] }
 ;
 
 defines:
@@ -39,11 +50,15 @@ exp:
 | INT 
   { Int($1) }
 | LPAREN MINUS INT RPAREN
-  { Int(-$3) } 
+  { Int(Z.neg $3) } 
 | FLOAT
   { Float($1) }
+| LPAREN MINUS FLOAT RPAREN
+  { Float(-.$3) } 
 | LPAREN DIV FLOAT FLOAT RPAREN
   { Div($3, $4) }
+| LPAREN MINUS LPAREN DIV FLOAT FLOAT RPAREN RPAREN
+  { Div(-.$5, $6) }
 
 id:
   ID { $1 }

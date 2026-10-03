@@ -1,13 +1,13 @@
 (menhir
-  (modules parser z3Parser)
+  (modules parser z3Parser z3Parser2)
 )
 (ocamllex
-  (modules lexer z3Lexer)
+  (modules lexer z3Lexer z3Lexer2)
 )
 
 (library
  (name myproject)
- (libraries ounit2)
+ (libraries ounit2 zarith)
  (preprocess (pps ppx_deriving.std)))
 
 (env

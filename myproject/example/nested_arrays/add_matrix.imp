@@ -1,0 +1,309 @@
+init(pin, p) 
+[ <#pin: int, p: int ref (0, pin - 1, 1.) > -> 
+  <#pin: int, p: int ref (0, pin - 1, 1.) | int> ]
+{
+  if pin <= 0 then {
+    1
+  } else {
+    p := 1;
+    let q = p + 1 in
+    let m1 = pin - 1 in
+    let d = init(m1, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+initMatrix(l, k, pp)
+[ <#l: int, #k: int, pp: int ref(0, 0, 0.) ref(0, k - 1, 1.)> ->
+    <#l: int, #k: int, 
+    pp: {v:int| (=> ((((i1 >= 0) and (i1 < l)) and (i2 >= 0)) and (i2 < k)) (v = 1))} ref(0 , l- 1, 1.) ref(0, k - 1, 1.) | int> ]
+{ 
+  if k > 0 && l > 0 then { 
+    let r = alloc l : int ref in
+    let d = init(l, r) in
+    pp := r;
+    let q = pp + 1 in
+    let m = k - 1 in
+    let d2 = initMatrix(l, m, q) in
+    alias(q=pp+1);
+    0
+  } else {
+    0
+  }
+}
+
+addarray(n, p, q, r) 
+[ <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.)> -> 
+  <#n: int, p: int ref(0, n- 1, 1.), q: int ref(0, n- 1, 1.), r: int ref(0, n- 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    let y = *q in
+    let z = x + y in
+    r := z;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let r1 = r + 1 in
+    let m = n - 1 in
+    let d = addarray(m, p1, q1, r1) in
+    alias(r1 = r + 1);
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+addmatrix(n1, n2, pp, qq, rr) 
+[ <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, 0, 0.) ref(0, n2- 1, 1.)> -> 
+  <#n1: int, #n2: int, pp: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), qq: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.), rr: int ref(0, n1- 1, 1.) ref(0, n2- 1, 1.) | int> ]
+{
+  if n1 > 0 && n2 > 0 then {
+    let x = *pp in
+    let y = *qq in
+    let z = alloc n1 : int ref in
+    let d = addarray(n1, x, y, z) in
+    alias(x = *pp);
+    alias(y = *qq);
+    rr := z;
+    let pp1 = pp + 1 in
+    let qq1 = qq + 1 in
+    let rr1 = rr + 1 in
+    let m = n2 - 1 in
+    let d2 = addmatrix(n1, m, pp1, qq1, rr1) in
+    alias(rr1 = rr + 1);
+    alias(qq1 = qq + 1);
+    alias(pp1 = pp + 1);
+    1
+  } else {
+    1
+  }
+}
+
+{
+  let ten = _ : (ten > 0) in
+  let mat1 = alloc ten : int ref ref in
+  let mat2 = alloc ten : int ref ref in
+  let mat3 = alloc ten : int ref ref in
+  let z1 = initMatrix(ten, ten, mat1) in
+  let z2 = initMatrix(ten, ten, mat2) in
+  let z3 = addmatrix(ten, ten, mat1, mat2, mat3) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < ten) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < ten) in
+  assert(mat1[ind1][ind2] = 1);
+  assert(mat2[ind1][ind2] = 1);
+  assert(mat3[ind1][ind2] = 2);
+  1
+}
+
+/* 
+./example/much_time_example/add_matrix.imp ->
+fun_name:main 
+ownership
+let ten = _ in 
+  let mat1 = alloc ten : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0 + -1 * i_0_mat1_2th + -1 * ten, 0 + -1 * i_0_mat1_2th + -1 * ten] -> 0.000000 */
+  let mat2 = alloc ten : int ref ref in
+/* mat2 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat2 : ref^1 [ 0 + -1 * i_0_mat2_2th + -1 * ten, 0 + -1 * i_0_mat2_2th + -1 * ten] -> 0.000000 */
+  let mat3 = alloc ten : int ref ref in
+/* mat3 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat3 : ref^1 [ 0 + -1 * i_0_mat3_2th + -1 * ten, 0 + -1 * i_0_mat3_2th + -1 * ten] -> 0.000000 */
+  let _ = initMatrix(ten, ten, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+  let _ = initMatrix(ten, ten, mat2) in
+/* mat2 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+  let _ = addmatrix(ten, ten, mat1, mat2, mat3) in
+/* mat1 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat2 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat2 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat3 : ref^2 [ 0, -1 + 1 * ten] -> 1.000000 */
+/* mat3 : ref^1 [ 0, -1 + 1 * ten] -> 1.000000 */
+let ind1 = _ in 
+let ind2 = _ in 
+
+
+
+
+fun_name:init 
+ownership
+initp b : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+initp e : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000
+if exp then {
+  } else {
+  initp := (int);
+  let q = initp + 1 in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+/* initp : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = init(not yet implemented, q) in
+/* q : ref^1 [ 0, -2 + 1 * initpin] -> 1.000000 */
+  alias(q=initp+1);
+/* q : ref^1 [ -127 + -1 * initpin, -127 + -1 * initpin] -> 0.000000 */
+/* initp : ref^1 [ 0, -1 + 1 * initpin] -> 1.000000 */
+}
+
+fun_name:initMatrix 
+ownership
+initMatrixpp b : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp b : ref^1 [ 0, 0] -> 0.000000
+initMatrixpp e : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000
+initMatrixpp e : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000
+if exp then {
+    let r = alloc initMatrixl : int ref in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  let _ = init(initMatrixl, r) in
+/* r : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  initMatrixpp := r;
+/* initMatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp_eq0 : ref^1 [ 0 + -1 * i_2_initMatrixpp_eq0_2th, -1 + -1 * i_2_initMatrixpp_eq0_2th + 1 * initMatrixl] -> 1.000000 */
+/* initMatrixpp_non0 : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* r : ref^1 [ -127 + -1 * initMatrixl + -1 * initMatrixk, -127 + -1 * initMatrixl + -1 * initMatrixk] -> 0.000000 */
+  let q = initMatrixpp + 1 in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, 0] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0 + -1 * i_2_initMatrixpp_2th, -1 + -1 * i_2_initMatrixpp_2th + 1 * initMatrixl] -> 1.000000 */
+  let _ = initMatrix(initMatrixl, not yet implemented, q) in
+/* q : ref^2 [ 0, -2 + 1 * initMatrixk] -> 1.000000 */
+/* q : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+  alias(q=initMatrixpp+1);
+/* q : ref^2 [ 573 + -1 * initMatrixl + -1 * initMatrixk, 2 + 1 * initMatrixl + -1 * initMatrixk] -> 0.000000 */
+/* q : ref^1 [ -127 + -1 * i_2_q_2th + -1 * initMatrixl + -1 * initMatrixk, -127 + -1 * i_2_q_2th + -1 * initMatrixl + -1 * initMatrixk] -> 0.000000 */
+/* initMatrixpp : ref^2 [ 0, -1 + 1 * initMatrixk] -> 1.000000 */
+/* initMatrixpp : ref^1 [ 0, -1 + 1 * initMatrixl] -> 1.000000 */
+} else {
+}
+
+fun_name:addarray 
+ownership
+addarrayp b : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayq b : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayr b : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayp e : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayq e : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+addarrayr e : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000
+if exp then {
+  } else {
+  let _ = *addarrayp in
+  let _ = *addarrayq in
+  addarrayr := (int);
+  let p1 = addarrayp + 1 in
+/* p1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* addarrayp : ref^1 [ 0, 0] -> 1.000000 */
+  let q1 = addarrayq + 1 in
+/* q1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* addarrayq : ref^1 [ 0, 0] -> 1.000000 */
+  let r1 = addarrayr + 1 in
+/* r1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* addarrayr : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = addarray(not yet implemented, p1, q1, r1) in
+/* p1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* q1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+/* r1 : ref^1 [ 0, -2 + 1 * addarrayn] -> 1.000000 */
+  alias(r1=addarrayr+1);
+/* r1 : ref^1 [ -127 + -1 * addarrayn, -127 + -1 * addarrayn] -> 0.000000 */
+/* addarrayr : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000 */
+  alias(q1=addarrayq+1);
+/* q1 : ref^1 [ -127 + -1 * addarrayn, -127 + -1 * addarrayn] -> 0.000000 */
+/* addarrayq : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000 */
+  alias(p1=addarrayp+1);
+/* p1 : ref^1 [ -127 + -1 * addarrayn, -127 + -1 * addarrayn] -> 0.000000 */
+/* addarrayp : ref^1 [ 0, -1 + 1 * addarrayn] -> 1.000000 */
+}
+
+fun_name:addmatrix 
+ownership
+addmatrixpp b : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixpp b : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000
+addmatrixqq b : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixqq b : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000
+addmatrixrr b : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixrr b : ref^1 [ 0, 0] -> 0.000000
+addmatrixpp e : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixpp e : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000
+addmatrixqq e : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixqq e : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000
+addmatrixrr e : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000
+addmatrixrr e : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000
+if exp then {
+    let x = *addmatrixpp in
+/* x : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* addmatrixpp_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixpp_eq0 : ref^1 [ -127 + -1 * i_4_addmatrixpp_eq0_2th + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * i_4_addmatrixpp_eq0_2th + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixpp_non0 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixpp_non0 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  let y = *addmatrixqq in
+/* y : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* addmatrixqq_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixqq_eq0 : ref^1 [ -127 + -1 * i_4_addmatrixqq_eq0_2th + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * i_4_addmatrixqq_eq0_2th + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixqq_non0 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixqq_non0 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  let z = alloc addmatrixn1 : int ref in
+/* z : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  let _ = addarray(addmatrixn1, x, y, z) in
+/* x : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* y : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* z : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  alias(x=*addmatrixpp);
+/* x : ref^1 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixpp : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixpp : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  alias(y=*addmatrixqq);
+/* y : ref^1 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixqq : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixqq : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  addmatrixrr := z;
+/* addmatrixrr_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixrr_eq0 : ref^1 [ 0 + -1 * i_4_addmatrixrr_eq0_2th, -1 + -1 * i_4_addmatrixrr_eq0_2th + 1 * addmatrixn1] -> 1.000000 */
+/* addmatrixrr_non0 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixrr_non0 : ref^1 [ 0, 0] -> 0.000000 */
+/* z : ref^1 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+  let pp1 = addmatrixpp + 1 in
+/* pp1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* pp1 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* addmatrixpp : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixpp : ref^1 [ 0 + -1 * i_4_addmatrixpp_2th, -1 + 1 * i_4_addmatrixpp_2th + 1 * addmatrixn1] -> 1.000000 */
+  let qq1 = addmatrixqq + 1 in
+/* qq1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* qq1 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* addmatrixqq : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixqq : ref^1 [ 0 + 1 * i_4_addmatrixqq_2th, -1 + 1 * i_4_addmatrixqq_2th + 1 * addmatrixn1] -> 1.000000 */
+  let rr1 = addmatrixrr + 1 in
+/* rr1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* rr1 : ref^1 [ 0, 0] -> 0.000000 */
+/* addmatrixrr : ref^2 [ 0, 0] -> 1.000000 */
+/* addmatrixrr : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  let _ = addmatrix(addmatrixn1, not yet implemented, pp1, qq1, rr1) in
+/* pp1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* pp1 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* qq1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* qq1 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+/* rr1 : ref^2 [ 0, -2 + 1 * addmatrixn2] -> 1.000000 */
+/* rr1 : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  alias(rr1=addmatrixrr+1);
+/* rr1 : ref^2 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* rr1 : ref^1 [ -127 + -1 * i_4_rr1_2th + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * i_4_rr1_2th + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixrr : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixrr : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  alias(qq1=addmatrixqq+1);
+/* qq1 : ref^2 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* qq1 : ref^1 [ -127 + -1 * i_4_qq1_2th + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * i_4_qq1_2th + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixqq : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixqq : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+  alias(pp1=addmatrixpp+1);
+/* pp1 : ref^2 [ -127 + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* pp1 : ref^1 [ -127 + -1 * i_4_pp1_2th + -1 * addmatrixn1 + -1 * addmatrixn2, -127 + -1 * i_4_pp1_2th + -1 * addmatrixn1 + -1 * addmatrixn2] -> 0.000000 */
+/* addmatrixpp : ref^2 [ 0, -1 + 1 * addmatrixn2] -> 1.000000 */
+/* addmatrixpp : ref^1 [ 0, -1 + 1 * addmatrixn1] -> 1.000000 */
+} else {
+}
+
+
+*/

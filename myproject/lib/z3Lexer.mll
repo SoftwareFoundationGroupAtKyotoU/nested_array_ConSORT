@@ -16,10 +16,13 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline { next_line lexbuf; read lexbuf }
-  | int { let i = int_of_string @@ Lexing.lexeme lexbuf in  INT i }
+  | int 
+  { 
+    try let i = Z.of_string @@ Lexing.lexeme lexbuf in  INT i 
+    with
+    | _ -> failwith @@ "Invalid token " ^ (Lexing.lexeme lexbuf) }
   | float { let f = float_of_string @@ Lexing.lexeme lexbuf in FLOAT f }
   | "sat" { SAT }
-  | "model" { MODEL }
   | "define-fun" { DEF }
   | "Real" { TREAL }
   | "Int" { TINT }

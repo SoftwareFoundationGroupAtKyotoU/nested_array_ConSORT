@@ -10,6 +10,7 @@
 
 # ocamlbuild working directory
 _build/
+_tmp/
 
 # ocamlbuild targets
 *.byte
@@ -24,6 +25,8 @@ setup.log
 
 # Dune generated files
 *.install
+
+*.log
 
 # Local OPAM switch
 _opam/

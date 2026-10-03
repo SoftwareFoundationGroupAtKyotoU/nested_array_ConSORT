@@ -1,0 +1,61 @@
+init(n, x, p) 
+[ <#n: int, x: int, p: int ref (0, n - 1, 1.) > -> 
+  <#n: int, x: int, p: int ref (0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    p := x;
+    let q = p + 1 in
+    let m = n - 1 in
+    let d = init(m, x, q) in
+    alias(q=p+1);
+    1
+  }
+}
+
+boomerang(b2, r)
+[ <#b2: int, r: int ref(0, b2 - 1, 1.)> ->
+    <#b2: int, r: int ref(0, b2 - 1, 1.) | int> ]
+{
+  if b2 > 0 then {
+    let t = *r in
+    assert(t = 0);
+    r := t;
+    let s = r + 1 in
+    let b3 = b2 - 1 in
+    let d = boomerang(b3, s) in
+    alias(s = r + 1);
+    0
+  } else {
+    0
+  }
+}
+
+verify(a, p)
+[ <#a: int, p: int ref(0, a - 1, 1.)> -> 
+  <#a: int, p: int ref(0, a - 1, 1.) | int> ]
+{
+  if a <= 0 then {
+    1
+  } else {
+    let y = *p in
+    let q = p + 1 in
+    let m = a - 1 in
+    let d = verify(m, q) in
+    alias(q = p + 1);
+    1
+  }
+}
+
+{
+  let kp = alloc 10 : int ref in
+  let ten = 10 in
+  let zero = 0 in
+  let d1 = init(ten, zero, kp) in
+  assert(kp[0] = 0);
+  let d2 = boomerang(ten, kp) in
+  assert(kp[0] = 0);
+  let d3 = verify(ten, kp) in
+  ()
+}

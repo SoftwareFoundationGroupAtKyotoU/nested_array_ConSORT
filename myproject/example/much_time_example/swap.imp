@@ -1,0 +1,209 @@
+copyarray(n, val, p, q)
+[ <#n: int, val: int, p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, val: int, p: int ref(0, n - 1, 1.), q: 
+  int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, val, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    1
+  }
+}
+
+swaprow(l, n1, n2, pp)
+[ <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)> -> 
+  <#l: int, #n1: int, #n2: int, pp: int ref(0, l - 1, 1.) ref(0, l- 1, 1.)| int> ]
+{
+  if l > 0 && n1 >= 0 && n1 < l && n2 >= 0 && n2 < l then {
+    let ppShift1 = pp + n1 in
+    let row1 = *ppShift1 in
+    let dummy1 = alloc l : int ref in
+    let d = copyarray(l, n1, row1, dummy1) in
+    alias(row1 = *ppShift1);
+    alias(ppShift1 = pp + n1);
+
+    let ppShift2 = pp + n2 in
+    let row2 = *ppShift2 in
+    let dummy2 = alloc l : int ref in
+    let d2 = copyarray(l, n2, row2, dummy2) in
+    let d3 = copyarray(l, n1, dummy1, row2) in
+    alias(row2 = *ppShift2);
+    alias(ppShift2 = pp + n2);
+
+    let ppShift3 = pp + n1 in
+    let row3 = *ppShift3 in
+    let d4 = copyarray(l, n2, dummy2, row3) in
+    alias(row3 = *ppShift3);
+    alias(ppShift3 = pp + n1);
+    1
+
+  } else { 0 }
+}
+
+
+{
+  let unde = _ : (unde >= 2) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let d = swaprow(unde, zero, one, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 0);
+  assert(mat1[0][ind1] = 1);
+  1
+}
+
+/*{
+  let unde = _ : (unde > 5) in
+  let zero = 0 in
+  let one = 1 in
+  let mat1 = alloc unde : {v:int| ((=> (i2 = 1) (v = 1)) and (=> (i2 = 0) (v = 0)))} 
+  ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  assert(mat1[1][ind1] = 1);
+  assert(mat1[0][ind1] = 0);
+  1
+}*/
+
+
+/* 生成規則を工夫 */
+/*
+./example/much_time_example/swap.imp ->
+fun_name:main 
+ownership
+let unde = _ in 
+  let mat1 = alloc unde : int ref ref in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+  let _ = swaprow(unde, 0, 1, mat1) in
+/* mat1 : ref^2 [ 0, -1 + 1 * unde] -> 1.000000 */
+/* mat1 : ref^1 [ 0, -1 + 1 * unde] -> 1.000000 */
+let ind1 = _ in 
+
+
+
+fun_name:copyarray 
+ownership
+copyarrayp b : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000
+copyarrayq b : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000
+copyarrayp e : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000
+copyarrayq e : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000
+if exp then {
+  } else {
+  let _ = *copyarrayp in
+  copyarrayq := (int);
+  let p1 = copyarrayp + 1 in
+/* p1 : ref^1 [ 0, -2 + 1 * copyarrayn] -> 1.000000 */
+/* copyarrayp : ref^1 [ 0, 0] -> 1.000000 */
+  let q1 = copyarrayq + 1 in
+/* q1 : ref^1 [ 0, -2 + 1 * copyarrayn] -> 1.000000 */
+/* copyarrayq : ref^1 [ 0, 0] -> 1.000000 */
+  let _ = copyarray(not yet implemented, copyarrayval, p1, q1) in
+/* p1 : ref^1 [ 0, -2 + 1 * copyarrayn] -> 1.000000 */
+/* q1 : ref^1 [ 0, -2 + 1 * copyarrayn] -> 1.000000 */
+  alias(q1=copyarrayq+1);
+/* q1 : ref^1 [ 4859 + -1 * copyarrayn, 4859 + -1 * copyarrayn] -> 0.000000 */
+/* copyarrayq : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000 */
+  alias(p1=copyarrayp+1);
+/* p1 : ref^1 [ 4859 + -1 * copyarrayn, 4859 + -1 * copyarrayn] -> 0.000000 */
+/* copyarrayp : ref^1 [ 0, -1 + 1 * copyarrayn] -> 1.000000 */
+}
+
+fun_name:swaprow 
+ownership
+swaprowpp b : ref^2 [ 0, -1 + 1 * swaprowl] -> 1.000000
+swaprowpp b : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000
+swaprowpp e : ref^2 [ 0, -1 + 1 * swaprowl] -> 1.000000
+swaprowpp e : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000
+if exp then {
+    let ppShift1 = swaprowpp + swaprown1 in
+/* ppShift1 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprown1] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let row1 = *ppShift1 in
+/* row1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* ppShift1_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* ppShift1_eq0 : ref^1 [ 4859 + -1 * i_2_ppShift1_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * i_2_ppShift1_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift1_non0 : ref^2 [ 0, -2 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift1_non0 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let dummy1 = alloc swaprowl : int ref in
+/* dummy1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let _ = copyarray(swaprowl, swaprown1, row1, dummy1) in
+/* row1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* dummy1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(row1=*ppShift1);
+/* row1 : ref^1 [ 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift1 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(ppShift1=swaprowpp+swaprown1);
+/* ppShift1 : ref^2 [ -2 + 1 * swaprowl + -1 * swaprown1 + 1 * swaprown2, 0 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift1 : ref^1 [ 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let ppShift2 = swaprowpp + swaprown2 in
+/* ppShift2 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown2] -> 1.000000 */
+/* ppShift2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprown2] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let row2 = *ppShift2 in
+/* row2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* ppShift2_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* ppShift2_eq0 : ref^1 [ 4859 + -1 * i_2_ppShift2_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * i_2_ppShift2_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift2_non0 : ref^2 [ 0, -2 + 1 * swaprowl + -1 * swaprown2] -> 1.000000 */
+/* ppShift2_non0 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let dummy2 = alloc swaprowl : int ref in
+/* dummy2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let _ = copyarray(swaprowl, swaprown2, row2, dummy2) in
+/* row2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* dummy2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let _ = copyarray(swaprowl, swaprown1, dummy1, row2) in
+/* dummy1 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* row2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(row2=*ppShift2);
+/* row2 : ref^1 [ 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift2 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown2] -> 1.000000 */
+/* ppShift2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(ppShift2=swaprowpp+swaprown2);
+/* ppShift2 : ref^2 [ 4859 + 1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, -67 + 1 * swaprowl + 1 * swaprown1 + 1 * swaprown2] -> 0.000000 */
+/* ppShift2 : ref^1 [ 4859 + -1 * i_2_ppShift2_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * i_2_ppShift2_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let ppShift3 = swaprowpp + swaprown1 in
+/* ppShift3 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift3 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprown1] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let row3 = *ppShift3 in
+/* row3 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* ppShift3_eq0 : ref^2 [ 0, 0] -> 1.000000 */
+/* ppShift3_eq0 : ref^1 [ 4859 + -1 * i_2_ppShift3_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * i_2_ppShift3_eq0_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift3_non0 : ref^2 [ 0, -2 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift3_non0 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  let _ = copyarray(swaprowl, swaprown2, dummy2, row3) in
+/* dummy2 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* row3 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(row3=*ppShift3);
+/* row3 : ref^1 [ 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift3 : ref^2 [ 0, -1 + 1 * swaprowl + -1 * swaprown1] -> 1.000000 */
+/* ppShift3 : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+  alias(ppShift3=swaprowpp+swaprown1);
+/* ppShift3 : ref^2 [ 25 + -1 * swaprowl + 1 * swaprown1 + 1 * swaprown2, 4859 + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* ppShift3 : ref^1 [ 4859 + -1 * i_2_ppShift3_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2, 4859 + 1 * i_2_ppShift3_2th + -1 * swaprowl + -1 * swaprown1 + -1 * swaprown2] -> 0.000000 */
+/* swaprowpp : ref^2 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+/* swaprowpp : ref^1 [ 0, -1 + 1 * swaprowl] -> 1.000000 */
+} else {
+}
+
+
+*/

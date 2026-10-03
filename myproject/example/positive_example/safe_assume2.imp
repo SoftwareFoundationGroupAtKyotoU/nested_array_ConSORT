@@ -1,0 +1,17 @@
+/*
+assume(x>0)の過程のもとでassert(x > 0);を判断するので
+satになる
+*/
+verify(x)
+[<x:int> -> <x:int|int>]
+{
+    assume(x > 0);
+    assert(x > 0);
+    1
+}
+
+{
+    let x = 0 in
+    let d = verify(x) in
+    ()
+}

@@ -3,12 +3,12 @@
         (*予約語*)
         ("alias", Parser.ALIAS);
         ("assert", Parser.ASSERT);
+        ("assume", Parser.ASSUME);
         ("else", Parser.ELSE);
         ("ifnp", Parser.IFNP);
         ("if", Parser.IF);
         ("in", Parser.IN);
         ("int", Parser.INT);
-        ("unit", Parser.UNIT);
         ("let", Parser.LET);
         ("alloc", Parser.ALLOC);
         ("ref", Parser.REF);
@@ -20,13 +20,15 @@
         ("not", Parser.TNOT);
         ("T", Parser.TOP);
         ("v", Parser.NU);
+        ("immut", Parser.IMMUT);
     ]
 }
 
 rule main = parse
   (*改行と空白とタブと改ページは無視*)
   [' ' '\009' '\012' '\n']+   { main lexbuf }(*?*)
-  | "-"? ['0'-'9']+ {Parser.INTV (int_of_string (Lexing.lexeme lexbuf)) }
+  | "-"? ['0'-'9']+ {Parser.INTV (Z.of_string (Lexing.lexeme lexbuf)) }
+  | '-'? ['0'-'9']+ '.' ['0' - '9']* {Parser.FLOATV (float_of_string (Lexing.lexeme lexbuf)) }
   | "()" { Parser.UNITV }
   | "(" { Parser.LPAREN }
   | ")" { Parser.RPAREN }
@@ -37,6 +39,7 @@ rule main = parse
   | "+" { Parser.PLUS }
   | "-" { Parser.MINUS }
   | "*" { Parser.STAR }
+  | "/" { Parser.SLASH }
   | "<" { Parser.LT }
   | ">" { Parser.GT }
   | "<=" { Parser.LEQ }
@@ -48,7 +51,7 @@ rule main = parse
   | ":=" { Parser.ASSIGN }
   | "||" { Parser.OR }
   | "&&" { Parser.AND }
-  | "_" { Parser.NONDET }
+  | "_" { Parser.ConstRandInt }
   | "!" { Parser.NOT }
   | "->" { Parser.RARROW }
   | "=>" { Parser.TIMPLY }
@@ -57,7 +60,7 @@ rule main = parse
   | "#" { Parser.HASH }
   | "/*" { comment lexbuf; main lexbuf }
   (*コメントの先頭を読んだ際はエントリポイント「コメント」に移ったのちメインに戻ってくる*)
-  | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']*
+  | ['A'-'Z' 'a'-'z'] ['A'-'Z' 'a'-'z' '0'-'9' '_' '\'']*
       { let id = Lexing.lexeme lexbuf in
         try
           List.assoc id reservedWords(*予約語に含まれている場合は予約語として機能*)

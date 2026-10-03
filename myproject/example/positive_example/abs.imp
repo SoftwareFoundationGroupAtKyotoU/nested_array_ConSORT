@@ -1,0 +1,17 @@
+abs(m)
+[ <#m: int> -> <#m: int | int> ]
+{
+  if m >= 0 then {
+    m
+  } else {
+    let k = -m in
+    k
+  }
+}
+
+{
+  let rand = _ in
+  let z = abs(rand) in
+  assert(z >= 0);
+  ()
+}

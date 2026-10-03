@@ -1,0 +1,90 @@
+copyarray(n, dum, p, q)
+[ <#n: int, dum:int , p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.)> -> 
+  <#n: int, dum:int , p: int ref(0, n - 1, 1.), q: int ref(0, n - 1, 1.) | int> ]
+{
+  if n <= 0 then {
+    1
+  } else {
+    let x = *p in
+    q := x;
+    let p1 = p + 1 in
+    let q1 = q + 1 in
+    let m = n - 1 in
+    let d = copyarray(m, dum, p1, q1) in
+    alias(q1 = q + 1);
+    alias(p1 = p + 1);
+    assert(p[0] = x);
+    1
+  }
+}
+
+rev(n, le, ph, q)
+[ <#n: int, #le: int, 
+ph: int ref(0, n- 1, 0.) ref(0, le- 1, 1.), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, 1.) ref(0, le- 1, 1.) > -> 
+  <#n: int, #le: int, 
+ph: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = ((le - i2) - 1)))} ref(0, n- 1, 1.) ref(0, le- 1, 1.), 
+q: {v:int| (=> ((((i1 >= 0) and (i1 < n)) and (i2 >= 0)) and (i2 < le)) (v = i2))} ref(0, n- 1, 1.) ref(0, le- 1, 1.) | int> ]
+{
+  if n <= 0 || le <= 0 then {
+    1
+  } else {
+    let l = le - 1 in
+    let qShift = q + l in
+    let y = *qShift in
+    let arr = alloc n : int ref in
+    let d2 = copyarray(n, l, y, arr) in
+    ph := arr;
+    let phShift = ph + 1 in
+    let d = rev(n, l, phShift, q) in
+    alias(phShift = ph + 1);
+    alias(y = *qShift);
+    alias(qShift = q + l);
+    1
+  }
+}
+
+{
+  let unde = _ : (unde > 0) in
+  let mat1 = alloc unde : {v:int| (v = i2)} ref(0, unde - 1, 1.) ref(0, unde - 1, 1.) in
+  let mat2 = alloc unde : int ref ref in
+  let d = rev(unde, unde, mat2, mat1) in
+  let ind1 = _ : (ind1 >= 0 && ind1 < unde) in
+  let ind2 = _ : (ind2 >= 0 && ind2 < unde) in
+  assert(mat2[ind2][ind1] = unde - ind2 - 1);
+  1
+}
+
+/*
+int fin                               
+fv fin iter: 0 unsat time: 0.084682s
+cex fin int fin 
+fv fin iter: 1 unsat time: 1.091819s
+cex fin int fin 
+fv fin iter: 2 unsat time: 2.396924s
+cex fin int fin 
+fv fin iter: 3 unsat time: 3.087659s
+cex fin int fin 
+fv fin iter: 4 unsat time: 3.788744s
+cex fin int fin 
+fv fin iter: 5 unsat time: 4.717897s
+cex fin int fin 
+fv fin iter: 6 unsat time: 5.812205s
+cex fin int fin 
+fv fin iter: 7 unsat time: 6.864388s
+cex fin int fin 
+fv fin iter: 8 unsat time: 7.934786s
+cex fin int fin 
+fv fin iter: 9 unsat time: 8.943434s
+cex fin int fin 
+fv fin iter: 10 unsat time: 9.849324s
+cex fin (incomplete quantifiers)
+iter: 11 unknown time: 10.189835s
+(incomplete quantifiers)
+iter: 12 unknown time: 10.460470s
+int fin 
+fv fin iter: 13 sat time: 11.426890s
+ownership: sat
+refinement: sat
+total time: 11.633386s
+*/

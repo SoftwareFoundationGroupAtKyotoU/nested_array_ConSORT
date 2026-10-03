@@ -1,12 +1,13 @@
 %{
 open Syntax
+open SmtlibSyntax
 %}
 
 // value
-%token <int> INTV
+%token <Z.t> INTV
 %token <float> FLOATV
 %token <Syntax.id> ID_NAME
-%token TRUE FALSE UNITV NONDET
+%token TRUE FALSE UNITV ConstRandInt
 
 // conditional
 %token IFNP IF THEN ELSE
@@ -22,9 +23,13 @@ open Syntax
 
 // aseert expression
 %token ASSERT
+%token IMMUT
+
+// assume expression
+%token ASSUME
 
 // binary operator
-%token OR AND PLUS MINUS LT GT LEQ GEQ NEQ
+%token OR AND PLUS MINUS LT GT LEQ GEQ NEQ SLASH
 %token STAR // multipul and pointer dereference
 
 // unary operator
@@ -41,10 +46,13 @@ open Syntax
 
 // type
 %token TOP RARROW
-%token NU INT REF UNIT TOR TAND TIMPLY TNOT
+%token NU INT REF TOR TAND TIMPLY TNOT
 
 // others # | (end_of_file)
 %token HASH BAR EOF
+
+%nonassoc IN ELSE
+%right SEMI
 
 %start toplevel
 %type <Syntax.program> toplevel 
@@ -79,12 +87,55 @@ ID_Funtype: (* 関数の評価前後の引数名と型 *)
 | HASH x = ID COLON idtype = Ftype { (HashId(x), idtype) }
 
 Ftype: // プログラム内に記述する型
-// | LBRACE NU COLON TINT BAR smtlib RBRACE
-//   { FTInt($6) }
-// | ftype REF LPAREN exp COMMA exp COMMA FLOATV RPAREN
-//   { FTRef($1, $4, $6, $8) }
+| LBRACE NU COLON INT BAR sl=Smtlib RBRACE
+  { FTInt(sl) } 
+| inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA fl=FLOATV RPAREN
+  { FTRef(inner_type, e1, e2, fl) }
+| inner_type=Ftype REF LPAREN e1=Expr COMMA e2=Expr COMMA RPAREN
+  { FTRef(inner_type, e1, e2, 2.) }
 | INT { FTInt(VarPred) }
 | inner_type = Ftype REF { FTRef(inner_type, ENull, ENull, 0.) }
+
+Smtlib:
+| LPAREN sl1=Smtlib TOR sl2=Smtlib RPAREN
+  { Or(sl1, sl2) }
+| LPAREN sl1=Smtlib TAND sl2=Smtlib RPAREN
+  { And(sl1, sl2) } 
+| LPAREN TIMPLY sl1=Smtlib sl2=Smtlib RPAREN
+  { Imply(sl1, sl2) } 
+| LPAREN TNOT sl=Smtlib RPAREN
+  { Not(sl) } 
+| LPAREN sl1=Smtlib EQ sl2=Smtlib RPAREN
+  { Eq(sl1, sl2) } 
+| LPAREN sl1=Smtlib LT sl2=Smtlib RPAREN
+  { Lt(sl1, sl2) }  
+| LPAREN sl1=Smtlib GT sl2=Smtlib RPAREN
+  { Gt(sl1, sl2) } 
+| LPAREN sl1=Smtlib LEQ sl2=Smtlib RPAREN
+  { Leq(sl1, sl2) } 
+| LPAREN sl1=Smtlib GEQ sl2=Smtlib RPAREN
+  { Geq(sl1, sl2) } 
+| LPAREN sl1=Smtlib PLUS sl2=Smtlib RPAREN
+  { Add(sl1, sl2) } 
+| LPAREN sl1=Smtlib MINUS sl2=Smtlib RPAREN
+  { Sub(sl1, sl2) } 
+| LPAREN sl1=Smtlib STAR sl2=Smtlib RPAREN
+  { Mul(sl1, sl2) } 
+// | LPAREN DIV smtlib smtlib RPAREN
+//   { Div($3, $4) } 
+| TOP
+  { Id("true") }
+| NU
+  { Id("v") }
+| id=ID
+  { FV(id) }
+| i=INTV
+  { Id(Z.to_string i) }
+;
+
+Brackets :
+  | LBRACKET e=Expr RBRACKET { [e] }
+  | LBRACKET e=Expr RBRACKET b=Brackets {e :: b}
 
 Expr :
   | e=LetExpr{ e }
@@ -93,10 +144,6 @@ Expr :
   | e=AppExpr { e }
   | e=DerefExpr { e }
   | e=ORExpr {e}
-//   | e=IfExpr { e }
-//   | e=LetExpr { e }
-//   | e1=PreSEMIExpr SEMI e2=Expr { PreSEMIExpr(e1, e2) }
-//   | e=AExpr { e }
 
 IfExpr :
     IFNP x=ID THEN t=Expr ELSE e=Expr { IfnpExp (x, t, e) }
@@ -104,42 +151,26 @@ IfExpr :
 
 LetExpr :
   | LET x=ID EQ e1 = Expr IN e2 = Expr { Let (x, e1, e2) }
-  | LET x=ID EQ ALLOC e1=Expr COLON ty=SimpleTyExpr REF IN e2=Expr { LetAllocExp(x, e1, SRef ( ty ), e2) }
-//   | LET x=ID EQ STAR y=ID IN e=Expr { LetDerefExp(x, Var y, e) }
-//   | LET x=ID EQ e1=BinOpExpr IN e2=Expr { LetBinOpExp(x, e1, e2) }
-//   | LET x=ID EQ e1=Expr IN e2=Expr { LetBindExp(x, e1, e2) }
-//   | LET x=ID EQ app=FunCallExpr IN e=Expr { LetFunCall(x, app, e) }
-
-SimpleTyExpr :
-    INT { SInt }
-  | ty=SimpleTyExpr REF { SRef (ty) }
+  | LET IMMUT x=ID EQ y=ID PLUS e1=Expr IN e2 = Expr { LetImmutAddPtrExp (x, y, e1, e2) }
+  | LET x=ID EQ ALLOC e1=Expr COLON ty=Ftype IN e2=Expr { LetAllocExp(x, e1, ty, e2) }
 
 PlusMinusExpr :
-  | x=PlusMinusExpr PLUS y=MultExpr { PlusExp(x, y) }
-  | x=PlusMinusExpr MINUS y=MultExpr { MinusExp(x, y) }
-  | e=MultExpr { e }
+  | x=PlusMinusExpr PLUS y=MultDivExpr { PlusExp(x, y) }
+  | x=PlusMinusExpr MINUS y=MultDivExpr { MinusExp(x, y) }
+  | e=MultDivExpr { e }
 
-MultExpr :
-  | x=MultExpr STAR y=AExpr { MultExp(x, y) }
+MultDivExpr :
+  | x=MultDivExpr STAR y=AExpr { MultExp(x, y) }
+  | x=MultDivExpr SLASH y=AExpr { DivExp(x, y) }
   | e=AExpr { e }
 
-// FunCallExpr :
-//   | i=ID LPAREN v=VarSeq RPAREN { FunCall(i, v)}
-
-// VarSeq :
-//     i=ID { [i] }
-//   | i=ID COMMA v=VarSeq { i :: v } 
 
 InsertSEMIExpr :
   | x=ID ASSIGN e1=Expr SEMI e2=Expr { Assign(x, e1, e2) }
   | ALIAS LPAREN e1=ID EQ e2=Expr RPAREN SEMI e3=Expr { Alias(Var e1, e2, e3) }
   | ASSERT LPAREN e1=Expr RPAREN SEMI e2=Expr { Assert(e1, e2) } 
+  | ASSUME LPAREN e1=Expr RPAREN SEMI e2=Expr { Assume(e1, e2) } 
   | e1=Expr SEMI e2=Expr { Seq(e1, e2) }
-// PreSEMIExpr :
-//     x=ID ASSIGN y=ID { Assign(x, y) }
-//   | ALIAS LPAREN x=ID EQ y=ID PLUS z=ID RPAREN { AliasAddPtr(x, y, z) }
-//   | ALIAS LPAREN x=ID EQ STAR y=ID RPAREN { AliasDeref(x, y) }
-//   | ASSERT LPAREN p=LTExpr RPAREN { Assert(p) } 
 
 ORExpr :
     e1=ORExpr OR e2=ANDExpr { OrExp(e1, e2) }
@@ -150,7 +181,7 @@ ANDExpr :
   | e=NotExpr { e }
 
 NotExpr :
-  | NOT e=NotExpr { e }
+  | NOT e=NotExpr { NotExp e }
   | e=CompareExpr { e }
 
 CompareExpr :
@@ -162,28 +193,17 @@ CompareExpr :
   | e1=PlusMinusExpr NEQ e2=PlusMinusExpr { NeqExp(e1, e2) }
   | e=PlusMinusExpr{ e }
 
-// LTExpr :
-//     e1=BaseExpr LT e2=BaseExpr { BinOp(Lt, e1, e2) }
-//   | e=EQExpr { e }
-
-// EQExpr :
-//     e1=BaseExpr EQ e2=BaseExpr { BinOp(Eq, e1, e2) }
-
-// BaseExpr :
-//     i=INTV { ILit (i) }
-//   | i=ID { Var i }
-//   | STAR e=BaseExpr { Deref e }
-//   | LPAREN e=ORExpr RPAREN { e }
-
 AExpr :
     i=INTV { ILit i }
-  | MINUS e=Expr { MinusExp(ILit 0, e) }
+  | MINUS e=AExpr { MinusExp(ILit Z.zero, e) }
   | i=ID   { Var i }
   | LBRACE e=Expr RBRACE { e }
   | TRUE { BLit true }
   | FALSE { BLit false }
-  | NONDET { Nondet }
+  | ConstRandInt { ConstRandInt (BLit true) }
+  | ConstRandInt COLON LPAREN x=Expr RPAREN { ConstRandInt x }
   | UNITV { Unit }
+  | id=ID ids=Brackets { DerefBracketExp(id, ids) }
 
 AppExpr :
   | f=ID LPAREN ids=Args RPAREN { AppExp(f, ids) }
@@ -197,4 +217,4 @@ DerefExpr :
 
 ID :
   | x=ID_NAME { x }
-  | NU { "v" } 
+  // | NU { "v" } 
